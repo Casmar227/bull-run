@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BULL RUN — Finance Roguelike</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#060d06;--surf:#0e1a0e;--surf2:#152415;--bord:#1e3a1e;
+  --green:#00ff41;--gdim:#00aa2a;--gdark:#004d15;
+  --red:#ff4444;--gold:#ffd700;--blue:#4af;--text:#c0e8c0;--tdim:#6a986a;
+  --atk:#ff6644;--def:#4af;--skl:#aa88ff;
+}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
+  min-height:100vh;display:flex;justify-content:center;align-items:flex-start;}
+#game{width:960px;max-width:100vw;min-height:100vh;padding:16px;position:relative;}
+h1{font-size:2.4rem;color:var(--green);text-shadow:0 0 20px var(--green);}
+h2{font-size:1.3rem;color:var(--green);}
+.screen{display:none;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* MENU */
+#menu-screen{align-items:center;justify-content:center;min-height:100vh;gap:20px;text-align:center;}
+.subtitle{color:var(--tdim);font-size:.85rem;letter-spacing:3px;margin-top:6px;}
+.ticker{background:var(--surf);border:1px solid var(--bord);padding:8px 16px;
+  font-size:.8rem;color:var(--gdim);width:100%;overflow:hidden;white-space:nowrap;}
+
+/* BUTTONS */
+.btn{background:var(--surf);border:1px solid var(--gdim);color:var(--green);
+  padding:10px 28px;font-family:inherit;font-size:.95rem;cursor:pointer;
+  transition:all .15s;letter-spacing:1px;}
+.btn:hover:not(:disabled){background:var(--gdark);border-color:var(--green);box-shadow:0 0 10px var(--gdark);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn.red{border-color:var(--red);color:var(--red);}
+.btn.red:hover:not(:disabled){background:#2a0000;}
+.btn.gold{border-color:var(--gold);color:var(--gold);}
+.btn.gold:hover:not(:disabled){background:#2a2200;}
+.btn.sm{padding:5px 14px;font-size:.8rem;}
+
+/* MAP */
+#map-screen{gap:14px;}
+.map-hdr{display:flex;justify-content:space-between;align-items:center;
+  padding-bottom:10px;border-bottom:1px solid var(--bord);}
+.pstats{display:flex;gap:20px;align-items:center;}
+.stat{display:flex;gap:6px;align-items:center;}
+.slbl{color:var(--tdim);font-size:.78rem;}
+.sval{color:var(--green);font-weight:bold;}
+.sval.hp{color:#ff9999;}
+.sval.gold{color:var(--gold);}
+#map-nodes{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+.map-row{display:flex;gap:12px;justify-content:center;}
+.mnode{width:90px;height:66px;border:1px solid var(--bord);background:var(--surf);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.72rem;gap:3px;transition:all .15s;}
+.mnode:hover:not(.locked){border-color:var(--green);background:var(--surf2);}
+.mnode.locked{opacity:.25;cursor:not-allowed;}
+.mnode.done{opacity:.45;border-style:dashed;}
+.mnode.cur{border-color:var(--green);box-shadow:0 0 10px var(--gdark);}
+.mnode .ico{font-size:1.5rem;}
+.mnode.elite .ico{filter:sepia(1) saturate(5) hue-rotate(10deg);}
+.mnode.boss .ico{filter:sepia(1) saturate(5) hue-rotate(300deg);}
+
+/* COMBAT */
+#combat-screen{gap:10px;min-height:100vh;}
+.ctop{display:flex;justify-content:space-between;align-items:center;
+  padding-bottom:8px;border-bottom:1px solid var(--bord);}
+.energy-row{display:flex;gap:5px;align-items:center;}
+.epip{width:26px;height:26px;border:1px solid var(--gold);background:#1a1400;
+  display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--gold);}
+.epip.on{background:#2a2200;}
+.pile-row{display:flex;gap:14px;font-size:.75rem;color:var(--tdim);}
+.combat-area{display:flex;justify-content:space-around;align-items:flex-end;
+  flex:1;padding:10px 0;min-height:210px;flex-wrap:wrap;gap:12px;}
+.entity{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:140px;}
+.esprite{font-size:3.5rem;line-height:1;}
+.ename{font-size:.8rem;color:var(--tdim);letter-spacing:1px;text-align:center;}
+.hbar-bg{background:#1a0000;border:1px solid #440000;height:13px;width:100%;}
+.hbar-fill{background:linear-gradient(90deg,#880000,#dd2222);height:100%;transition:width .3s;}
+.hbar-fill.p{background:linear-gradient(90deg,#006600,#00cc44);}
+.hptxt{font-size:.72rem;color:#ff9999;text-align:center;margin-top:2px;}
+.hptxt.p{color:#99ff99;}
+.blk-badge{background:#001833;border:1px solid var(--blue);color:var(--blue);
+  padding:2px 8px;font-size:.78rem;display:none;}
+.blk-badge.on{display:block;}
+.statuses{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;}
+.sbadge{padding:1px 5px;font-size:.68rem;border:1px solid;}
+.sbadge.vulnerable{border-color:#ff8800;color:#ff8800;background:#180800;}
+.sbadge.weak{border-color:#aaaaff;color:#aaaaff;background:#08081a;}
+.sbadge.debt{border-color:var(--red);color:var(--red);background:#180000;}
+.sbadge.strength{border-color:var(--green);color:var(--green);background:#001800;}
+.intent{font-size:.72rem;color:var(--tdim);text-align:center;border:1px solid var(--bord);
+  padding:3px 7px;background:var(--surf);min-width:110px;}
+.intent.atk{border-color:var(--atk);color:var(--atk);}
+.intent.def{border-color:var(--def);color:var(--def);}
+.intent.buf{border-color:var(--skl);color:var(--skl);}
+.intent.deb{border-color:var(--red);color:var(--red);}
+.clog{background:var(--surf);border:1px solid var(--bord);padding:7px;
+  font-size:.73rem;height:68px;overflow-y:auto;}
+.clog-e{line-height:1.5;}
+.clog-e.dmg{color:var(--atk);}
+.clog-e.blk{color:var(--blue);}
+.clog-e.heal{color:#88ff88;}
+.clog-e.sts{color:var(--gold);}
+.clog-e.enm{color:#ff9999;}
+.hand-hdr{display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:7px;font-size:.75rem;color:var(--tdim);padding-top:10px;border-top:1px solid var(--bord);}
+.hand{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;min-height:135px;}
+
+/* CARD */
+.card{width:105px;min-height:132px;border:1px solid var(--bord);background:var(--surf);
+  padding:7px;cursor:pointer;transition:transform .12s,border-color .12s;
+  display:flex;flex-direction:column;gap:3px;position:relative;user-select:none;}
+.card:hover:not(.dis){transform:translateY(-10px);border-color:var(--green);z-index:10;}
+.card.dis{opacity:.45;cursor:not-allowed;}
+.card.sel{border-color:var(--green);box-shadow:0 0 12px var(--gdark);}
+.card.attack{border-top:2px solid var(--atk);}
+.card.defend{border-top:2px solid var(--def);}
+.card.skill{border-top:2px solid var(--skl);}
+.card.exhaust{border-style:dashed;}
+.ccost{position:absolute;top:4px;right:5px;width:20px;height:20px;
+  background:#1a1400;border:1px solid var(--gold);color:var(--gold);
+  font-size:.72rem;display:flex;align-items:center;justify-content:center;}
+.cname{font-size:.68rem;font-weight:bold;line-height:1.2;padding-right:20px;color:var(--text);}
+.cico{font-size:1.4rem;text-align:center;}
+.cdesc{font-size:.63rem;color:var(--tdim);line-height:1.3;flex:1;}
+.ctype{font-size:.58rem;color:var(--tdim);text-transform:uppercase;letter-spacing:1px;}
+.card.attack .ctype{color:var(--atk);}
+.card.defend .ctype{color:var(--def);}
+.card.skill .ctype{color:var(--skl);}
+.card.exhaust .ctype::after{content:' • EXHAUST';}
+
+/* REWARD */
+#reward-screen{align-items:center;gap:20px;padding:28px 0;}
+.reward-cards{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+.rcrd{cursor:pointer;}
+.rcrd .card{width:120px;min-height:150px;}
+.rcrd:hover .card{transform:scale(1.05) translateY(-5px);}
+
+/* SHOP */
+#shop-screen{gap:14px;padding:14px 0;}
+.shop-grid{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+.shop-item{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.sprice{color:var(--gold);font-size:.82rem;}
+.sprice.sold{color:var(--tdim);text-decoration:line-through;}
+.shop-item .card{opacity:1;cursor:pointer;}
+.shop-item .card.purchased{opacity:.4;cursor:not-allowed;}
+
+/* REST */
+#rest-screen{align-items:center;gap:20px;padding:32px 0;}
+.rest-opts{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;}
+.rest-opt{text-align:center;display:flex;flex-direction:column;gap:8px;}
+
+/* REMOVE */
+#remove-screen{gap:16px;padding:16px 0;}
+#remove-screen .inner{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px;}
+
+/* GAMEOVER/VICTORY */
+#gameover-screen,#victory-screen{align-items:center;justify-content:center;
+  min-height:100vh;gap:20px;text-align:center;}
+#gameover-screen h1{color:var(--red);text-shadow:0 0 20px var(--red);}
+#victory-screen h1{color:var(--gold);text-shadow:0 0 20px var(--gold);}
+
+/* MODAL (deck view) */
+.moverlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.87);
+  z-index:100;display:none;align-items:center;justify-content:center;}
+.moverlay.open{display:flex;}
+.modal{background:var(--surf);border:1px solid var(--bord);padding:20px;
+  max-width:820px;max-height:82vh;overflow-y:auto;width:92%;}
+.modal h2{margin-bottom:14px;}
+.mcards{display:flex;gap:8px;flex-wrap:wrap;}
+.mcards .card{cursor:default;width:100px;min-height:124px;}
+.mcards .card:hover{transform:none;border-color:var(--bord);}
+
+/* discard prompt */
+.discard-prompt{background:#1a1200;border:1px solid var(--gold);padding:8px 14px;
+  font-size:.82rem;color:var(--gold);text-align:center;margin-bottom:6px;}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--gdark);}
+.flex{display:flex;}
+.fc{justify-content:center;}
+.gap8{gap:8px;}
+.mt8{margin-top:8px;}
+.mt16{margin-top:16px;}
+.tdim{color:var(--tdim);font-size:.85rem;}
+.tgold{color:var(--gold);}
+.tred{color:var(--red);}
+.tgrn{color:var(--green);}
+
+/* ── ANIMATIONS ── */
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes shake-v{0%,100%{transform:translateY(0)}20%{transform:translateY(-5px)}50%{transform:translateY(5px)}80%{transform:translateY(-3px)}}
+@keyframes dmg-float{0%{opacity:1;transform:translateY(0) scale(1)}60%{opacity:1}100%{opacity:0;transform:translateY(-60px) scale(0.8)}}
+@keyframes card-out{0%{opacity:1;transform:scale(1) translateY(0)}100%{opacity:0;transform:scale(0.6) translateY(-40px)}}
+@keyframes card-in{0%{opacity:0;transform:translateY(28px) scale(0.85)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes hbar-flash{0%,100%{filter:brightness(1)}40%{filter:brightness(2.5) saturate(0)}}
+@keyframes screen-shake{0%,100%{transform:translate(0,0)}10%{transform:translate(-10px,-5px)}25%{transform:translate(10px,5px)}40%{transform:translate(-7px,3px)}55%{transform:translate(7px,-3px)}70%{transform:translate(-4px,2px)}85%{transform:translate(4px,-2px)}}
+@keyframes particle-drop{0%{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}100%{opacity:0;transform:translateY(180px) rotate(540deg) scale(0.4)}}
+@keyframes ticker-scroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+@keyframes turn-flash{0%,100%{background:var(--bg)}30%{background:#001a00}}
+@keyframes victory-glow{0%,100%{text-shadow:0 0 20px var(--gold)}50%{text-shadow:0 0 60px var(--gold),0 0 120px #ffaa00}}
+@keyframes defeat-glow{0%,100%{text-shadow:0 0 20px var(--red)}50%{text-shadow:0 0 60px var(--red),0 0 120px #ff0000}}
+@keyframes enemy-death{0%{transform:scale(1);filter:none}50%{transform:scale(1.3);filter:brightness(3) saturate(0)}100%{transform:scale(0);filter:brightness(0)}}
+
+.shake{animation:shake 0.28s ease;}
+.shake-v{animation:shake-v 0.28s ease;}
+.card-out{animation:card-out 0.18s ease forwards;pointer-events:none;}
+.card-in{animation:card-in 0.16s ease;}
+.hbar-flash{animation:hbar-flash 0.3s ease;}
+#game.screen-shake{animation:screen-shake 0.35s ease;}
+#victory-screen h1{animation:victory-glow 1.5s ease infinite;}
+#gameover-screen h1{animation:defeat-glow 1.5s ease infinite;}
+
+/* Damage / heal popups */
+.popup{position:fixed;pointer-events:none;font-weight:bold;font-family:'Courier New',monospace;
+  z-index:500;animation:dmg-float 0.85s ease forwards;text-shadow:0 0 6px currentColor;}
+.popup.hit{font-size:1.5rem;color:var(--atk);}
+.popup.blk{font-size:1.2rem;color:var(--blue);}
+.popup.heal{font-size:1.2rem;color:#88ff88;}
+.popup.sts{font-size:1rem;color:var(--gold);}
+.popup.miss{font-size:1rem;color:var(--tdim);}
+
+/* Ticker scroll */
+.ticker{overflow:hidden;white-space:nowrap;position:relative;}
+.ticker-inner{display:inline-block;animation:ticker-scroll 28s linear infinite;}
+
+/* Mute toggle */
+#mute-btn{position:fixed;bottom:12px;right:12px;z-index:300;background:var(--surf);
+  border:1px solid var(--bord);color:var(--tdim);padding:5px 10px;
+  font-family:'Courier New',monospace;font-size:.78rem;cursor:pointer;transition:all .15s;}
+#mute-btn:hover{border-color:var(--green);color:var(--green);}
+
+/* Particle */
+.particle{position:fixed;pointer-events:none;z-index:400;font-size:1.4rem;
+  animation:particle-drop 2s ease forwards;}
+
+/* ── RARITY ── */
+.card.unc .cname{color:#7ec8ff;}
+.card.rare .cname{color:var(--gold);text-shadow:0 0 6px #553f00;}
+.card.rare{background:linear-gradient(160deg,var(--surf) 70%,#1a1500 100%);}
+.rar-tag{font-size:.55rem;letter-spacing:1px;}
+.rar-tag.unc{color:#7ec8ff;}
+.rar-tag.rare{color:var(--gold);}
+
+/* ── RELICS ── */
+.relic-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.relic{width:34px;height:34px;border:1px solid var(--gold);background:#171200;
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+  cursor:help;position:relative;}
+.relic .rtip{display:none;position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
+  background:#000;border:1px solid var(--gold);color:var(--text);padding:7px 10px;
+  font-size:.7rem;width:180px;z-index:60;line-height:1.4;text-align:center;}
+.relic:hover .rtip{display:block;}
+.relic .rtip b{color:var(--gold);}
+@keyframes relic-pop{0%{transform:scale(0) rotate(-180deg)}70%{transform:scale(1.3)}100%{transform:scale(1) rotate(0)}}
+.relic.new{animation:relic-pop .5s ease;}
+
+/* relic reward */
+#relic-reward{display:flex;flex-direction:column;align-items:center;gap:10px;
+  border:1px solid var(--gold);background:#120e00;padding:18px 30px;}
+#relic-reward .big{font-size:2.6rem;}
+
+/* ── EVENT ── */
+#event-screen{align-items:center;gap:18px;padding:32px 0;text-align:center;}
+#event-ico{font-size:3.6rem;}
+#event-body{max-width:480px;line-height:1.7;color:var(--text);}
+.event-opts{display:flex;flex-direction:column;gap:10px;min-width:340px;}
+.event-opts .btn{text-align:left;}
+.event-opts .btn small{display:block;color:var(--tdim);letter-spacing:0;margin-top:2px;}
+#event-result{color:var(--gold);min-height:24px;}
+
+/* upgraded card */
+.card.upg .cname::after{content:' ★';color:var(--gold);}
+
+/* ── TUTORIAL ── */
+.tut-banner{background:#001a33;border:2px solid var(--blue);padding:12px 16px;
+  font-size:.85rem;line-height:1.6;color:#cce6ff;display:none;
+  align-items:center;gap:14px;justify-content:space-between;}
+.tut-banner.on{display:flex;}
+.tut-banner .tut-txt b{color:var(--gold);}
+.tut-banner .tut-btns{display:flex;gap:8px;flex-shrink:0;}
+@keyframes tut-pulse{0%,100%{border-color:var(--blue)}50%{border-color:#aaddff;box-shadow:0 0 14px #003a66}}
+.tut-banner.on{animation:tut-pulse 1.6s ease infinite;}
+
+/* ── HELP MODAL ── */
+.help-sec{margin-bottom:16px;line-height:1.7;font-size:.85rem;}
+.help-sec h3{color:var(--gold);font-size:.95rem;margin-bottom:5px;}
+.help-sec .kw{color:var(--green);font-weight:bold;}
+.menu-btns{display:flex;flex-direction:column;gap:10px;align-items:center;}
+.btn.big{font-size:1.05rem;padding:14px 36px;}
+.diff-note{font-size:.72rem;color:var(--tdim);margin-top:-4px;}
+</style>
+</head>
+<body>
+<div id="game">
+
+<!-- MENU -->
+<div id="menu-screen" class="screen active">
+  <div><h1>BULL RUN</h1><div class="subtitle">A FINANCE ROGUELIKE DECKBUILDER</div></div>
+  <div class="ticker"><span class="ticker-inner" id="ticker">LOADING MARKET DATA...</span></div>
+  <div class="tdim" style="max-width:380px;line-height:1.7;text-align:center;">
+    Build a portfolio of financial instruments.<br>
+    Battle market forces and regulators.<br>
+    Defeat the Federal Reserve to win.
+  </div>
+  <div class="menu-btns">
+    <button class="btn big gold" onclick="startGame(true)">▶ EASY MODE — NEW INVESTOR</button>
+    <div class="diff-note">Recommended for your first run: more health, gentler enemies</div>
+    <button class="btn big" onclick="startGame(false)">▶ NORMAL — WALL STREET VETERAN</button>
+    <button class="btn" onclick="openHelp()">📖 HOW TO PLAY</button>
+  </div>
+  <div style="font-size:.75rem;color:var(--tdim);">10 starter cards • 3 acts • 1 final boss</div>
+</div>
+
+<!-- MAP -->
+<div id="map-screen" class="screen">
+  <div class="map-hdr">
+    <div>
+      <h2 id="act-title">ACT I</h2>
+      <div class="tdim" id="floor-lbl">Floor 0/0</div>
+    </div>
+    <div class="pstats">
+      <div class="stat"><span class="slbl">HP</span><span class="sval hp" id="map-hp">75/75</span></div>
+      <div class="stat"><span class="slbl">GOLD</span><span class="sval gold" id="map-gold">$99</span></div>
+      <div class="stat"><span class="slbl">DECK</span><span class="sval" id="map-deck">10</span></div>
+      <button class="btn sm" onclick="openDeck()">VIEW DECK</button>
+    </div>
+  </div>
+  <div class="relic-bar" id="map-relics"></div>
+  <div id="map-nodes"></div>
+</div>
+
+<!-- COMBAT -->
+<div id="combat-screen" class="screen">
+  <div class="ctop">
+    <div class="pstats">
+      <div class="stat"><span class="slbl">HP</span><span class="sval hp" id="c-hp">75/75</span></div>
+      <div class="stat"><span class="slbl">GOLD</span><span class="sval gold" id="c-gold">$99</span></div>
+    </div>
+    <div class="energy-row" id="energy-row"></div>
+    <div class="pile-row">
+      <span title="Cards waiting to be drawn. When it runs out, your discard pile is shuffled back in.">DRAW:<span id="draw-cnt"> 0</span></span>
+      <span title="Cards you've played or didn't use this turn. They come back when the draw pile empties.">DISC:<span id="disc-cnt"> 0</span></span>
+      <span title="Exhausted cards are gone for the rest of this battle only.">EXHS:<span id="exhs-cnt"> 0</span></span>
+    </div>
+  </div>
+  <div class="relic-bar" id="combat-relics"></div>
+  <div class="tut-banner" id="tut-banner">
+    <div class="tut-txt" id="tut-txt"></div>
+    <div class="tut-btns">
+      <button class="btn sm" onclick="tutNext()" id="tut-next">NEXT ▶</button>
+      <button class="btn sm red" onclick="tutSkip()">SKIP</button>
+    </div>
+  </div>
+  <div id="discard-prompt" class="discard-prompt" style="display:none;"></div>
+  <div class="combat-area" id="combat-area"></div>
+  <div class="clog" id="clog"></div>
+  <div class="hand-hdr">
+    <span>PORTFOLIO — TURN <span id="turn-num">1</span></span>
+    <button class="btn sm" id="etbtn" onclick="endTurn()">END TURN ▶</button>
+  </div>
+  <div class="hand" id="hand"></div>
+</div>
+
+<!-- REWARD -->
+<div id="reward-screen" class="screen">
+  <h2>⬆ MARKET OPPORTUNITY</h2>
+  <div id="relic-reward" style="display:none;">
+    <div class="big" id="relic-reward-ico"></div>
+    <div class="tgold" id="relic-reward-name"></div>
+    <div class="tdim" id="relic-reward-desc"></div>
+  </div>
+  <div class="tdim">Choose a card to add to your portfolio — or skip</div>
+  <div class="reward-cards" id="reward-cards"></div>
+  <div class="flex fc gap8 mt8">
+    <button class="btn" onclick="skipReward()">PASS — SKIP OPPORTUNITY</button>
+  </div>
+</div>
+
+<!-- SHOP -->
+<div id="shop-screen" class="screen">
+  <div class="map-hdr">
+    <div><h2>🏦 THE EXCHANGE</h2><div class="tdim">Buy cards to strengthen your portfolio</div></div>
+    <div class="pstats">
+      <div class="stat"><span class="slbl">CASH</span><span class="sval gold" id="shop-gold">$99</span></div>
+      <button class="btn sm" onclick="openDeck()">VIEW DECK</button>
+    </div>
+  </div>
+  <div class="shop-grid" id="shop-items"></div>
+  <button class="btn mt16" onclick="leaveShop()">LEAVE EXCHANGE →</button>
+</div>
+
+<!-- REST -->
+<div id="rest-screen" class="screen">
+  <h2>☕ BOARD MEETING</h2>
+  <div class="tdim">Your team regroups. Choose an action.</div>
+  <div class="rest-opts">
+    <div class="rest-opt">
+      <button class="btn" onclick="restHeal()">RECOVER CAPITAL</button>
+      <div class="tdim">Heal 30% of max HP</div>
+    </div>
+    <div class="rest-opt">
+      <button class="btn" onclick="restRemove()">RESTRUCTURE PORTFOLIO</button>
+      <div class="tdim">Remove a card from your deck</div>
+    </div>
+    <div class="rest-opt">
+      <button class="btn gold" onclick="restUpgrade()">EXECUTIVE TRAINING</button>
+      <div class="tdim">Upgrade a card (★ costs 1 less)</div>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT -->
+<div id="event-screen" class="screen">
+  <div id="event-ico">❓</div>
+  <h2 id="event-title">MARKET EVENT</h2>
+  <div id="event-body"></div>
+  <div class="event-opts" id="event-opts"></div>
+  <div id="event-result"></div>
+</div>
+
+<!-- REMOVE CARD -->
+<div id="remove-screen" class="screen">
+  <h2>📋 PORTFOLIO RESTRUCTURE</h2>
+  <div class="tdim">Select a card to permanently remove from your deck</div>
+  <div class="inner" id="remove-cards"></div>
+  <button class="btn mt16" onclick="skipRemove()">KEEP ALL — CANCEL</button>
+</div>
+
+<!-- GAMEOVER -->
+<div id="gameover-screen" class="screen">
+  <h1>MARGIN CALL</h1>
+  <div class="tdim">Your portfolio has been liquidated.</div>
+  <div id="go-stats" class="mt8" style="color:var(--tdim);line-height:1.8;"></div>
+  <div class="flex fc gap8 mt16">
+    <button class="btn red" onclick="startGame()">▶ NEW PORTFOLIO</button>
+    <button class="btn" onclick="show('menu-screen')">MAIN MENU</button>
+  </div>
+</div>
+
+<!-- VICTORY -->
+<div id="victory-screen" class="screen">
+  <h1>🏆 THE BULL MARKET!</h1>
+  <div style="color:var(--gold);font-size:1.05rem;">You defeated the Federal Reserve!</div>
+  <div id="win-stats" class="mt8" style="color:var(--tdim);line-height:1.8;"></div>
+  <div class="flex fc gap8 mt16">
+    <button class="btn gold" onclick="startGame()">▶ NEW PORTFOLIO</button>
+    <button class="btn" onclick="show('menu-screen')">MAIN MENU</button>
+  </div>
+</div>
+
+</div>
+
+<button id="mute-btn" onclick="toggleMute()">🔊 SOUND</button>
+
+<!-- HELP MODAL -->
+<div class="moverlay" id="help-modal">
+  <div class="modal">
+    <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h2>📖 HOW TO PLAY</h2>
+      <button class="btn sm" onclick="closeHelp()">✕ CLOSE</button>
+    </div>
+    <div class="help-sec">
+      <h3>THE GOAL</h3>
+      It's a card game crossed with a dungeon crawl. Fight your way up the map, win battles with your deck of cards, collect better cards and relics as you go, and defeat the Federal Reserve at the top. If your HP (health) hits 0, the run is over — you start fresh.
+    </div>
+    <div class="help-sec">
+      <h3>YOUR TURN, STEP BY STEP</h3>
+      1. Each turn you get <span class="kw">3 Capital ($)</span> — this is your budget for playing cards.<br>
+      2. Every card shows its cost in the top-right corner. Click a card to play it.<br>
+      3. <span class="kw">Red cards attack</span>, <span class="kw">blue cards protect you</span>, <span class="kw">purple cards do tricks</span> (draw more cards, heal, power up).<br>
+      4. When you're done (or out of Capital), press <span class="kw">END TURN</span>. The enemy acts, then you get a fresh hand of 5 cards and full Capital.
+    </div>
+    <div class="help-sec">
+      <h3>READ THE ENEMY'S MIND</h3>
+      The box above each enemy shows <span class="kw">exactly what it will do next turn</span> — e.g. "Audit: 8 dmg" means it will hit you for 8. If you have <span class="kw">Block 🛡</span>, block absorbs damage first. Block disappears at the start of your next turn, so block when a hit is coming, attack when it isn't.
+    </div>
+    <div class="help-sec">
+      <h3>THE JARGON (hover anything in-game for a reminder)</h3>
+      <span class="kw">Block 🛡</span> — a shield. Absorbs that much damage, then expires next turn.<br>
+      <span class="kw">Vulnerable</span> — takes 50% MORE damage. Great to put on enemies.<br>
+      <span class="kw">Weak</span> — deals 25% LESS damage. Great to put on enemies, bad on you.<br>
+      <span class="kw">Strength</span> — all your attacks hit harder (+1 damage per point).<br>
+      <span class="kw">Debt</span> — you lose that much HP at the end of every turn. Clear it with Tax Shelter.<br>
+      <span class="kw">Exhaust</span> — the card is used ONCE per battle, then gone until the next battle.
+    </div>
+    <div class="help-sec">
+      <h3>BETWEEN BATTLES</h3>
+      <span class="kw">⚔️ Combat</span> — a normal fight, rewards a new card.&nbsp;
+      <span class="kw">💀 Elite</span> — harder fight, also drops a relic (permanent bonus).&nbsp;
+      <span class="kw">🏦 Exchange</span> — spend gold on cards.&nbsp;
+      <span class="kw">☕ Meeting</span> — heal, remove a card, or upgrade one.&nbsp;
+      <span class="kw">❓ Event</span> — a surprise with choices.
+    </div>
+    <div class="help-sec">
+      <h3>ONE TIP</h3>
+      A small deck of good cards beats a big pile of mediocre ones — you'll draw your best cards more often. Don't grab every card you're offered!
+    </div>
+  </div>
+</div>
+
+<!-- DECK MODAL -->
+<div class="moverlay" id="deck-modal">
+  <div class="modal">
+    <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h2>YOUR PORTFOLIO (<span id="deck-sz">0</span> cards)</h2>
+      <button class="btn sm" onclick="closeDeck()">✕ CLOSE</button>
+    </div>
+    <div class="mcards" id="deck-cards"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// AUDIO ENGINE
+// ============================================================
+let _actx = null;
+let _muted = false;
+let _ambientStarted = false;
+let _ambientGain = null;
+
+function getACtx(){
+  if(!_actx) _actx = new (window.AudioContext||window.webkitAudioContext)();
+  if(_actx.state==='suspended') _actx.resume();
+  return _actx;
+}
+
+function toggleMute(){
+  _muted=!_muted;
+  document.getElementById('mute-btn').textContent=_muted?'🔇 MUTED':'🔊 SOUND';
+  if(_ambientGain) _ambientGain.gain.value=_muted?0:0.04;
+}
+
+function startAmbient(){
+  if(_ambientStarted) return;
+  _ambientStarted=true;
+  const ctx=getACtx();
+  _ambientGain=ctx.createGain();
+  _ambientGain.gain.value=_muted?0:0.04;
+  _ambientGain.connect(ctx.destination);
+
+  // Crowd chatter: bandpass-filtered noise loop
+  const len=ctx.sampleRate*3;
+  const buf=ctx.createBuffer(1,len,ctx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*0.35;
+  const ns=ctx.createBufferSource(); ns.buffer=buf; ns.loop=true;
+  const bpf=ctx.createBiquadFilter(); bpf.type='bandpass'; bpf.frequency.value=900; bpf.Q.value=0.4;
+  ns.connect(bpf); bpf.connect(_ambientGain); ns.start();
+
+  // Periodic order-confirmation beeps
+  (function beep(){
+    if(_actx){
+      const f=[880,1047,1175,1319,1397][Math.floor(Math.random()*5)];
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0,ctx.currentTime);
+      g.gain.linearRampToValueAtTime(_muted?0:0.035,ctx.currentTime+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.14);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime+0.15);
+    }
+    setTimeout(beep, 600+Math.random()*2200);
+  })();
+}
+
+function snd(type){
+  if(_muted) return;
+  const ctx=getACtx();
+  const t=ctx.currentTime;
+  const go=(fn)=>{ try{ fn(); }catch(e){} };
+
+  if(type==='card_play') go(()=>{
+    // Whoosh: noise swept through bandpass
+    const b=ctx.createBuffer(1,ctx.sampleRate*0.14,ctx.sampleRate);
+    const d=b.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+    const s=ctx.createBufferSource(); s.buffer=b;
+    const f=ctx.createBiquadFilter(); f.type='bandpass';
+    f.frequency.setValueAtTime(3200,t); f.frequency.exponentialRampToValueAtTime(280,t+0.14); f.Q.value=1.2;
+    const g=ctx.createGain(); g.gain.setValueAtTime(0.18,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.14);
+    s.connect(f); f.connect(g); g.connect(ctx.destination); s.start();
+  });
+
+  else if(type==='attack') go(()=>{
+    // Sharp thud + noise click
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sawtooth'; o.frequency.setValueAtTime(130,t); o.frequency.exponentialRampToValueAtTime(38,t+0.18);
+    g.gain.setValueAtTime(0.28,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.2);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(t+0.2);
+    const b=ctx.createBuffer(1,ctx.sampleRate*0.04,ctx.sampleRate);
+    const d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    const s=ctx.createBufferSource(); s.buffer=b;
+    const ng=ctx.createGain(); ng.gain.setValueAtTime(0.22,t); ng.gain.exponentialRampToValueAtTime(0.0001,t+0.04);
+    s.connect(ng); ng.connect(ctx.destination); s.start();
+  });
+
+  else if(type==='big_attack') go(()=>{
+    // Heavier version for big hits
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sawtooth'; o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(25,t+0.35);
+    g.gain.setValueAtTime(0.38,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.38);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(t+0.38);
+  });
+
+  else if(type==='block') go(()=>{
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='triangle'; o.frequency.setValueAtTime(520,t); o.frequency.exponentialRampToValueAtTime(180,t+0.22);
+    g.gain.setValueAtTime(0.14,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(t+0.25);
+  });
+
+  else if(type==='draw') go(()=>{
+    const b=ctx.createBuffer(1,ctx.sampleRate*0.07,ctx.sampleRate);
+    const d=b.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+    const s=ctx.createBufferSource(); s.buffer=b;
+    const f=ctx.createBiquadFilter(); f.type='highpass'; f.frequency.value=1800;
+    const g=ctx.createGain(); g.gain.value=0.07;
+    s.connect(f); f.connect(g); g.connect(ctx.destination); s.start();
+  });
+
+  else if(type==='enemy_attack') go(()=>{
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sawtooth'; o.frequency.setValueAtTime(75,t); o.frequency.exponentialRampToValueAtTime(28,t+0.32);
+    g.gain.setValueAtTime(0.32,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.35);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(t+0.35);
+  });
+
+  else if(type==='heal') go(()=>{
+    [523,659,784].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=f;
+      const s=t+i*0.09;
+      g.gain.setValueAtTime(0,s); g.gain.linearRampToValueAtTime(0.09,s+0.02); g.gain.exponentialRampToValueAtTime(0.0001,s+0.22);
+      o.connect(g); g.connect(ctx.destination); o.start(s); o.stop(s+0.25);
+    });
+  });
+
+  else if(type==='end_turn') go(()=>{
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sine'; o.frequency.value=330;
+    g.gain.setValueAtTime(0.08,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.12);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(t+0.12);
+  });
+
+  else if(type==='status') go(()=>{
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='square'; o.frequency.value=440;
+    g.gain.setValueAtTime(0.04,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.07);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(t+0.07);
+  });
+
+  else if(type==='click') go(()=>{
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sine'; o.frequency.value=660;
+    g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.05);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(t+0.05);
+  });
+
+  else if(type==='victory') go(()=>{
+    [523,659,784,1047,1319,1568].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='triangle'; o.frequency.value=f;
+      const s=t+i*0.11;
+      g.gain.setValueAtTime(0,s); g.gain.linearRampToValueAtTime(0.13,s+0.02); g.gain.exponentialRampToValueAtTime(0.0001,s+0.5);
+      o.connect(g); g.connect(ctx.destination); o.start(s); o.stop(s+0.55);
+    });
+  });
+
+  else if(type==='defeat') go(()=>{
+    [392,349,294,247,196].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=f;
+      const s=t+i*0.2;
+      g.gain.setValueAtTime(0,s); g.gain.linearRampToValueAtTime(0.1,s+0.03); g.gain.exponentialRampToValueAtTime(0.0001,s+0.55);
+      o.connect(g); g.connect(ctx.destination); o.start(s); o.stop(s+0.6);
+    });
+  });
+}
+
+// ============================================================
+// ANIMATION HELPERS
+// ============================================================
+function spawnPopup(text, cls, x, y){
+  const el=document.createElement('div');
+  el.className=`popup ${cls}`;
+  el.textContent=text;
+  el.style.left=(x+(Math.random()-.5)*30)+'px';
+  el.style.top=(y+(Math.random()-.5)*20)+'px';
+  document.body.appendChild(el);
+  el.addEventListener('animationend',()=>el.remove());
+}
+
+function popupNearEl(text, cls, elId){
+  const el=document.getElementById(elId)||document.querySelector('.'+elId);
+  const r=el?el.getBoundingClientRect():{left:400,top:300,width:60,height:60};
+  spawnPopup(text,cls,r.left+r.width/2,r.top+r.height/3);
+}
+
+function shakeEl(selector){
+  const el=typeof selector==='string'?document.querySelector(selector):selector;
+  if(!el) return;
+  el.classList.remove('shake','shake-v');
+  void el.offsetWidth;
+  el.classList.add('shake');
+  el.addEventListener('animationend',()=>el.classList.remove('shake'),{once:true});
+}
+
+function screenShake(){
+  const g=document.getElementById('game');
+  g.classList.remove('screen-shake');
+  void g.offsetWidth;
+  g.classList.add('screen-shake');
+  g.addEventListener('animationend',()=>g.classList.remove('screen-shake'),{once:true});
+}
+
+function flashHbar(selector){
+  const el=document.querySelector(selector);
+  if(!el) return;
+  el.classList.remove('hbar-flash');
+  void el.offsetWidth;
+  el.classList.add('hbar-flash');
+  el.addEventListener('animationend',()=>el.classList.remove('hbar-flash'),{once:true});
+}
+
+function spawnParticles(){
+  const syms=['💰','📈','💵','🏆','⭐','✨','💎','🎉','📊','💹'];
+  for(let i=0;i<22;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');
+      p.className='particle';
+      p.textContent=syms[Math.floor(Math.random()*syms.length)];
+      p.style.left=Math.random()*window.innerWidth+'px';
+      p.style.top=(Math.random()*window.innerHeight*0.6)+'px';
+      document.body.appendChild(p);
+      p.addEventListener('animationend',()=>p.remove());
+    },i*90);
+  }
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+let _uid = 0;
+const uid = () => ++_uid;
+const rand = (a) => a[Math.floor(Math.random()*a.length)];
+const shuffle = (a) => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
+const clamp = (v,mn,mx) => Math.max(mn,Math.min(mx,v));
+const show = (id) => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); };
+
+// ============================================================
+// CARD DEFINITIONS
+// ============================================================
+// effect(G, targetIdx) — targetIdx is enemy index or null
+// G is the full game state
+
+const CARDS = {
+  // ——— STARTER ———
+  market_order:{ id:'market_order', name:'Market Order', cost:1, type:'attack', ico:'📈',
+    desc:'Deal 6 damage.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,6); } },
+
+  stop_loss:{ id:'stop_loss', name:'Stop Loss', cost:1, type:'defend', ico:'🛡',
+    desc:'Gain 5 block.',
+    effect:(G)=>{ playerGainBlock(G,5); } },
+
+  // ——— ATTACKS ———
+  short_sell:{ id:'short_sell', name:'Short Sell', cost:2, type:'attack', ico:'📉',
+    desc:'Deal 14 damage.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,14); } },
+
+  bear_raid:{ id:'bear_raid', name:'Bear Raid', cost:2, type:'attack', ico:'🐻',
+    desc:'Deal 5 damage to ALL enemies.',
+    effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,5); }); } },
+
+  flash_crash:{ id:'flash_crash', name:'Flash Crash', cost:2, type:'attack', ico:'⚡',
+    desc:'Deal 4 damage 3 times.', needsTarget:true,
+    effect:(G,t)=>{ for(let i=0;i<3;i++) playerDealDamage(G,t,4); } },
+
+  hostile_takeover:{ id:'hostile_takeover', name:'Hostile Takeover', cost:3, type:'attack', ico:'🏢',
+    desc:'Deal 26 damage.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,26); } },
+
+  margin_call:{ id:'margin_call', name:'Margin Call', cost:0, type:'attack', ico:'⚠️',
+    desc:'Deal 10 damage. Take 4 damage.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,10); playerTakeDamage(G,4,true); } },
+
+  leveraged_play:{ id:'leveraged_play', name:'Leveraged Play', cost:1, type:'attack', ico:'💹',
+    desc:'Deal 14 damage. Exhaust.', needsTarget:true, exhausts:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,14); } },
+
+  pump_dump:{ id:'pump_dump', name:'Pump & Dump', cost:1, type:'attack', ico:'🎪',
+    desc:'Deal 7 damage. Apply 2 Vulnerable.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,7); applyStatus(G,t,'vulnerable',2); } },
+
+  insider_trade:{ id:'insider_trade', name:'Insider Trading', cost:1, type:'attack', ico:'🕵️',
+    desc:'Deal 9 damage. Draw 1.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,9); drawCards(G,1); } },
+
+  short_squeeze:{ id:'short_squeeze', name:'Short Squeeze', cost:2, type:'attack', ico:'🔩',
+    desc:'Deal 12 damage. Apply 3 Weak.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,12); applyStatus(G,t,'weak',3); } },
+
+  // ——— DEFENSE ———
+  hedge:{ id:'hedge', name:'Hedge', cost:1, type:'defend', ico:'🌿',
+    desc:'Gain 8 block.',
+    effect:(G)=>{ playerGainBlock(G,8); } },
+
+  diversify:{ id:'diversify', name:'Diversify', cost:2, type:'defend', ico:'📊',
+    desc:'Gain 16 block.',
+    effect:(G)=>{ playerGainBlock(G,16); } },
+
+  insurance:{ id:'insurance', name:'Insurance Policy', cost:1, type:'defend', ico:'📋',
+    desc:'Gain 4 block. Draw 1.',
+    effect:(G)=>{ playerGainBlock(G,4); drawCards(G,1); } },
+
+  circuit_breaker:{ id:'circuit_breaker', name:'Circuit Breaker', cost:1, type:'defend', ico:'🔴',
+    desc:'Gain 13 block. Exhaust.', exhausts:true,
+    effect:(G)=>{ playerGainBlock(G,13); } },
+
+  golden_parachute:{ id:'golden_parachute', name:'Golden Parachute', cost:2, type:'defend', ico:'🪂',
+    desc:'Gain 6 block. Heal 6 HP.',
+    effect:(G)=>{ playerGainBlock(G,6); healPlayer(G,6); } },
+
+  // ——— SKILL ———
+  due_diligence:{ id:'due_diligence', name:'Due Diligence', cost:1, type:'skill', ico:'🔍',
+    desc:'Draw 2 cards.',
+    effect:(G)=>{ drawCards(G,2); } },
+
+  bull_market:{ id:'bull_market', name:'Bull Market', cost:0, type:'skill', ico:'🐂',
+    desc:'Gain 2 Energy this turn.',
+    effect:(G)=>{ G.combat.energy=clamp(G.combat.energy+2,0,9); renderEnergy(); log('Gained 2 Energy!','sts'); } },
+
+  quant_easing:{ id:'quant_easing', name:'Quant. Easing', cost:1, type:'skill', ico:'🖨️',
+    desc:'Draw 3 cards. Discard 2.',
+    effect:(G)=>{ drawCards(G,3); G.combat.pendingDiscard=2; showDiscardPrompt(); } },
+
+  dividend:{ id:'dividend', name:'Dividend', cost:1, type:'skill', ico:'💰',
+    desc:'Heal 8 HP.',
+    effect:(G)=>{ healPlayer(G,8); } },
+
+  compound_interest:{ id:'compound_interest', name:'Compound Interest', cost:1, type:'skill', ico:'📐',
+    desc:'Gain 3 Strength.',
+    effect:(G)=>{ G.player.statuses.strength=(G.player.statuses.strength||0)+3;
+      log('You gain 3 Strength!','sts'); renderCombat(); } },
+
+  market_research:{ id:'market_research', name:'Market Research', cost:0, type:'skill', ico:'🗞️',
+    desc:'Draw 2 cards. Exhaust.', exhausts:true,
+    effect:(G)=>{ drawCards(G,2); } },
+
+  tax_shelter:{ id:'tax_shelter', name:'Tax Shelter', cost:1, type:'skill', ico:'🏠',
+    desc:'Remove all Debt stacks. Gain 5 block.',
+    effect:(G)=>{ const d=G.player.statuses.debt||0; delete G.player.statuses.debt;
+      playerGainBlock(G,5); log(`Cleared ${d} Debt. Gained 5 block.`,'heal'); } },
+
+  ipo:{ id:'ipo', name:'IPO', cost:1, type:'skill', ico:'🚀',
+    desc:'Add a random card to your hand.',
+    effect:(G)=>{ const pool=Object.values(CARDS).filter(c=>!['market_order','stop_loss'].includes(c.id));
+      const cd={...rand(pool),uid:uid()};
+      G.combat.hand.push(cd); renderHand(); log(`IPO: drew ${cd.name}!`,'sts'); } },
+
+  leveraged_buyout:{ id:'leveraged_buyout', name:'Leveraged Buyout', cost:2, type:'skill', ico:'💼',
+    desc:'Double your current block.',
+    effect:(G)=>{ const b=G.player.block; G.player.block*=2;
+      log(`Block doubled: ${b} → ${G.player.block}`,'blk'); renderCombat(); } },
+
+  // ——— RARE ———
+  bailout:{ id:'bailout', name:'Government Bailout', cost:2, type:'defend', ico:'🏛️',
+    desc:'Gain 30 block. Exhaust.', exhausts:true,
+    effect:(G)=>{ playerGainBlock(G,30); } },
+
+  black_swan:{ id:'black_swan', name:'Black Swan', cost:3, type:'attack', ico:'🦢',
+    desc:'Deal 18 damage to ALL enemies. Exhaust.', exhausts:true,
+    effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,18); }); } },
+
+  ponzi_scheme:{ id:'ponzi_scheme', name:'Ponzi Scheme', cost:2, type:'skill', ico:'🎩',
+    desc:'Gain 5 Strength. Gain 3 Debt.',
+    effect:(G)=>{ G.player.statuses.strength=(G.player.statuses.strength||0)+5;
+      applyStatus(G,'player','debt',3); log('You gain 5 Strength!','sts'); renderCombat(); } },
+
+  golden_goose:{ id:'golden_goose', name:'Golden Goose', cost:1, type:'skill', ico:'🪿',
+    desc:'Gain 1 Energy. Draw 2 cards.',
+    effect:(G)=>{ G.combat.energy=clamp(G.combat.energy+1,0,9); renderEnergy(); drawCards(G,2); } },
+};
+
+// Rarity assignment (default: common)
+const CARD_RARITY={
+  flash_crash:'unc', pump_dump:'unc', insider_trade:'unc', short_squeeze:'unc',
+  circuit_breaker:'unc', golden_parachute:'unc', quant_easing:'unc',
+  compound_interest:'unc', ipo:'unc', leveraged_buyout:'unc', bear_raid:'unc',
+  hostile_takeover:'rare', bull_market:'rare', tax_shelter:'rare',
+  bailout:'rare', black_swan:'rare', ponzi_scheme:'rare', golden_goose:'rare',
+};
+Object.entries(CARD_RARITY).forEach(([k,r])=>{ if(CARDS[k]) CARDS[k].rar=r; });
+
+// Card pool for rewards / shop (excludes starter)
+const REWARD_POOL = Object.keys(CARDS).filter(k=>!['market_order','stop_loss'].includes(k));
+const POOL_BY_RARITY={
+  common: REWARD_POOL.filter(k=>!CARDS[k].rar),
+  unc:    REWARD_POOL.filter(k=>CARDS[k].rar==='unc'),
+  rare:   REWARD_POOL.filter(k=>CARDS[k].rar==='rare'),
+};
+function rollRarity(){ const r=Math.random(); return r<0.60?'common':r<0.90?'unc':'rare'; }
+
+// ============================================================
+// RELICS
+// ============================================================
+const RELICS={
+  bull_horn:   {ico:'📯', name:'Bull Horn',         desc:'Start each combat with 1 Strength.'},
+  ledger:      {ico:'📒', name:'Golden Ledger',     desc:'Draw an extra card each turn.'},
+  piggy_bank:  {ico:'🐷', name:'Piggy Bank',        desc:'Gain $15 extra after each combat.'},
+  calculator:  {ico:'🧮', name:'Golden Calculator', desc:'Heal 5 HP after each combat.'},
+  vault:       {ico:'🔐', name:'Private Vault',     desc:'Start each combat with 6 block.'},
+  bear_trap:   {ico:'🪤', name:'Bear Trap',         desc:'Enemies start combat with 1 Vulnerable.'},
+  espresso:    {ico:'☕', name:'Triple Espresso',   desc:'+1 max Capital every combat.'},
+  stock_option:{ico:'📜', name:'Stock Options',     desc:'+10 max HP (immediately).'},
+};
+
+const hasRelic=(id)=>G&&G.player.relics.includes(id);
+
+function addRelic(id){
+  if(!RELICS[id]||hasRelic(id)) return;
+  G.player.relics.push(id);
+  if(id==='stock_option'){ G.player.maxHp+=10; G.player.hp+=10; }
+  snd('victory');
+}
+
+function randomNewRelic(){
+  const pool=Object.keys(RELICS).filter(id=>!hasRelic(id));
+  return pool.length?rand(pool):null;
+}
+
+function renderRelics(containerId){
+  const cont=document.getElementById(containerId);
+  if(!cont) return;
+  cont.innerHTML='';
+  G.player.relics.forEach(id=>{
+    const r=RELICS[id];
+    const el=document.createElement('div');
+    el.className='relic';
+    el.innerHTML=`${r.ico}<div class="rtip"><b>${r.name}</b><br>${r.desc}</div>`;
+    cont.appendChild(el);
+  });
+}
+
+// ============================================================
+// ENEMY DEFINITIONS
+// ============================================================
+// pattern items: { label, intentType('atk'|'def'|'buf'|'deb'), effect(G, enemyRef) }
+
+function mkEnemy(id,name,ico,maxHp,pattern){
+  return{id,name,ico,maxHp,hp:maxHp,block:0,statuses:{},pattern,pi:0};
+}
+
+const ENEMY_DEFS = {
+  tax_auditor:()=> mkEnemy('tax_auditor','Tax Auditor','🕵️',30,[
+    {label:'Audit: 8 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,8)},
+    {label:'Scrutinize: +2 Vulnerable',it:'deb', ef:(G,e)=>applyStatus(G,'player','vulnerable',2)},
+    {label:'Audit: 8 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,8)},
+    {label:'Fine: 11 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,11)},
+  ]),
+
+  day_trader:()=> mkEnemy('day_trader','Day Trader','📱',25,[
+    {label:'Trade: 5 dmg ×2',it:'atk', ef:(G,e)=>{ enemyAttack(G,e,5); enemyAttack(G,e,5); }},
+    {label:'Panic Sell: +2 Weak',it:'deb', ef:(G,e)=>applyStatus(G,'player','weak',2)},
+    {label:'FOMO: 8 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,8)},
+  ]),
+
+  inflation:()=>{
+    let pwr=5;
+    const e=mkEnemy('inflation','Inflation','📊',38,[]);
+    e.pattern=[
+      {label:`Erode: ${pwr} dmg`, it:'atk',
+        ef:(G,en)=>{ enemyAttack(G,en,pwr); pwr+=2;
+          en.pattern[0].label=`Erode: ${pwr} dmg`; en.pattern[0].pwr=pwr; }}
+    ];
+    return e;
+  },
+
+  // ELITES
+  bear_baron:()=> mkEnemy('bear_baron','Bear Baron','🐻',58,[
+    {label:'Crash: 13 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,13)},
+    {label:'Fortify: +9 block',it:'def', ef:(G,e)=>{ e.block+=9; log(`${e.name} braces for impact!`,'blk'); renderCombat(); }},
+    {label:'Crush: 18 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,18)},
+    {label:'Crash: 13 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,13)},
+  ]),
+
+  sec_agent:()=> mkEnemy('sec_agent','SEC Agent','👮',44,[
+    {label:'Investigate: +2 Weak',it:'deb', ef:(G,e)=>applyStatus(G,'player','weak',2)},
+    {label:'Cease & Desist: 11 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,11)},
+    {label:'Subpoena: 9 dmg + 2 Debt',it:'atk', ef:(G,e)=>{ enemyAttack(G,e,9); applyStatus(G,'player','debt',2); }},
+    {label:'Charge: 14 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,14)},
+  ]),
+
+  hedge_mgr:()=> mkEnemy('hedge_mgr','Hedge Fund Mgr','💼',50,[
+    {label:'Leverage: 14 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,14)},
+    {label:'Hedge: +12 block',it:'def', ef:(G,e)=>{ e.block+=12; log(`${e.name} hedges!`,'blk'); renderCombat(); }},
+    {label:'Short: 10 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,10)},
+    {label:'Margin Call: 20 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,20)},
+  ]),
+
+  // BOSSES
+  the_sec:()=> mkEnemy('the_sec','THE SEC','🏛️',95,[
+    {label:'Freeze: 11 dmg + Weak 2',it:'atk', ef:(G,e)=>{ enemyAttack(G,e,11); applyStatus(G,'player','weak',2); }},
+    {label:'Audit: 15 dmg + Vuln 2',it:'atk', ef:(G,e)=>{ enemyAttack(G,e,15); applyStatus(G,'player','vulnerable',2); }},
+    {label:'Power: +5 Strength',it:'buf', ef:(G,e)=>{ e.statuses.strength=(e.statuses.strength||0)+5; log('THE SEC gains 5 Strength!','enm'); renderCombat(); }},
+    {label:'Regulation: 18 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,18)},
+    {label:'Full Force: 12 dmg ×2',it:'atk', ef:(G,e)=>{ enemyAttack(G,e,12); enemyAttack(G,e,12); }},
+  ]),
+
+  fed_reserve:()=> mkEnemy('fed_reserve','FEDERAL RESERVE','🏦',150,[
+    {label:'Rate Hike: 16 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,16)},
+    {label:'QT: +3 Debt',it:'deb', ef:(G,e)=>applyStatus(G,'player','debt',3)},
+    {label:'Intervention: 22 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,22)},
+    {label:'Bailout Denied: 28 dmg',it:'atk', ef:(G,e)=>enemyAttack(G,e,28)},
+    {label:'Recession: 14 dmg + Weak+Vuln',it:'atk', ef:(G,e)=>{ enemyAttack(G,e,14); applyStatus(G,'player','weak',2); applyStatus(G,'player','vulnerable',2); }},
+    {label:'QE: +12 block',it:'def', ef:(G,e)=>{ e.block+=12; log('Federal Reserve prints money: +12 block','blk'); renderCombat(); }},
+  ]),
+};
+
+// ============================================================
+// MAP STRUCTURE
+// ============================================================
+const ACT_TITLES=['THE BEAR TRAP','THE VOLATILE MARKET','THE FINAL QUARTER'];
+
+function buildActMap(act){
+  // Returns array of rows; each row is array of {type}
+  if(act===0) return [
+    [{type:'fight'},{type:'fight'}],
+    [{type:'fight'},{type:'event'}],
+    [{type:'fight'},{type:'shop'},{type:'rest'}],
+    [{type:'elite'},{type:'event'},{type:'elite'}],
+    [{type:'boss'}],
+  ];
+  if(act===1) return [
+    [{type:'fight'},{type:'event'},{type:'fight'}],
+    [{type:'rest'},{type:'shop'}],
+    [{type:'fight'},{type:'elite'},{type:'event'}],
+    [{type:'elite'},{type:'shop'},{type:'rest'}],
+    [{type:'boss'}],
+  ];
+  // Act 2 - final boss
+  return [[{type:'boss'}]];
+}
+
+function getEnemies(act,type){
+  if(type==='boss') return [ENEMY_DEFS[act===2?'fed_reserve':'the_sec']()];
+  if(type==='elite') return [rand(['bear_baron','sec_agent','hedge_mgr'].map(k=>ENEMY_DEFS[k]()))];
+  // normal fight: 1 or 2 enemies
+  const pool=['tax_auditor','day_trader','inflation'];
+  const count=Math.random()<0.28?2:1;
+  return Array.from({length:count},()=>ENEMY_DEFS[rand(pool)]());
+}
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let G = null;
+
+function newPlayerDeck(){
+  return [
+    ...Array(5).fill(0).map(()=>({...CARDS.market_order,uid:uid()})),
+    ...Array(4).fill(0).map(()=>({...CARDS.stop_loss,uid:uid()})),
+    {...CARDS.due_diligence,uid:uid()},
+  ];
+}
+
+function startGame(easy=false){
+  const hp=easy?95:75;
+  G={
+    easy,
+    player:{ hp, maxHp:hp, block:0, statuses:{}, gold:easy?130:99, deck:newPlayerDeck(), relics:[] },
+    act:0, floor:-1,
+    actMap: buildActMap(0),
+    combat:null,
+    stats:{ floorsCleared:0, damageDealt:0, damageTaken:0, cardsPlayed:0 },
+  };
+  startAmbient();
+  snd('click');
+  goMap();
+}
+
+// ============================================================
+// HELP & TUTORIAL
+// ============================================================
+function openHelp(){ document.getElementById('help-modal').classList.add('open'); snd('click'); }
+function closeHelp(){ document.getElementById('help-modal').classList.remove('open'); }
+
+const TUT_STEPS=[
+  'Welcome to your first trade! 👇 The cards below are your <b>hand</b>. Each card costs <b>Capital ($)</b> — see the gold pips at the top. You get <b>3 Capital every turn</b>.',
+  '👆 Look above the enemy: that box shows <b>exactly what it will do next turn</b>. "8 dmg" means it will hit you for 8 health. No surprises — you can always plan around it.',
+  '<b>Red cards deal damage</b> to enemies. <b>Blue cards give you Block 🛡</b> — a shield that soaks up damage but disappears next turn. Rule of thumb: block when a big hit is coming, attack when it\'s safe.',
+  'When you\'re out of Capital or done playing cards, press <b>END TURN ▶</b> on the right. The enemy acts, then you draw a fresh hand of 5 with full Capital.',
+  'Last thing: win fights to earn <b>new cards</b>, and visit ☕ meetings to heal or upgrade. Hover over anything confusing for a tooltip. Good luck — the Federal Reserve awaits! 🏦',
+];
+let tutStep=-1;
+
+function maybeStartTutorial(){
+  if(localStorage.getItem('br_tut_done')) return;
+  tutStep=0; showTutStep();
+}
+function showTutStep(){
+  const b=document.getElementById('tut-banner');
+  b.classList.add('on');
+  document.getElementById('tut-txt').innerHTML=TUT_STEPS[tutStep];
+  document.getElementById('tut-next').textContent=tutStep<TUT_STEPS.length-1?'NEXT ▶':'GOT IT ✓';
+}
+function tutNext(){
+  snd('click');
+  tutStep++;
+  if(tutStep>=TUT_STEPS.length){ tutSkip(); return; }
+  showTutStep();
+}
+function tutSkip(){
+  document.getElementById('tut-banner').classList.remove('on');
+  localStorage.setItem('br_tut_done','1');
+  tutStep=-1;
+}
+
+// Plain-English explanations for hover tooltips
+const KEYWORD_TIPS={
+  vulnerable:'Vulnerable: takes 50% MORE damage while active. Counts down each turn.',
+  weak:'Weak: deals 25% LESS damage while active. Counts down each turn.',
+  debt:'Debt: lose this much HP at the end of every turn. Clear it with Tax Shelter.',
+  strength:'Strength: all attacks deal +1 damage per point. Lasts the whole fight.',
+};
+
+// ============================================================
+// MAP
+// ============================================================
+function goMap(){
+  show('map-screen');
+  renderMap();
+}
+
+function renderMap(){
+  document.getElementById('act-title').textContent=`ACT ${G.act+1} — ${ACT_TITLES[G.act]}`;
+  document.getElementById('map-hp').textContent=`${G.player.hp}/${G.player.maxHp}`;
+  document.getElementById('map-gold').textContent=`$${G.player.gold}`;
+  document.getElementById('map-deck').textContent=G.player.deck.length;
+  document.getElementById('floor-lbl').textContent=`Floor ${G.floor+1}/${G.actMap.length}`;
+  renderRelics('map-relics');
+
+  const cont=document.getElementById('map-nodes');
+  cont.innerHTML='';
+  G.actMap.forEach((row,fi)=>{
+    const rowEl=document.createElement('div');
+    rowEl.className='map-row';
+    row.forEach((node,ni)=>{
+      const el=document.createElement('div');
+      const locked=fi>G.floor+1, done=fi<=G.floor, cur=fi===G.floor+1;
+      el.className=`mnode ${node.type} ${locked?'locked':''} ${done?'done':''} ${cur?'cur':''}`;
+      const icons={fight:'⚔️',elite:'💀',shop:'🏦',rest:'☕',boss:'👹',event:'❓'};
+      const labels={fight:'Combat',elite:'ELITE',shop:'Exchange',rest:'Meeting',boss:'BOSS',event:'Event'};
+      el.innerHTML=`<div class="ico">${icons[node.type]}</div><div>${labels[node.type]}</div>`;
+      if(!locked&&!done) el.onclick=()=>enterNode(fi,node.type);
+      rowEl.appendChild(el);
+    });
+    cont.appendChild(rowEl);
+  });
+}
+
+function enterNode(fi,type){
+  G.floor=fi;
+  if(type==='fight'||type==='elite'||type==='boss'){
+    startCombat(getEnemies(G.act,type), type==='boss');
+  } else if(type==='shop') goShop();
+  else if(type==='rest') goRest();
+  else if(type==='event') goEvent();
+}
+
+function advanceFloor(){
+  G.stats.floorsCleared++;
+  // Check if this was the last floor of the act
+  if(G.floor>=G.actMap.length-1){
+    G.act++;
+    if(G.act>=3){ victory(); return; }
+    G.floor=-1;
+    G.actMap=buildActMap(G.act);
+  }
+  goMap();
+}
+
+// ============================================================
+// COMBAT ENGINE
+// ============================================================
+function startCombat(enemies, isBoss=false){
+  G.player.block=0;
+  G.player.statuses={}; // combat statuses don't carry between fights
+  const maxE=hasRelic('espresso')?4:3;
+  G.combat={
+    enemies,
+    hand:[],
+    draw:shuffle(G.player.deck.map(c=>({...c,uid:uid()}))),
+    discard:[],
+    exhaust:[],
+    energy:maxE,
+    maxEnergy:maxE,
+    turn:1,
+    pendingDiscard:0,
+    selectedCard:null,
+    isBoss,
+    drawN:hasRelic('ledger')?6:5,
+  };
+  document.getElementById('clog').innerHTML='';
+  // Relic start-of-combat effects
+  if(hasRelic('vault')){ G.player.block=6; log('Private Vault: +6 block.','blk'); }
+  if(hasRelic('bull_horn')){ G.player.statuses.strength=(G.player.statuses.strength||0)+1; log('Bull Horn: +1 Strength.','sts'); }
+  if(hasRelic('bear_trap')) enemies.forEach(e=>{ e.statuses.vulnerable=(e.statuses.vulnerable||0)+1; });
+  renderRelics('combat-relics');
+  drawCards(G,G.combat.drawN);
+  updateIntents();
+  show('combat-screen');
+  renderCombat();
+  log('— MARKET OPENS —','sts');
+  maybeStartTutorial();
+}
+
+// ——— COMBAT ACTIONS ———
+
+function playerDealDamage(G,targetIdx,base){
+  let dmg=base+(G.player.statuses.strength||0);
+  if(G.player.statuses.weak>0) dmg=Math.floor(dmg*0.75);
+  const e=G.combat.enemies[targetIdx];
+  if(!e||e.hp<=0) return;
+  if(e.statuses.vulnerable>0) dmg=Math.floor(dmg*1.5);
+  const blk=Math.min(e.block,dmg);
+  e.block-=blk;
+  const hit=dmg-blk;
+  e.hp=Math.max(0,e.hp-hit);
+  G.stats.damageDealt+=hit;
+  log(`Dealt ${hit} to ${e.name}${blk>0?` (${blk} blocked)`:''}${e.hp===0?' — LIQUIDATED!':''}`, 'dmg');
+  // Sound & animation
+  snd(hit>=14?'big_attack':'attack');
+  const eel=document.querySelectorAll('.enemy-entity')[targetIdx];
+  if(eel){
+    shakeEl(eel);
+    const r=eel.getBoundingClientRect();
+    spawnPopup(blk>0?`${hit} (${blk}🛡)`:`-${hit}`,'hit',r.left+r.width/2,r.top+20);
+    if(hit>0) flashHbar('.enemy-entity .hbar-fill');
+  }
+  if(e.hp===0){ setTimeout(()=>{ const d=document.querySelectorAll('.enemy-entity')[targetIdx]; if(d){ d.style.animation='enemy-death 0.4s ease forwards'; } },50); }
+  renderCombat();
+}
+
+function enemyAttack(G,e,base){
+  let dmg=base+(e.statuses.strength||0);
+  if(G.easy) dmg=Math.floor(dmg*0.8);
+  if(e.statuses.weak>0) dmg=Math.floor(dmg*0.75);
+  if(G.player.statuses.vulnerable>0) dmg=Math.floor(dmg*1.5);
+  const blk=Math.min(G.player.block,dmg);
+  G.player.block-=blk;
+  const hit=dmg-blk;
+  G.player.hp=Math.max(0,G.player.hp-hit);
+  G.stats.damageTaken+=hit;
+  log(`${e.name} attacks: ${hit} dmg${blk>0?` (${blk} blocked)`:''}`, 'enm');
+  snd('enemy_attack');
+  const pel=document.querySelector('.player-entity');
+  if(pel){
+    shakeEl(pel);
+    const r=pel.getBoundingClientRect();
+    if(blk>0) spawnPopup(`🛡${blk}`,'blk',r.left+r.width/2,r.top+10);
+    if(hit>0){ spawnPopup(`-${hit}`,'hit',r.left+r.width/2,r.top+30); flashHbar('.hbar-fill.p'); }
+  }
+  if(hit>=15) screenShake();
+  renderCombat();
+}
+
+function playerTakeDamage(G,amount,ignoreBlock=false){
+  if(!ignoreBlock){
+    const blk=Math.min(G.player.block,amount);
+    G.player.block-=blk; amount-=blk;
+  }
+  G.player.hp=Math.max(0,G.player.hp-amount);
+  G.stats.damageTaken+=amount;
+  if(amount>0) log(`You take ${amount} damage!`,'enm');
+}
+
+function playerGainBlock(G,amount){
+  G.player.block+=amount;
+  log(`Gained ${amount} block.`,'blk');
+  snd('block');
+  const pel=document.querySelector('.player-entity');
+  if(pel){ const r=pel.getBoundingClientRect(); spawnPopup(`🛡+${amount}`,'blk',r.left+r.width/2,r.top+10); }
+  renderCombat();
+}
+
+function healPlayer(G,amount){
+  const prev=G.player.hp;
+  G.player.hp=Math.min(G.player.maxHp,G.player.hp+amount);
+  const actual=G.player.hp-prev;
+  if(actual>0){
+    log(`Healed ${actual} HP.`,'heal');
+    snd('heal');
+    const pel=document.querySelector('.player-entity');
+    if(pel){ const r=pel.getBoundingClientRect(); spawnPopup(`+${actual}❤️`,'heal',r.left+r.width/2,r.top+10); }
+  }
+  renderCombat();
+}
+
+function applyStatus(G,target,type,stacks){
+  if(target==='player'){
+    G.player.statuses[type]=(G.player.statuses[type]||0)+stacks;
+    log(`You gain ${stacks} ${type}.`,'sts');
+    snd('status');
+    const pel=document.querySelector('.player-entity');
+    if(pel){ const r=pel.getBoundingClientRect(); spawnPopup(type.toUpperCase()+' +'+stacks,'sts',r.left+r.width/2,r.top); }
+    renderCombat();
+  } else {
+    const e=G.combat.enemies[target];
+    if(!e) return;
+    e.statuses[type]=(e.statuses[type]||0)+stacks;
+    log(`${e.name} gains ${stacks} ${type}.`,'sts');
+    snd('status');
+    const eel=document.querySelectorAll('.enemy-entity')[target];
+    if(eel){ const r=eel.getBoundingClientRect(); spawnPopup(type.toUpperCase()+' +'+stacks,'sts',r.left+r.width/2,r.top); }
+    renderCombat();
+  }
+}
+
+function drawCards(G,n){
+  for(let i=0;i<n;i++){
+    if(G.combat.draw.length===0){
+      if(G.combat.discard.length===0) break;
+      G.combat.draw=shuffle([...G.combat.discard]);
+      G.combat.discard=[];
+      log('Reshuffled discard.','sts');
+    }
+    G.combat.hand.push(G.combat.draw.pop());
+    setTimeout(()=>snd('draw'), i*55);
+  }
+  renderHand();
+  updatePileCounts();
+}
+
+// ——— CARD PLAY ———
+
+function playCard(cardUid){
+  if(!G||!G.combat) return;
+  if(G.combat.pendingDiscard>0) return; // must discard first
+
+  const ci=G.combat.hand.findIndex(c=>c.uid===cardUid);
+  if(ci===-1) return;
+  const card=G.combat.hand[ci];
+  if(card.cost>G.combat.energy) return;
+
+  // If card needs a target and we have multiple enemies — select mode
+  const aliveEnemies=G.combat.enemies.filter(e=>e.hp>0);
+  if(card.needsTarget && aliveEnemies.length>1){
+    // toggle selection
+    if(G.combat.selectedCard===cardUid){
+      G.combat.selectedCard=null;
+    } else {
+      G.combat.selectedCard=cardUid;
+    }
+    renderHand();
+    renderEnemies();
+    return;
+  }
+
+  // Single target or no target
+  let targetIdx=null;
+  if(card.needsTarget){
+    targetIdx=G.combat.enemies.findIndex(e=>e.hp>0);
+  }
+  executeCard(ci,card,targetIdx);
+}
+
+function clickEnemy(ei){
+  if(!G||!G.combat) return;
+  if(G.combat.enemies[ei].hp<=0) return;
+  if(G.combat.selectedCard!==null){
+    const ci=G.combat.hand.findIndex(c=>c.uid===G.combat.selectedCard);
+    if(ci===-1){G.combat.selectedCard=null;renderHand();return;}
+    const card=G.combat.hand[ci];
+    G.combat.selectedCard=null;
+    executeCard(ci,card,ei);
+  }
+}
+
+function executeCard(ci,card,targetIdx){
+  G.combat.energy-=card.cost;
+  G.combat.hand.splice(ci,1);
+  G.stats.cardsPlayed++;
+  snd('card_play');
+
+  card.effect(G,targetIdx);
+
+  if(card.exhausts){
+    G.combat.exhaust.push(card);
+  } else {
+    G.combat.discard.push(card);
+  }
+
+  checkCombatEnd();
+  if(!G.combat) return; // combat ended
+  renderHand();
+  renderEnergy();
+  updatePileCounts();
+}
+
+function discardCard(cardUid){
+  if(G.combat.pendingDiscard<=0) return;
+  const ci=G.combat.hand.findIndex(c=>c.uid===cardUid);
+  if(ci===-1) return;
+  G.combat.discard.push(G.combat.hand.splice(ci,1)[0]);
+  G.combat.pendingDiscard--;
+  if(G.combat.pendingDiscard===0) hideDiscardPrompt();
+  renderHand();
+  updatePileCounts();
+}
+
+// ——— END TURN ———
+
+function endTurn(){
+  if(!G||!G.combat) return;
+  if(G.combat.pendingDiscard>0){ log('Discard cards first!','sts'); return; }
+  document.getElementById('etbtn').disabled=true;
+  snd('end_turn');
+
+  // Discard hand
+  G.combat.discard.push(...G.combat.hand);
+  G.combat.hand=[];
+
+  // Tick player statuses
+  tickStatuses(G.player.statuses, 'player');
+
+  // Enemy turns
+  G.combat.enemies.forEach((e,i)=>{
+    if(e.hp<=0) return;
+    e.block=0; // enemies lose block each turn
+    const action=e.pattern[e.pi];
+    log(`${e.name}: ${action.label}`,'enm');
+    action.ef(G,e);
+    e.pi=(e.pi+1)%e.pattern.length;
+    tickStatuses(e.statuses, null);
+  });
+
+  checkCombatEnd();
+  if(!G.combat) return;
+
+  // Player tick — Debt
+  const debt=G.player.statuses.debt||0;
+  if(debt>0){ playerTakeDamage(G,debt,true); log(`Debt costs you ${debt} HP!`,'enm'); }
+  checkCombatEnd();
+  if(!G.combat) return;
+
+  // New turn setup
+  G.player.block=0;
+  G.combat.energy=G.combat.maxEnergy;
+  G.combat.turn++;
+  document.getElementById('turn-num').textContent=G.combat.turn;
+
+  updateIntents();
+  drawCards(G,G.combat.drawN);
+  document.getElementById('etbtn').disabled=false;
+  renderCombat();
+  log(`— TURN ${G.combat.turn} —`,'sts');
+}
+
+function tickStatuses(sts, who){
+  ['vulnerable','weak'].forEach(s=>{ if(sts[s]>0) sts[s]--; });
+}
+
+function checkCombatEnd(){
+  if(!G||!G.combat) return;
+  if(G.player.hp<=0){ combatLose(); return; }
+  if(G.combat.enemies.every(e=>e.hp<=0)){ combatWin(); }
+}
+
+function combatWin(){
+  const isBoss=G.combat.isBoss;
+  const wasElite=G.combat.enemies.some(e=>['bear_baron','sec_agent','hedge_mgr'].includes(e.id));
+  let goldEarned=isBoss?50+(G.act*25):15+Math.floor(Math.random()*20);
+  if(hasRelic('piggy_bank')) goldEarned+=15;
+  G.player.gold+=goldEarned;
+  log(`Victory! Earned $${goldEarned}`,'heal');
+  if(hasRelic('calculator')) G.player.hp=Math.min(G.player.maxHp,G.player.hp+5);
+  G.combat=null;
+
+  if(isBoss && G.act===2){ victory(); return; }
+
+  // Elites and bosses also drop a relic
+  showReward((isBoss||wasElite)?randomNewRelic():null);
+}
+
+function combatLose(){
+  G.combat=null;
+  snd('defeat');
+  screenShake();
+  show('gameover-screen');
+  document.getElementById('go-stats').innerHTML=
+    `Floors cleared: ${G.stats.floorsCleared}<br>
+     Damage dealt: ${G.stats.damageDealt}<br>
+     Damage taken: ${G.stats.damageTaken}<br>
+     Cards played: ${G.stats.cardsPlayed}`;
+}
+
+// ——— INTENT / RENDER ———
+
+function updateIntents(){
+  // re-render enemies section
+  renderEnemies();
+}
+
+function renderEnergy(){
+  const row=document.getElementById('energy-row');
+  row.innerHTML='';
+  for(let i=0;i<G.combat.maxEnergy;i++){
+    const pip=document.createElement('div');
+    pip.className=`epip ${i<G.combat.energy?'on':''}`;
+    pip.textContent=i<G.combat.energy?'$':'';
+    row.appendChild(pip);
+  }
+  const lbl=document.createElement('span');
+  lbl.style.cssText='font-size:.78rem;color:var(--gold);margin-left:4px;';
+  lbl.textContent=`${G.combat.energy}/${G.combat.maxEnergy} CAPITAL`;
+  lbl.title='Capital is your budget for playing cards each turn. Each card costs the amount shown in its corner. Refills every turn.';
+  row.appendChild(lbl);
+}
+
+function renderCombat(){
+  if(!G||!G.combat) return;
+  document.getElementById('c-hp').textContent=`${G.player.hp}/${G.player.maxHp}`;
+  document.getElementById('c-gold').textContent=`$${G.player.gold}`;
+  document.getElementById('turn-num').textContent=G.combat.turn;
+  renderEnergy();
+  renderPlayerEntity();
+  renderEnemies();
+  updatePileCounts();
+}
+
+function renderPlayerEntity(){
+  const ca=document.getElementById('combat-area');
+  let pel=ca.querySelector('.player-entity');
+  if(!pel){
+    pel=document.createElement('div');
+    pel.className='entity player-entity';
+    ca.insertBefore(pel,ca.firstChild);
+  }
+  const pct=clamp(G.player.hp/G.player.maxHp,0,1)*100;
+  const sts=G.player.statuses;
+  pel.innerHTML=`
+    <div class="esprite">👤</div>
+    <div class="ename">YOU — THE TRADER</div>
+    <div class="hbar-bg" style="width:150px"><div class="hbar-fill p" style="width:${pct}%"></div></div>
+    <div class="hptxt p">${G.player.hp}/${G.player.maxHp} HP</div>
+    <div class="blk-badge ${G.player.block>0?'on':''}" title="Block: absorbs damage before HP is lost. Resets at the start of your turn.">🛡 ${G.player.block}</div>
+    <div class="statuses">${renderStatuses(sts)}</div>
+  `;
+}
+
+function renderEnemies(){
+  if(!G||!G.combat) return;
+  const ca=document.getElementById('combat-area');
+  // Remove existing enemy elements
+  ca.querySelectorAll('.enemy-entity').forEach(el=>el.remove());
+
+  G.combat.enemies.forEach((e,i)=>{
+    if(e.hp<=0){
+      const dead=document.createElement('div');
+      dead.className='entity enemy-entity';
+      dead.style.opacity='0.3';
+      dead.innerHTML=`<div class="esprite" style="filter:grayscale(1)">💀</div><div class="ename">${e.name}</div><div class="tdim">LIQUIDATED</div>`;
+      ca.appendChild(dead);
+      return;
+    }
+    const pct=clamp(e.hp/e.maxHp,0,1)*100;
+    const action=e.pattern[e.pi];
+    const el=document.createElement('div');
+    el.className='entity enemy-entity';
+    const isSel=G.combat.selectedCard!==null;
+    if(isSel) el.style.cursor='crosshair';
+    el.innerHTML=`
+      <div class="intent ${action.it}" title="This is what the enemy will do on its next turn — plan around it!">NEXT: ${action.label}</div>
+      <div class="esprite" style="${isSel?'filter:brightness(1.5);cursor:crosshair;':''}">${e.ico}</div>
+      <div class="ename">${e.name}</div>
+      <div class="hbar-bg" style="width:160px"><div class="hbar-fill" style="width:${pct}%"></div></div>
+      <div class="hptxt">${e.hp}/${e.maxHp} HP</div>
+      <div class="blk-badge ${e.block>0?'on':''}" title="Block: absorbs damage before HP is lost. Resets each turn.">🛡 ${e.block}</div>
+      <div class="statuses">${renderStatuses(e.statuses)}</div>
+    `;
+    el.onclick=()=>clickEnemy(i);
+    ca.appendChild(el);
+  });
+}
+
+function renderStatuses(sts){
+  return Object.entries(sts).filter(([k,v])=>v>0).map(([k,v])=>
+    `<span class="sbadge ${k}" title="${KEYWORD_TIPS[k]||''}">${k.toUpperCase()} ${v}</span>`
+  ).join('');
+}
+
+function renderHand(){
+  const cont=document.getElementById('hand');
+  cont.innerHTML='';
+  if(!G||!G.combat) return;
+
+  const discarding=G.combat.pendingDiscard>0;
+
+  G.combat.hand.forEach(card=>{
+    const cantAfford=card.cost>G.combat.energy;
+    const isSel=G.combat.selectedCard===card.uid;
+    const el=document.createElement('div');
+    el.className=`card ${card.type} ${card.rar||''} ${card.upgraded?'upg':''} ${(cantAfford&&!discarding)?'dis':''} ${isSel?'sel':''} ${card.exhausts?'exhaust':''}`;
+    el.innerHTML=`
+      <div class="ccost">${card.cost}</div>
+      <div class="cname">${card.name}</div>
+      <div class="cico">${card.ico}</div>
+      <div class="cdesc">${card.desc}</div>
+      <div class="ctype">${card.type}</div>
+    `;
+    if(discarding){
+      el.onclick=()=>discardCard(card.uid);
+      el.classList.remove('dis');
+      el.style.borderColor='var(--gold)';
+    } else if(!cantAfford){
+      el.onclick=()=>playCard(card.uid);
+    }
+    el.classList.add('card-in');
+    cont.appendChild(el);
+  });
+}
+
+function updatePileCounts(){
+  if(!G||!G.combat) return;
+  document.getElementById('draw-cnt').textContent=' '+G.combat.draw.length;
+  document.getElementById('disc-cnt').textContent=' '+G.combat.discard.length;
+  document.getElementById('exhs-cnt').textContent=' '+G.combat.exhaust.length;
+}
+
+function showDiscardPrompt(){
+  const p=document.getElementById('discard-prompt');
+  p.style.display='block';
+  p.textContent=`Select ${G.combat.pendingDiscard} card(s) to discard`;
+}
+function hideDiscardPrompt(){
+  document.getElementById('discard-prompt').style.display='none';
+}
+
+// ============================================================
+// CARD REWARD
+// ============================================================
+function showReward(relicId=null){
+  // Grant relic immediately and display it
+  const rr=document.getElementById('relic-reward');
+  if(relicId){
+    addRelic(relicId);
+    const r=RELICS[relicId];
+    rr.style.display='flex';
+    document.getElementById('relic-reward-ico').textContent=r.ico;
+    document.getElementById('relic-reward-name').textContent='RELIC ACQUIRED: '+r.name;
+    document.getElementById('relic-reward-desc').textContent=r.desc;
+  } else rr.style.display='none';
+
+  // Pick 3 unique cards, rarity-weighted (60% common / 30% uncommon / 10% rare)
+  const choices=[];
+  const used=new Set();
+  while(choices.length<3){
+    const pool=POOL_BY_RARITY[rollRarity()].filter(k=>!used.has(k));
+    const pick=pool.length?rand(pool):rand(REWARD_POOL.filter(k=>!used.has(k)));
+    if(!pick) break;
+    used.add(pick);
+    choices.push(CARDS[pick]);
+  }
+
+  const cont=document.getElementById('reward-cards');
+  cont.innerHTML='';
+  choices.forEach(card=>{
+    const wrap=document.createElement('div');
+    wrap.className='rcrd';
+    wrap.innerHTML=cardHTML(card,'rcard');
+    wrap.onclick=()=>pickReward(card.id);
+    cont.appendChild(wrap);
+  });
+  show('reward-screen');
+}
+
+// Shared card markup (rarity + upgrade aware)
+function cardHTML(card){
+  const rar=card.rar||'';
+  return `<div class="card ${card.type} ${rar} ${card.exhausts?'exhaust':''} ${card.upgraded?'upg':''}">
+    <div class="ccost">${card.cost}</div>
+    <div class="cname">${card.name}</div>
+    <div class="cico">${card.ico}</div>
+    <div class="cdesc">${card.desc}</div>
+    <div class="ctype">${card.type}${rar?` <span class="rar-tag ${rar}">• ${rar==='unc'?'UNCOMMON':'RARE'}</span>`:''}</div>
+  </div>`;
+}
+
+function pickReward(cardId){
+  G.player.deck.push({...CARDS[cardId],uid:uid()});
+  afterReward();
+}
+function skipReward(){ afterReward(); }
+function afterReward(){
+  // Check if act is over
+  if(G.floor>=G.actMap.length-1){
+    G.act++;
+    if(G.act>=3){ victory(); return; }
+    G.floor=-1;
+    G.actMap=buildActMap(G.act);
+  }
+  goMap();
+}
+
+// ============================================================
+// SHOP
+// ============================================================
+const SHOP_PRICES={attack:75,defend:60,skill:70};
+
+function goShop(){
+  show('shop-screen');
+  document.getElementById('shop-gold').textContent=`$${G.player.gold}`;
+
+  // Generate 5 random cards for sale
+  const pool=[...REWARD_POOL];
+  const items=[];
+  while(items.length<5&&pool.length>0){
+    const idx=Math.floor(Math.random()*pool.length);
+    items.push(CARDS[pool.splice(idx,1)[0]]);
+  }
+
+  const cont=document.getElementById('shop-items');
+  cont.innerHTML='';
+  items.forEach(card=>{
+    const price=(SHOP_PRICES[card.type]||70)+(card.rar==='rare'?45:card.rar==='unc'?20:0);
+    const canBuy=G.player.gold>=price;
+    const wrap=document.createElement('div');
+    wrap.className='shop-item';
+    wrap.id=`si_${card.id}`;
+    wrap.innerHTML=`
+      <div class="card ${card.type} ${card.rar||''} ${card.exhausts?'exhaust':''} ${canBuy?'':'dis'}" id="sc_${card.id}">
+        <div class="ccost">${card.cost}</div>
+        <div class="cname">${card.name}</div>
+        <div class="cico">${card.ico}</div>
+        <div class="cdesc">${card.desc}</div>
+        <div class="ctype">${card.type}</div>
+      </div>
+      <div class="sprice" id="sp_${card.id}">$${price}</div>
+    `;
+    if(canBuy){
+      wrap.querySelector('.card').onclick=()=>buyCard(card.id,price);
+    }
+    cont.appendChild(wrap);
+  });
+}
+
+function buyCard(cardId,price){
+  if(G.player.gold<price) return;
+  G.player.gold-=price;
+  G.player.deck.push({...CARDS[cardId],uid:uid()});
+  document.getElementById('shop-gold').textContent=`$${G.player.gold}`;
+  // Mark as purchased
+  const sc=document.getElementById(`sc_${cardId}`);
+  if(sc){ sc.classList.add('dis'); sc.onclick=null; }
+  const sp=document.getElementById(`sp_${cardId}`);
+  if(sp){ sp.innerHTML='<span class="sprice sold">PURCHASED</span>'; }
+}
+
+function leaveShop(){ advanceFloor(); }
+
+// ============================================================
+// EVENTS
+// ============================================================
+const EVENTS=[
+  { ico:'🤫', title:'THE WHISTLEBLOWER',
+    body:'A nervous analyst slides a folder across the table. "I know what your competitors are hiding. Make it worth my while — or do the right thing."',
+    opts:[
+      {label:'PAY HUSH MONEY', sub:'Gain $45',
+        fn:()=>{ G.player.gold+=45; return 'You pocket the folder. +$45.'; }},
+      {label:'REPORT TO AUTHORITIES', sub:'Lose 8 HP, gain a random RARE card',
+        fn:()=>{ G.player.hp=Math.max(1,G.player.hp-8);
+          const id=rand(POOL_BY_RARITY.rare);
+          G.player.deck.push({...CARDS[id],uid:uid()});
+          return `The press conference is brutal (-8 HP), but you gain ${CARDS[id].name}!`; }},
+    ]},
+  { ico:'🪙', title:'CRYPTO BRO',
+    body:'"Bro. BRO. This coin is going TO THE MOON. $30 gets you in on the ground floor. Trust me bro."',
+    opts:[
+      {label:'INVEST $30', sub:'50% chance: triple it. 50% chance: rug pull.',
+        fn:()=>{ if(G.player.gold<30) return 'You can\'t afford it. He scoffs and skates away.';
+          G.player.gold-=30;
+          if(Math.random()<0.5){ G.player.gold+=90; snd('victory'); return 'IT MOONED! +$90!'; }
+          snd('defeat'); return 'Rug pulled. The Discord is deleted. -$30.'; }},
+      {label:'DECLINE', sub:'Walk away',
+        fn:()=>'You keep walking. He yells "HAVE FUN STAYING POOR" behind you.'},
+    ]},
+  { ico:'🍸', title:'PENSION FUND GALA',
+    body:'You\'re invited to a charity gala full of institutional investors. Open bar, heavy hors d\'oeuvres, light insider gossip.',
+    opts:[
+      {label:'RELAX & RECOVER', sub:'Heal 18 HP',
+        fn:()=>{ G.player.hp=Math.min(G.player.maxHp,G.player.hp+18); snd('heal'); return 'You unwind. +18 HP.'; }},
+      {label:'WORK THE ROOM', sub:'Gain $35',
+        fn:()=>{ G.player.gold+=35; return 'Three business cards and a verbal commitment later: +$35.'; }},
+    ]},
+  { ico:'🗑️', title:'DOCUMENT SHREDDING DAY',
+    body:'Compliance says it\'s time to clean house. The shredder hums expectantly.',
+    opts:[
+      {label:'SHRED A CARD', sub:'Remove a card from your deck',
+        fn:()=>{ restRemove(); return null; }},
+      {label:'KEEP EVERYTHING', sub:'You never know what you\'ll need',
+        fn:()=>'You file it all away. Legal is thrilled.'},
+    ]},
+  { ico:'🔮', title:'THE MARKET ORACLE',
+    body:'A retired quant in a Hawaiian shirt offers to "optimize your strategy" for the price of a coffee.',
+    opts:[
+      {label:'PAY $25 FOR WISDOM', sub:'Upgrade a random card',
+        fn:()=>{ if(G.player.gold<25) return 'You can\'t even afford the coffee.';
+          const up=G.player.deck.filter(c=>!c.upgraded&&c.cost>0);
+          if(up.length===0) return 'He looks at your deck and shrugs. "Already optimal."';
+          G.player.gold-=25;
+          const c=rand(up); c.cost=Math.max(0,c.cost-1); c.upgraded=true;
+          snd('heal'); return `He scribbles on a napkin. ${c.name} upgraded! ★`; }},
+      {label:'POLITELY DECLINE', sub:'Walk away',
+        fn:()=>'He nods sagely and returns to his crossword.'},
+    ]},
+];
+
+function goEvent(){
+  const ev=rand(EVENTS);
+  show('event-screen');
+  document.getElementById('event-ico').textContent=ev.ico;
+  document.getElementById('event-title').textContent=ev.title;
+  document.getElementById('event-body').textContent=ev.body;
+  document.getElementById('event-result').textContent='';
+  const cont=document.getElementById('event-opts');
+  cont.innerHTML='';
+  ev.opts.forEach(opt=>{
+    const b=document.createElement('button');
+    b.className='btn';
+    b.innerHTML=`${opt.label}<small>${opt.sub}</small>`;
+    b.onclick=()=>{
+      snd('click');
+      const result=opt.fn();
+      if(result===null) return; // option opened another screen (e.g. card removal)
+      document.getElementById('event-result').textContent=result;
+      cont.innerHTML='';
+      const cont2=document.createElement('button');
+      cont2.className='btn gold';
+      cont2.textContent='CONTINUE →';
+      cont2.onclick=()=>advanceFloor();
+      cont.appendChild(cont2);
+    };
+    cont.appendChild(b);
+  });
+}
+
+// ============================================================
+// REST
+// ============================================================
+function goRest(){
+  show('rest-screen');
+}
+
+function restHeal(){
+  const amount=Math.floor(G.player.maxHp*0.3);
+  G.player.hp=Math.min(G.player.maxHp,G.player.hp+amount);
+  advanceFloor();
+}
+
+function showCardPicker(title, sub, cards, onPick){
+  show('remove-screen');
+  document.querySelector('#remove-screen h2').textContent=title;
+  document.querySelector('#remove-screen .tdim').textContent=sub;
+  const cont=document.getElementById('remove-cards');
+  cont.innerHTML='';
+  cards.forEach(card=>{
+    const wrap=document.createElement('div');
+    wrap.innerHTML=cardHTML(card);
+    wrap.style.cursor='pointer';
+    wrap.onclick=()=>onPick(card);
+    cont.appendChild(wrap);
+  });
+}
+
+function restRemove(){
+  showCardPicker('📋 PORTFOLIO RESTRUCTURE','Select a card to permanently remove from your deck',
+    G.player.deck, (card)=>{ removeCard(card.uid); });
+}
+
+function restUpgrade(){
+  const upgradable=G.player.deck.filter(c=>!c.upgraded&&c.cost>0);
+  if(upgradable.length===0){ restHeal(); return; }
+  showCardPicker('🎓 EXECUTIVE TRAINING','Select a card to upgrade — ★ cards cost 1 less Capital',
+    upgradable, (card)=>{
+      card.cost=Math.max(0,card.cost-1);
+      card.upgraded=true;
+      snd('heal');
+      advanceFloor();
+    });
+}
+
+function removeCard(uid){
+  G.player.deck=G.player.deck.filter(c=>c.uid!==uid);
+  advanceFloor();
+}
+function skipRemove(){ advanceFloor(); }
+
+// ============================================================
+// DECK VIEW
+// ============================================================
+function openDeck(){
+  const cards=[...G.player.deck];
+  cards.sort((a,b)=>a.type.localeCompare(b.type)||a.name.localeCompare(b.name));
+  document.getElementById('deck-sz').textContent=cards.length;
+  const cont=document.getElementById('deck-cards');
+  cont.innerHTML='';
+  cards.forEach(card=>{ cont.innerHTML+=cardHTML(card); });
+  document.getElementById('deck-modal').classList.add('open');
+}
+function closeDeck(){ document.getElementById('deck-modal').classList.remove('open'); }
+
+// ============================================================
+// END STATES
+// ============================================================
+function victory(){
+  snd('victory');
+  spawnParticles();
+  show('victory-screen');
+  document.getElementById('win-stats').innerHTML=
+    `Floors cleared: ${G.stats.floorsCleared}<br>
+     Damage dealt: ${G.stats.damageDealt}<br>
+     Cards played: ${G.stats.cardsPlayed}<br>
+     Final deck size: ${G.player.deck.length} cards`;
+}
+
+// ============================================================
+// LOG
+// ============================================================
+function log(msg, cls=''){
+  const el=document.getElementById('clog');
+  if(!el) return;
+  const e=document.createElement('div');
+  e.className=`clog-e ${cls}`;
+  e.textContent=msg;
+  el.appendChild(e);
+  el.scrollTop=el.scrollHeight;
+}
+
+// ============================================================
+// TICKER TAPE
+// ============================================================
+const TICKERS=['INFLATION +8.4% ↑','MARKET_ORDER BUY 500 @ $142.00','HOSTILE_TAKEOVER EXECUTED','SEC INVESTIGATION OPENED','BEAR MARKET: DOW -2,100 pts','MARGIN CALL: LIQUIDATE POSITION','QUANTITATIVE_EASING ACTIVATED','INTEREST RATES ↑ 75bps','INSIDER TRADING DETECTED','IPO: BULLRUN CORP $BULL +340%','FEDERAL RESERVE MEETING TODAY','PORTFOLIO REBALANCING IN PROGRESS'];
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('ticker').textContent = TICKERS.join('   ◆   ');
+</script>
+</body>
+</html>
