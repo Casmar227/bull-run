@@ -1227,7 +1227,8 @@ function snd(type){
 // ============================================================
 // ANIMATION HELPERS
 // ============================================================
-function spawnPopup(text, cls, x, y){
+function spawnPopup(...a){ if(window.BR_HEADLESS) return; return _spawnPopup(...a); }
+function _spawnPopup(text, cls, x, y){
   const el=document.createElement('div');
   el.className=`popup ${cls}`;
   el.textContent=text;
@@ -1270,7 +1271,8 @@ function flashHbar(selector){
 }
 
 // Burst of glowing particles at a screen point (impacts, blocks, heals)
-function spawnBurst(x,y,color,n=10){
+function spawnBurst(...a){ if(window.BR_HEADLESS) return; return _spawnBurst(...a); }
+function _spawnBurst(x,y,color,n=10){
   for(let i=0;i<n;i++){
     const p=document.createElement('div');
     p.className='burst';
@@ -2828,7 +2830,7 @@ function setActBG(act){
 
 // ——— BOSS SPLASH ———
 function bossSplash(boss){
-  if(fxLevel()==='off') return;
+  if(window.BR_HEADLESS||fxLevel()==='off') return;
   const el=document.getElementById('boss-splash');
   el.innerHTML=`<div class="bs-bars t"></div>
     <div class="bs-art">${(typeof ART!=='undefined'&&ART[boss.id])?ART[boss.id]:boss.ico}</div>
@@ -2851,7 +2853,7 @@ function hitStop(ms=80){
 
 // ——— DEATH DISSOLVE ———
 function dissolveEnemy(idx){
-  if(fxLevel()==='off') return;
+  if(window.BR_HEADLESS||fxLevel()==='off') return;
   const el=document.querySelectorAll('.enemy-entity')[idx];
   const sprite=el&&el.querySelector('.esprite');
   if(!sprite) return;
@@ -3749,7 +3751,8 @@ function playCardAt(cardUid,targetIdx,skipAnim){
 }
 
 // Visual: clone the hand card and fly it into the target before it resolves
-function animateCardPlay(card,targetIdx){
+function animateCardPlay(...a){ if(window.BR_HEADLESS) return; return _animateCardPlay(...a); }
+function _animateCardPlay(card,targetIdx){
   const el=document.querySelector(`#hand .card[data-uid="${card.uid}"]`);
   if(!el) return;
   const r=el.getBoundingClientRect();
@@ -4873,6 +4876,7 @@ function victory(){
 // LOG
 // ============================================================
 function log(msg, cls=''){
+  if(window.BR_HEADLESS) return;
   const el=document.getElementById('clog');
   if(!el) return;
   const e=document.createElement('div');
