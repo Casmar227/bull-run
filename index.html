@@ -221,6 +221,32 @@ h2{font-size:1.3rem;color:var(--green);}
   background:linear-gradient(170deg,#101e30 0%,#080e18 55%,#060a10 100%);border-top-color:var(--def);}
 .card.skill{border-top:3px solid var(--skl);border-color:#3c2f5c;
   background:linear-gradient(170deg,#1c1430 0%,#0e0a1a 55%,#090710 100%);border-top-color:var(--skl);}
+.card.power{border-top:3px solid var(--gold);border-color:#5c4d1a;
+  background:linear-gradient(170deg,#2b2410 0%,#141008 55%,#0e0a05 100%);}
+.card.power .ctype{color:var(--gold);}
+.card.power .cico{background:radial-gradient(ellipse 80% 90% at 50% 45%,rgba(255,215,0,.22),rgba(255,215,0,.04) 75%);}
+.power-chip{border-color:var(--gold);box-shadow:0 0 8px rgba(255,215,0,.3);}
+.power-chip .pcount{position:absolute;bottom:-4px;right:-6px;font-size:.55rem;color:var(--gold);}
+.boss-relic{border:1px solid var(--gold);border-radius:8px;padding:10px 12px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:5px;background:rgba(50,40,0,.25);
+  transition:all .15s;max-width:170px;text-align:center;}
+.boss-relic:hover{box-shadow:0 0 16px rgba(255,215,0,.4);transform:translateY(-3px);}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.stat-box{border:1px solid var(--bord);border-radius:8px;padding:10px;text-align:center;
+  background:linear-gradient(180deg,var(--surf2),var(--surf));}
+.sb-num{font-size:1.4rem;color:var(--green);font-family:'VT323',monospace;letter-spacing:1px;}
+.sb-lbl{font-size:.58rem;color:var(--tdim);letter-spacing:2px;margin-top:2px;}
+.stats-table{width:100%;border-collapse:collapse;font-size:.74rem;}
+.stats-table th{color:var(--tdim);font-size:.6rem;letter-spacing:2px;text-align:left;padding:5px 8px;border-bottom:1px solid var(--bord);}
+.stats-table td{padding:6px 8px;border-bottom:1px solid rgba(30,58,38,.4);}
+.codex-h{color:var(--gold);font-size:1rem;letter-spacing:2px;margin:16px 0 8px;}
+.card.codex-locked{opacity:.5;border-style:dashed;align-items:center;justify-content:center;}
+.codex-relics{display:flex;gap:8px;flex-wrap:wrap;}
+.codex-relic{border:1px solid var(--bord);border-radius:8px;padding:8px;width:128px;text-align:center;
+  font-size:1.2rem;background:linear-gradient(180deg,var(--surf2),var(--surf));}
+.codex-relic.locked{opacity:.5;border-style:dashed;}
+.cr-name{font-size:.62rem;color:var(--gold);margin-top:3px;}
+.cr-desc{font-size:.56rem;color:var(--tdim);line-height:1.4;margin-top:2px;}
 .card:hover:not(.dis):not(.drag-src){transform:translateY(-30px) scale(1.13) rotate(0deg)!important;
   border-color:var(--green);z-index:60;
   box-shadow:0 18px 34px rgba(0,0,0,.7),0 0 22px rgba(0,255,65,.22);}
@@ -714,7 +740,11 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
     <button class="btn big" id="seed-btn" style="display:none;border-color:var(--blue);color:var(--blue);"></button>
     <button class="btn big" id="daily-btn" onclick="startDaily()">📅 DAILY RUN</button>
     <div class="diff-note" id="daily-note"></div>
-    <button class="btn" onclick="openHelp()">📖 HOW TO PLAY</button>
+    <div class="flex gap8" style="justify-content:center;">
+      <button class="btn" onclick="openHelp()">📖 HOW TO PLAY</button>
+      <button class="btn" onclick="openStats()">📊 STATS</button>
+      <button class="btn" onclick="openCodex()">🗃️ CODEX</button>
+    </div>
     <div class="diff-note" id="profile-strip"></div>
   </div>
   <div style="font-size:.75rem;color:var(--tdim);">66 cards • 3 investors • daily challenge • seeded runs</div>
@@ -765,7 +795,7 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
       <button class="btn sm" onclick="openHelp()" title="How to play">?</button>
     </div>
   </div>
-  <div class="bar-row"><div class="relic-bar" id="combat-relics"></div><div class="relic-bar potions" id="combat-potions"></div></div>
+  <div class="bar-row"><div class="relic-bar" id="combat-relics"></div><div class="relic-bar potions" id="combat-potions"></div><div class="relic-bar potions" id="powers-bar"></div></div>
   <div class="tut-banner" id="tut-banner">
     <div class="tut-txt" id="tut-txt"></div>
     <div class="tut-btns">
@@ -788,6 +818,7 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
 <div id="reward-screen" class="screen">
   <h2>⬆ MARKET OPPORTUNITY</h2>
   <div id="gold-earned"></div>
+  <div id="boss-relic-choice" style="display:none;flex-direction:column;gap:10px;align-items:center;"></div>
   <div id="potion-reward" class="tgold" style="display:none;"></div>
   <div id="relic-reward" style="display:none;">
     <div class="big" id="relic-reward-ico"></div>
@@ -873,12 +904,33 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
   <div id="win-stats" class="mt8" style="color:var(--tdim);line-height:1.8;"></div>
   <div class="flex fc gap8 mt16" style="flex-wrap:wrap;">
     <button class="btn gold" onclick="shareResult(this)">📋 SHARE P&amp;L</button>
+    <button class="btn" id="endless-btn" onclick="goEndless()">🌃 AFTER-HOURS TRADING — KEEP CLIMBING</button>
     <button class="btn" onclick="copySeed(this)">🌱 COPY SEED</button>
     <button class="btn gold" onclick="openCharSelect(G?G.easy:false)">▶ NEW PORTFOLIO</button>
     <button class="btn" onclick="show('menu-screen')">MAIN MENU</button>
   </div>
 </div>
 
+</div>
+
+<div class="moverlay" id="stats-modal">
+  <div class="modal" style="max-width:560px;">
+    <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h2 style="margin:0;">📊 TRADING DESK RECORDS</h2>
+      <button class="btn sm" onclick="document.getElementById('stats-modal').classList.remove('open')">✕</button>
+    </div>
+    <div id="stats-body"></div>
+  </div>
+</div>
+
+<div class="moverlay" id="codex-modal">
+  <div class="modal">
+    <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h2 style="margin:0;">🗃️ THE CODEX</h2>
+      <button class="btn sm" onclick="document.getElementById('codex-modal').classList.remove('open')">✕</button>
+    </div>
+    <div id="codex-body"></div>
+  </div>
 </div>
 
 <div class="moverlay" id="settings-modal">
@@ -1583,6 +1635,41 @@ const CARDS = {
     desc:'Deal 11 damage to ALL enemies. Costs $10.',
     effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,11); }); } },
 
+  // ——— POWERS (persistent combat auras) ———
+  compounding:{ id:'compounding', name:'Compounding', cost:1, type:'power', ico:'📈', rar:'rare',
+    desc:'POWER: Gain 1 Strength at the start of each turn.',
+    power:(G)=>{ G.player.statuses.strength=(G.player.statuses.strength||0)+1;
+      log('Compounding: +1 Strength.','sts'); },
+    effect:(G)=>{} },
+
+  dollar_cost_avg:{ id:'dollar_cost_avg', name:'Dollar-Cost Averaging', cost:1, type:'power', ico:'🗓️', rar:'unc',
+    desc:'POWER: Gain 3 block at the start of each turn.',
+    power:(G)=>{ playerGainBlock(G,3); },
+    effect:(G)=>{} },
+
+  dividend_stream:{ id:'dividend_stream', name:'Dividend Stream', cost:1, type:'power', ico:'💧', rar:'unc',
+    desc:'POWER: Heal 2 HP at the start of each turn.',
+    power:(G)=>{ healPlayer(G,2); },
+    effect:(G)=>{} },
+
+  algo_desk:{ id:'algo_desk', name:'Algorithmic Desk', cost:2, type:'power', ico:'🖥️', rar:'rare',
+    desc:'POWER: Gain 1 extra Capital at the start of each turn.',
+    power:(G)=>{ G.combat.energy=clamp(G.combat.energy+1,0,9); renderEnergy();
+      log('Algorithmic Desk: +1 Capital.','sts'); },
+    effect:(G)=>{} },
+
+  carrion_economy:{ id:'carrion_economy', name:'Carrion Economy', cost:1, type:'power', ico:'🦴', char:'vulture', rar:'rare',
+    desc:'POWER: At the start of each turn, gain 1 Debt and 2 Strength.',
+    power:(G)=>{ applyStatus(G,'player','debt',1);
+      G.player.statuses.strength=(G.player.statuses.strength||0)+2;
+      log('Carrion Economy: +2 Strength.','sts'); },
+    effect:(G)=>{} },
+
+  compound_account:{ id:'compound_account', name:'Compound Account', cost:1, type:'power', ico:'🏛️', char:'whale', rar:'unc',
+    desc:'POWER: Gain $4 at the start of each turn.',
+    power:(G)=>{ G.player.gold+=4; log('Interest accrued: +$4.','heal'); renderCombat(); },
+    effect:(G)=>{} },
+
   // ——— CURSE ———
   red_tape:{ id:'red_tape', name:'Red Tape', cost:0, type:'skill', ico:'🧻',
     desc:'Unplayable. Pure bureaucracy. Remove it at a Board Meeting.',
@@ -1752,6 +1839,19 @@ const UPGRADES={
     effect:(G,t)=>{ playerDealDamage(G,t,11); G.player.gold+=5; renderCombat(); }},
   whale_splash:{desc:'Deal 15 damage to ALL enemies. Costs $10.',
     effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,15); }); }},
+  // Powers
+  compounding:{desc:'POWER: Gain 1 Strength at the start of each turn.', cost:0},
+  dollar_cost_avg:{desc:'POWER: Gain 5 block at the start of each turn.',
+    power:(G)=>{ playerGainBlock(G,5); }},
+  dividend_stream:{desc:'POWER: Heal 3 HP at the start of each turn.',
+    power:(G)=>{ healPlayer(G,3); }},
+  algo_desk:{desc:'POWER: Gain 1 extra Capital at the start of each turn.', cost:1},
+  carrion_economy:{desc:'POWER: At the start of each turn, gain 1 Debt and 3 Strength.',
+    power:(G)=>{ applyStatus(G,'player','debt',1);
+      G.player.statuses.strength=(G.player.statuses.strength||0)+3;
+      log('Carrion Economy: +3 Strength.','sts'); }},
+  compound_account:{desc:'POWER: Gain $6 at the start of each turn.',
+    power:(G)=>{ G.player.gold+=6; log('Interest accrued: +$6.','heal'); renderCombat(); }},
 };
 
 function applyUpgrade(card){
@@ -1762,6 +1862,7 @@ function applyUpgrade(card){
     if(u.effect) card.effect=u.effect;
     if(u.dyn!==undefined) card.dyn=u.dyn;
     if(u.gcost!==undefined) card.gcost=u.gcost;
+    if(u.power) card.power=u.power;
     if(u.exhausts!==undefined) card.exhausts=u.exhausts;
   } else {
     card.cost=Math.max(0,card.cost-1); // fallback for unlisted cards
@@ -1798,6 +1899,10 @@ const RELICS={
   golden_gavel:{ico:'🔨', name:'Golden Gavel',      desc:'Weak and Vulnerable you apply get +1 stack.'},
   vulture_eye: {ico:'🪶', name:"Vulture's Eye",     desc:'Whenever you gain Debt, gain 2 block per stack.', innate:true},
   platinum_card:{ico:'💳', name:'Platinum Card',    desc:'Whenever you spend $ on a card in combat, gain 2 block.', innate:true},
+  // boss trade-offs (offered as a choice after Act I/II bosses, never random drops)
+  faustian_term_sheet:{ico:'📑', name:'Faustian Term Sheet', desc:'+1 max Capital every combat. Signing costs 8 max HP.', boss:true},
+  golden_handcuffs_r:{ico:'🔗', name:'Golden Handcuffs', desc:'Gain $200 on pickup. You may never remove cards again.', boss:true},
+  risk_engine:{ico:'🎲', name:'Risk Engine', desc:'Draw +1 card on your first turn. Start each combat with 1 Debt.', boss:true},
 };
 // Relics gated behind meta-progression unlocks
 ['golden_rolodex','severance_package','short_fuse'].forEach(id=>{ RELICS[id].unlock='exec_perks'; });
@@ -1809,11 +1914,14 @@ function addRelic(id){
   G.player.relics.push(id);
   if(id==='stock_option'){ G.player.maxHp+=10; G.player.hp+=10; }
   if(id==='corner_office'){ G.player.maxHp+=15; G.player.hp+=15; }
+  if(id==='faustian_term_sheet'){ G.player.maxHp=Math.max(10,G.player.maxHp-8);
+    G.player.hp=Math.min(G.player.hp,G.player.maxHp); }
+  if(id==='golden_handcuffs_r'){ G.player.gold+=200; }
   snd('victory');
 }
 
 function randomNewRelic(){
-  const pool=Object.keys(RELICS).filter(id=>!hasRelic(id)&&!RELICS[id].innate
+  const pool=Object.keys(RELICS).filter(id=>!hasRelic(id)&&!RELICS[id].innate&&!RELICS[id].boss
     &&(!RELICS[id].unlock||metaHas(RELICS[id].unlock)));
   return pool.length?rand(pool):null;
 }
@@ -2106,6 +2214,7 @@ function usePotion(i){
   if(p.combat&&!inCombat) return;
   if(p.mapOnly&&inCombat) return;
   if(id==='shredder'){
+    if(hasRelic('golden_handcuffs_r')){ log('🔗 Golden Handcuffs: removal forbidden.','sts'); return; }
     // consume only on an actual pick; canceling returns to the map
     showCardPicker('🗑️ SHRED-IT SERVICE','Select a card to permanently remove',
       G.player.deck,(card)=>{
@@ -2134,6 +2243,22 @@ function usePotion(i){
   }
   renderPotions();
   if(!inCombat){ saveRun(null); renderMap(); }
+}
+
+function renderPowers(){
+  const cont=document.getElementById('powers-bar');
+  if(!cont) return;
+  cont.innerHTML='';
+  if(!G||!G.combat) return;
+  const counts={};
+  G.combat.powers.forEach(pw=>{ counts[pw.id]=counts[pw.id]||{c:0,pw}; counts[pw.id].c++; });
+  Object.values(counts).forEach(({c,pw})=>{
+    const el=document.createElement('div');
+    el.className='relic power-chip';
+    el.innerHTML=`${pw.ico}${c>1?`<span class="pcount">×${c}</span>`:''}<div class="rtip"><b>${pw.name}</b><br>${pw.desc}</div>`;
+    el.onclick=()=>el.classList.toggle('tipon');
+    cont.appendChild(el);
+  });
 }
 
 function renderPotions(){
@@ -2224,6 +2349,7 @@ const ACT_BOSSES=['the_sec','black_monday','fed_reserve'];
 const ELITE_IDS=['bear_baron','sec_agent','hedge_mgr','activist_investor','whale_elite'];
 
 function getEnemies(act,type){
+  act=Math.min(act,2); // endless loops reuse final-act content (and scale up)
   if(type==='boss') return [ENEMY_DEFS[ACT_BOSSES[act]]()];
   if(type==='elite'){
     const pool=act===0?['bear_baron','sec_agent']:['hedge_mgr','activist_investor','whale_elite'];
@@ -2297,7 +2423,7 @@ function saveRun(inNode){
   if(!G) return;
   lsSet(SAVE_KEY,JSON.stringify({
     v:1, seed:G.seed, easy:G.easy, daily:G.daily||null,
-    charId:G.charId||'trader', ml:G.ml||0,
+    charId:G.charId||'trader', ml:G.ml||0, endless:!!G.endless,
     act:G.act, floor:G.floor, curCol:G.curCol, path:G.path||[], fullPath:G.fullPath||[],
     severanceUsed:!!G.severanceUsed,
     rngCalls:G.rngCalls, inNode:inNode||null,
@@ -2320,7 +2446,7 @@ function loadRun(){
   if(!s) return false;
   G={
     easy:s.easy, seed:s.seed, daily:s.daily||null, rngCalls:0,
-    charId:s.charId||'trader', ml:s.ml||0,
+    charId:s.charId||'trader', ml:s.ml||0, endless:!!s.endless,
     player:{ hp:s.player.hp, maxHp:s.player.maxHp, block:0, statuses:{},
       gold:s.player.gold, potions:[...(s.player.potions||[])].filter(id=>POTIONS[id]),
       // relic ids pushed directly — addRelic would re-apply stock_option's
@@ -2372,6 +2498,21 @@ const dailyMod=(id)=>!!(G&&G.daily&&G.daily.mod===id);
 
 function dailyRecord(){
   try{ return JSON.parse(lsGet('br_daily')||'null'); }catch(e){ return null; }
+}
+
+// consecutive daily-challenge days ending today or yesterday
+function dailyStreak(){
+  try{
+    const h=JSON.parse(lsGet('br_history')||'[]').filter(x=>x.daily);
+    const days=[...new Set(h.map(x=>x.daily))].sort((a,b)=>b-a);
+    if(!days.length) return 0;
+    const today=dailyNum();
+    let expect=days[0]===today?today:(days[0]===today-1?today-1:null);
+    if(expect===null) return 0;
+    let s=0;
+    for(const d of days){ if(d===expect){ s++; expect--; } else break; }
+    return s;
+  }catch(e){ return 0; }
 }
 
 function startDaily(){
@@ -2427,6 +2568,7 @@ function renderSettings(){
 
 // ——— PER-ACT LIVING BACKGROUND ———
 function setActBG(act){
+  act=Math.min(act,2);
   document.body.dataset.act=act;
   if(fxLevel()!=='full') return;
   const fall=document.querySelector('#bgfx .bg-fall');
@@ -2655,6 +2797,125 @@ const BOSS_IDS=['the_sec','black_monday','fed_reserve'];
 
 function dismissMapTip(){ lsSet('br_map_tip','1'); document.getElementById('map-tip').style.display='none'; snd('click'); }
 
+// ——— STATS ———
+function openStats(){
+  let h=[]; try{ h=JSON.parse(lsGet('br_history')||'[]'); }catch(e){}
+  const m=getMeta();
+  const wins=h.filter(x=>x.won).length;
+  const wr=h.length?Math.round(100*wins/h.length):0;
+  const best=h.length?Math.max(...h.map(x=>x.score||0)):0;
+  const dailies=h.filter(x=>x.daily);
+  const bestDaily=dailies.length?Math.max(...dailies.map(x=>x.score||0)):0;
+  const streak=dailyStreak();
+  const charRow=(id)=>{
+    const ch=CHARACTERS[id];
+    const w=(m.winsBy&&m.winsBy[id])||0;
+    const ml=(m.mlBy&&m.mlBy[id])||0;
+    const locked=ch.unlock&&!m.unlocks.includes(ch.unlock);
+    return `<tr><td>${locked?'❓':ch.ico} ${locked?'???':ch.name}</td>
+      <td>${locked?'—':w+' wins'}</td><td>${locked?'—':'ML '+ml+' unlocked'}</td></tr>`;
+  };
+  document.getElementById('stats-body').innerHTML=`
+    <div class="stats-grid">
+      <div class="stat-box"><div class="sb-num">${h.length}</div><div class="sb-lbl">RUNS</div></div>
+      <div class="stat-box"><div class="sb-num">${wins}</div><div class="sb-lbl">WINS</div></div>
+      <div class="stat-box"><div class="sb-num">${wr}%</div><div class="sb-lbl">WIN RATE</div></div>
+      <div class="stat-box"><div class="sb-num tgold">$${best.toLocaleString()}</div><div class="sb-lbl">ALL-TIME HIGH</div></div>
+      <div class="stat-box"><div class="sb-num">🔥${streak}</div><div class="sb-lbl">DAILY STREAK</div></div>
+      <div class="stat-box"><div class="sb-num">${dailies.length}</div><div class="sb-lbl">DAILIES PLAYED</div></div>
+    </div>
+    <table class="stats-table">
+      <tr><th>INVESTOR</th><th>RECORD</th><th>MARGIN LEVEL</th></tr>
+      ${Object.keys(CHARACTERS).map(charRow).join('')}
+    </table>
+    ${bestDaily?`<div class="tdim" style="font-size:.72rem;margin-top:8px;">Best daily P&L: <span class="tgold">$${bestDaily.toLocaleString()}</span></div>`:''}
+    <div class="tdim" style="font-size:.66rem;margin-top:10px;">Unlocks: ${m.unlocks.length}/${UNLOCKS.length} — ${UNLOCKS.map(u=>m.unlocks.includes(u.id)?'🔓':'🔒').join(' ')}</div>`;
+  document.getElementById('stats-modal').classList.add('open');
+  snd('click');
+}
+
+// ——— CODEX ———
+function openCodex(){
+  const m=getMeta();
+  const lockedCard=(hint)=>`<div class="card codex-locked"><div class="cico" style="font-size:1.6rem;">❓</div>
+    <div class="cdesc">${hint}</div></div>`;
+  const cardOrLocked=(k)=>{
+    const c=CARDS[k];
+    if(c.unlock&&!m.unlocks.includes(c.unlock)){
+      const u=UNLOCKS.find(u=>u.id===c.unlock);
+      return lockedCard('Locked — '+(u?u.hint:'keep playing'));
+    }
+    return cardHTML(c);
+  };
+  const charSection=(chId,title)=>{
+    const ch=CHARACTERS[chId];
+    const locked=ch&&ch.unlock&&!m.unlocks.includes(ch.unlock);
+    const ids=Object.keys(CARDS).filter(k=>CARDS[k].char===chId);
+    if(locked){
+      const u=UNLOCKS.find(u=>u.id===ch.unlock);
+      return `<h3 class="codex-h">❓ ??? — ${ids.length} exclusive cards</h3>
+        <div class="mcards">${ids.map(()=>lockedCard('Locked — '+(u?u.hint:''))).join('')}</div>`;
+    }
+    return `<h3 class="codex-h">${ch.ico} ${title}</h3>
+      <div class="mcards">${ids.map(k=>cardHTML(CARDS[k])).join('')}</div>`;
+  };
+  const neutral=Object.keys(CARDS).filter(k=>!CARDS[k].char&&k!=='red_tape');
+  const order={undefined:0,unc:1,rare:2};
+  neutral.sort((a,b)=>(order[CARDS[a].rar]||0)-(order[CARDS[b].rar]||0)||CARDS[a].name.localeCompare(CARDS[b].name));
+  const relicHTML=(id)=>{
+    const r=RELICS[id];
+    if(r.unlock&&!m.unlocks.includes(r.unlock)){
+      const u=UNLOCKS.find(u=>u.id===r.unlock);
+      return `<div class="codex-relic locked">❓<div class="cr-name">???</div><div class="cr-desc">Locked — ${u?u.hint:''}</div></div>`;
+    }
+    return `<div class="codex-relic">${r.ico}<div class="cr-name">${r.name}${r.boss?' 👑':''}${r.innate?' ★':''}</div><div class="cr-desc">${r.desc}</div></div>`;
+  };
+  document.getElementById('codex-body').innerHTML=
+    `<h3 class="codex-h">📇 MARKET INSTRUMENTS — ${neutral.length} cards</h3>
+     <div class="mcards">${neutral.map(cardOrLocked).join('')}</div>
+     ${charSection('vulture','THE VULTURE — exclusives')}
+     ${charSection('whale','THE WHALE — exclusives')}
+     <h3 class="codex-h">🏺 RELICS — ${Object.keys(RELICS).length}</h3>
+     <div class="codex-relics">${Object.keys(RELICS).map(relicHTML).join('')}</div>`;
+  document.getElementById('codex-modal').classList.add('open');
+  snd('click');
+}
+
+// ——— KEYBOARD PLAY ———
+// 1-9 play/discard cards, ←→ pick a target, Enter confirms, Esc cancels, E ends turn
+document.addEventListener('keydown',(ev)=>{
+  if(!G||!G.combat) return;
+  if(!document.getElementById('combat-screen').classList.contains('active')) return;
+  if(ev.repeat) return;
+  const k=ev.key;
+  if(k==='e'||k==='E'){ endTurn(); return; }
+  if(k==='Escape'&&G.combat.selectedCard!==null){
+    G.combat.selectedCard=null; renderHand(); renderEnemies(); return;
+  }
+  if(G.combat.selectedCard!==null){
+    const alive=G.combat.enemies.map((e,i)=>e.hp>0?i:-1).filter(i=>i>=0);
+    if(!alive.length) return;
+    if(k==='ArrowLeft'||k==='ArrowRight'){
+      let ti=alive.indexOf(G.combat.kbT!=null?G.combat.kbT:alive[0]);
+      if(ti<0) ti=0;
+      ti=(ti+(k==='ArrowRight'?1:alive.length-1))%alive.length;
+      G.combat.kbT=alive[ti];
+      document.querySelectorAll('.enemy-entity').forEach((el,i)=>
+        el.classList.toggle('target-hover',i===G.combat.kbT));
+      ev.preventDefault();
+      return;
+    }
+    if(k==='Enter'){ clickEnemy(G.combat.kbT!=null?G.combat.kbT:alive[0]); G.combat&&(G.combat.kbT=null); return; }
+  }
+  const n=parseInt(k,10);
+  if(n>=1&&n<=G.combat.hand.length){
+    const card=G.combat.hand[n-1];
+    if(G.combat.pendingDiscard>0) discardCard(card.uid);
+    else playCard(card.uid);
+    if(G.combat&&G.combat.selectedCard!==null) G.combat.kbT=null;
+  }
+});
+
 // Anonymous event counts (GoatCounter). No-ops if the script is blocked or absent.
 function track(ev){
   try{ if(window.goatcounter&&window.goatcounter.count) window.goatcounter.count({path:ev,event:true}); }catch(e){}
@@ -2690,8 +2951,9 @@ function copySeed(btn){
 
 function buildShare(won,killer){
   const lines=[];
+  const stk=G.daily?dailyStreak():0;
   lines.push(G.daily
-    ? `🐂 BULL RUN Daily #${G.daily.n} · ${G.daily.modName}${G.daily.practice?' (practice)':''}`
+    ? `🐂 BULL RUN Daily #${G.daily.n} · ${G.daily.modName}${stk>1?` · 🔥${stk}-day streak`:''}${G.daily.practice?' (practice)':''}`
     : '🐂 BULL RUN');
   const ch=CHARACTERS[G.charId]||CHARACTERS.trader;
   lines.push(`${won?'🏆':'📉'} Portfolio: $${runScore().toLocaleString()} · ${ch.ico}${G.ml?' ML'+G.ml:''} · Act ${['I','II','III'][Math.min(G.act,2)]}`);
@@ -2729,7 +2991,9 @@ function updateMenu(){
           :'📊 Fresh account — the market awaits.';
   const n=dailyNum(), mod=todaysMod(), rec=dailyRecord();
   const done=!!(rec&&rec.n===n&&rec.done);
-  document.getElementById('daily-btn').textContent=`📅 DAILY RUN #${n}${done?' — PRACTICE':''}`;
+  const streak=dailyStreak();
+  document.getElementById('daily-btn').textContent=
+    `📅 DAILY RUN #${n}${streak>1?` · 🔥${streak}`:''}${done?' — PRACTICE':''}`;
   document.getElementById('daily-note').textContent=
     `Today's market: ${mod.name} — ${mod.desc}`+
     (done?` · Your P&L today: $${(rec.score||0).toLocaleString()}`:' · One scored attempt per day.');
@@ -2841,7 +3105,8 @@ function goMap(){
 }
 
 function renderMap(){
-  document.getElementById('act-title').textContent=`ACT ${G.act+1} — ${ACT_TITLES[G.act]}`;
+  document.getElementById('act-title').textContent=
+    G.act<3?`ACT ${G.act+1} — ${ACT_TITLES[G.act]}`:`🌃 AFTER-HOURS — LOOP ${G.act-2}`;
   document.getElementById('map-hp').textContent=`${G.player.hp}/${G.player.maxHp}`;
   document.getElementById('map-gold').textContent=`$${G.player.gold}`;
   document.getElementById('map-deck').textContent=G.player.deck.length;
@@ -2975,7 +3240,7 @@ function advanceFloor(){
   if(hasRelic('bull_plush')) G.player.hp=Math.min(G.player.maxHp,G.player.hp+2);
   if(G.floor>=G.actMap.length-1){
     G.act++;
-    if(G.act>=3){ victory(); return; }
+    if(G.act>=3&&!G.endless){ victory(); return; }
     G.floor=-1; G.curCol=null; G.path=[];
     G.actMap=buildActMap(G.act,G.seed);
     if(mlAt(8)) G.player.deck.push({...CARDS.red_tape,uid:uid()}); // ML8 AUDIT SEASON
@@ -2998,7 +3263,12 @@ function startCombat(enemies, isBoss=false){
   if(mlAt(4)&&isBoss) enemies.forEach(e=>{ e.statuses.strength=(e.statuses.strength||0)+3; });
   if(mlAt(10)&&isBoss&&G.act===2) enemies.forEach(e=>{ e.maxHp+=40; e.hp=e.maxHp;
     e.statuses.strength=(e.statuses.strength||0)+3; });
-  const maxE=(hasRelic('espresso')?4:3)+(dailyMod('zirp')?1:0);
+  if(G.act>=3){ // AFTER-HOURS: each loop stacks +20% HP and +1 Strength
+    const loop=G.act-2;
+    enemies.forEach(e=>{ e.maxHp=Math.round(e.maxHp*(1+0.2*loop)); e.hp=e.maxHp;
+      e.statuses.strength=(e.statuses.strength||0)+loop; });
+  }
+  const maxE=3+(hasRelic('espresso')?1:0)+(hasRelic('faustian_term_sheet')?1:0)+(dailyMod('zirp')?1:0);
   G.combat={
     enemies,
     hand:[],
@@ -3008,6 +3278,7 @@ function startCombat(enemies, isBoss=false){
     energy:maxE,
     maxEnergy:maxE,
     turn:1,
+    powers:[],
     pendingDiscard:0,
     selectedCard:null,
     cardsPlayedThisTurn:0,
@@ -3022,13 +3293,15 @@ function startCombat(enemies, isBoss=false){
   if(hasRelic('bull_horn')){ G.player.statuses.strength=(G.player.statuses.strength||0)+1; log('Bull Horn: +1 Strength.','sts'); }
   if(hasRelic('bear_trap')) enemies.forEach(e=>{ e.statuses.vulnerable=(e.statuses.vulnerable||0)+1; });
   if(hasRelic('cold_brew')){ G.player.statuses.debt=(G.player.statuses.debt||0)+2; log('Cold Brew IV: +2 Debt. Worth it.','sts'); }
+  if(hasRelic('risk_engine')){ G.player.statuses.debt=(G.player.statuses.debt||0)+1; log('Risk Engine: +1 Debt.','sts'); }
   if(hasRelic('lucky_cufflinks')){ G.combat.energy+=1; log('Lucky Cufflinks: +1 Capital.','sts'); }
   if(dailyMod('diamond')){ G.player.block+=8; log('DIAMOND HANDS: +8 block. HODL.','blk'); }
   if(dailyMod('audit')){ G.player.statuses.debt=(G.player.statuses.debt||0)+1; log('AUDIT SEASON: +1 Debt.','sts'); }
   if(mlAt(3)){ G.player.statuses.debt=(G.player.statuses.debt||0)+1; log('ML3 OVERLEVERAGED: +1 Debt.','sts'); }
   renderRelics('combat-relics');
   renderPotions();
-  drawCards(G,G.combat.drawN+(hasRelic('insider_newsletter')?1:0));
+  renderPowers();
+  drawCards(G,G.combat.drawN+(hasRelic('insider_newsletter')?1:0)+(hasRelic('risk_engine')?1:0));
   updateIntents();
   show('combat-screen');
   renderCombat();
@@ -3278,7 +3551,11 @@ function executeCard(ci,card,targetIdx,skipAnim){
 
   card.effect(G,targetIdx);
 
-  if(card.exhausts){
+  if(card.type==='power'){
+    G.combat.powers.push(card);
+    log(`🔆 ${card.name} is now active.`,'sts');
+    renderPowers();
+  } else if(card.exhausts){
     G.combat.exhaust.push(card);
   } else {
     G.combat.discard.push(card);
@@ -3366,6 +3643,10 @@ function endTurn(){
   G.combat.cardsPlayedThisTurn=0;
   G.combat.energy=G.combat.maxEnergy;
   G.combat.turn++;
+  // active powers tick at the start of your turn
+  G.combat.powers.forEach(pw=>{ if(pw.power) pw.power(G); });
+  checkCombatEnd();
+  if(!G.combat) return;
   document.getElementById('turn-num').textContent=G.combat.turn;
 
   updateIntents();
@@ -3420,10 +3701,16 @@ function combatWin(){
   if(hasRelic('calculator')) G.player.hp=Math.min(G.player.maxHp,G.player.hp+5);
   G.combat=null;
 
-  if(isBoss && G.act===2){ victory(); return; }
+  if(isBoss && G.act===2 && !G.endless){ victory(); return; }
 
-  // Elites and bosses also drop a relic
-  showReward((isBoss||wasElite)?randomNewRelic():null);
+  // Act I/II bosses offer a Faustian CHOICE; elites/endless bosses drop a random relic
+  if(isBoss&&G.act<2){
+    _bossChoice=Object.keys(RELICS).filter(id=>RELICS[id].boss&&!hasRelic(id));
+    showReward(_bossChoice.length?null:randomNewRelic());
+  } else {
+    _bossChoice=null;
+    showReward((isBoss||wasElite)?randomNewRelic():null);
+  }
 }
 
 function combatLose(){
@@ -3804,7 +4091,30 @@ function hideDiscardPrompt(){
 // ============================================================
 let _potionDrop=null;
 let _lastGoldEarned=0;
+let _bossChoice=null;
+function pickBossRelic(id){
+  addRelic(id);
+  const r=RELICS[id];
+  const bc=document.getElementById('boss-relic-choice');
+  bc.innerHTML=`<div class="tgold">${r.ico} ${r.name} — signed.</div>`;
+  snd('victory');
+  setTimeout(()=>{ bc.style.display='none'; },1200);
+  saveRun(null);
+}
 function showReward(relicId=null){
+  const bc=document.getElementById('boss-relic-choice');
+  if(_bossChoice&&_bossChoice.length){
+    bc.style.display='flex';
+    bc.innerHTML=`<div class="tgold" style="letter-spacing:2px;">⚖ THE BOSS LEFT A CONTRACT — choose one (all have a price)</div>
+      <div class="flex gap8" style="flex-wrap:wrap;justify-content:center;">`+
+      _bossChoice.map(id=>{ const r=RELICS[id];
+        return `<div class="boss-relic" onclick="pickBossRelic('${id}')">
+          <div style="font-size:1.8rem;">${r.ico}</div>
+          <div class="tgold" style="font-size:.74rem;">${r.name}</div>
+          <div class="tdim" style="font-size:.62rem;max-width:150px;">${r.desc}</div></div>`; }).join('')+
+      `</div>`;
+    _bossChoice=null;
+  } else if(!_bossChoice) bc.style.display='none';
   const ge=document.getElementById('gold-earned');
   if(ge&&_lastGoldEarned) countUp(ge,_lastGoldEarned,'+$',900);
   const pr=document.getElementById('potion-reward');
@@ -4183,6 +4493,11 @@ function showCardPicker(title, sub, cards, onPick, onCancel){
 }
 
 function restRemove(){
+  if(hasRelic('golden_handcuffs_r')){
+    document.querySelector('#rest-screen .tdim').textContent=
+      '🔗 GOLDEN HANDCUFFS: card removal is contractually forbidden. You signed.';
+    return;
+  }
   const fee=mlAt(2)?20:0;
   if(fee&&G.player.gold<fee){
     document.querySelector('#rest-screen .tdim').textContent=
@@ -4231,8 +4546,20 @@ function closeDeck(){ document.getElementById('deck-modal').classList.remove('op
 // ============================================================
 // END STATES
 // ============================================================
+function goEndless(){
+  if(!G) return;
+  G.endless=true;
+  G.act=3; G.floor=-1; G.curCol=null; G.path=[]; G._mkD=null;
+  G.actMap=buildActMap(G.act,G.seed);
+  snd('click');
+  track('endless-start');
+  goMap();
+}
+
 function victory(){
   const score=recordRunEnd(true,null);
+  const eb=document.getElementById('endless-btn');
+  if(eb) eb.style.display=G.daily?'none':'';
   snd('victory');
   spawnParticles();
   show('victory-screen');

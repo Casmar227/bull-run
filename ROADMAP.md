@@ -99,9 +99,15 @@ localization, ads.
   runs fully offline. **$4.99 paid up-front; web stays free as the funnel.** Haptics
   on hits; audio suspend on `visibilitychange`; shell in `/ios-shell` to keep the web
   product no-build.
-- ⏳ **Depth backlog** (pick by metrics, ~15–20h): Powers card type (persistent auras),
-  boss trade-off relics, mid-combat save (after making enemy defs data-driven — remove
-  the `inflation` closure), endless mode ("After-Hours Trading"), MLs 11–20.
+- ✅ **Depth backlog — shipped**: Powers card type (6 persistent auras incl. per-character
+  ones), Faustian boss trade-off relics (choice of 3 after Act I/II bosses), endless
+  After-Hours Trading mode (stacking +20% HP/+1 Str loops), daily streaks 🔥, stats
+  screen, codex with locked silhouettes, keyboard play. Still open: mid-combat save
+  (needs data-driven enemy defs), MLs 11–20.
+- ✅ **Graphics overhaul — shipped**: title boot cinematic, per-act living backgrounds,
+  boss intro splashes, hit-stop, death dissolves, holo-foil rares with 3D tilt, custom
+  SVG portraits for all six "faces", bull map-marker that walks your route, VT323
+  terminal font, FX quality settings; 60fps verified on mobile viewport.
 
 **Moves:** revenue, App Store rating, D90 retention.
 
