@@ -3,7 +3,7 @@
 // newest build when online and a missed VERSION bump can never strand them.
 // Static assets (icons, manifest) stay cache-first. Bump VERSION per deploy
 // to clear old caches.
-const VERSION = 'br-v4';
+const VERSION = 'br-v5';
 const ASSETS = [
   './',
   './index.html',
