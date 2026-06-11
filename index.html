@@ -633,7 +633,7 @@ body[data-act="2"] #bgfx .bg-scene{background-image:url("data:image/svg+xml,%3Cs
 #vignette.on{opacity:1;animation:vign-beat 1.6s ease-in-out infinite;}
 @keyframes vign-beat{0%,100%{box-shadow:inset 0 0 90px 24px rgba(160,0,0,.38)}50%{box-shadow:inset 0 0 140px 50px rgba(200,0,0,.55)}}
 .esprite{position:relative;}
-.esprite svg{width:1.05em;height:1.05em;display:block;margin:0 auto;
+.esprite svg{width:1.55em;height:1.55em;display:block;margin:-0.18em auto -0.12em;
   filter:drop-shadow(0 4px 8px rgba(0,0,0,.6));}
 .ch-ico svg{width:96px;height:96px;}
 .esprite::after{content:'';position:absolute;left:50%;bottom:-10px;width:74%;height:12px;transform:translateX(-50%);
@@ -957,6 +957,8 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
       </div>
       <button class="btn sm" id="crt-btn" onclick="toggleCRT()">CRT SCANLINES: ON</button>
       <button class="btn sm" id="snd-btn" onclick="toggleMute();renderSettings();">SOUND: ON</button>
+      <button class="btn sm" onclick="reportBug()">🐞 REPORT A BUG</button>
+      <div class="tdim" style="font-size:.6rem;text-align:center;" id="ver-line"></div>
       <button class="btn mt8" onclick="closeSettings()">CLOSE</button>
     </div>
   </div>
@@ -1076,6 +1078,27 @@ function toggleMute(){
   if(_ambientGain) _ambientGain.gain.value=_muted?0:0.04;
 }
 
+// Low menacing drone under boss fights — procedural, two detuned saws
+let _drone=null;
+function setBossDrone(on){
+  try{
+    if(on&&!_drone&&_actx&&!_muted&&!window.BR_HEADLESS){
+      const ctx=_actx;
+      const g=ctx.createGain(); g.gain.value=0.012; g.connect(ctx.destination);
+      const o1=ctx.createOscillator(); o1.type='sawtooth'; o1.frequency.value=55;
+      const o2=ctx.createOscillator(); o2.type='sawtooth'; o2.frequency.value=55.7;
+      const f=ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=180;
+      o1.connect(f); o2.connect(f); f.connect(g);
+      o1.start(); o2.start();
+      _drone={g,o1,o2};
+    } else if(!on&&_drone){
+      _drone.g.gain.linearRampToValueAtTime(0,_actx.currentTime+0.6);
+      const d=_drone; _drone=null;
+      setTimeout(()=>{ try{ d.o1.stop(); d.o2.stop(); }catch(e){} },700);
+    }
+  }catch(e){}
+}
+
 function startAmbient(){
   if(_ambientStarted) return;
   _ambientStarted=true;
@@ -1093,10 +1116,13 @@ function startAmbient(){
   const bpf=ctx.createBiquadFilter(); bpf.type='bandpass'; bpf.frequency.value=900; bpf.Q.value=0.4;
   ns.connect(bpf); bpf.connect(_ambientGain); ns.start();
 
-  // Periodic order-confirmation beeps
+  // Periodic order-confirmation beeps — the note set follows the act's
+  // mood (bright pentatonic → uneasy minor → low gilded drone-notes)
   (function beep(){
     if(_actx){
-      const f=[880,1047,1175,1319,1397][Math.floor(Math.random()*5)];
+      const SCALES=[[880,1047,1175,1319,1397],[830,932,1108,1244,932],[660,784,880,988,1175]];
+      const sc=SCALES[Math.min(2,parseInt(document.body.dataset.act||'0',10))]||SCALES[0];
+      const f=sc[Math.floor(Math.random()*sc.length)];
       const o=ctx.createOscillator(), g=ctx.createGain();
       o.type='sine'; o.frequency.value=f;
       g.gain.setValueAtTime(0,ctx.currentTime);
@@ -1342,7 +1368,8 @@ const show = (id) => {
   const el=document.getElementById(id);
   el.classList.add('active');
   if(_lastScreen!==id){ void el.offsetWidth; el.classList.add('wipe'); _lastScreen=id; }
-  if(id!=='combat-screen'){ const v=document.getElementById('vignette'); if(v) v.classList.remove('on'); }
+  if(id!=='combat-screen'){ const v=document.getElementById('vignette'); if(v) v.classList.remove('on');
+    if(typeof setBossDrone==='function') setBossDrone(false); }
   if(id==='menu-screen') updateMenu();
 };
 
@@ -1368,8 +1395,8 @@ const CARDS = {
     effect:(G,t)=>{ playerDealDamage(G,t,14); } },
 
   bear_raid:{ id:'bear_raid', name:'Bear Raid', cost:2, type:'attack', ico:'🐻',
-    desc:'Deal 5 damage to ALL enemies.',
-    effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,5); }); } },
+    desc:'Deal 7 damage to ALL enemies.',
+    effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,7); }); } },
 
   flash_crash:{ id:'flash_crash', name:'Flash Crash', cost:2, type:'attack', ico:'⚡',
     desc:'Deal 4 damage 3 times.', needsTarget:true,
@@ -1380,8 +1407,8 @@ const CARDS = {
     effect:(G,t)=>{ playerDealDamage(G,t,26); } },
 
   margin_call:{ id:'margin_call', name:'Margin Call', cost:0, type:'attack', ico:'⚠️',
-    desc:'Deal 10 damage. Take 4 damage.', needsTarget:true,
-    effect:(G,t)=>{ playerDealDamage(G,t,10); playerTakeDamage(G,4,true); } },
+    desc:'Deal 12 damage. Take 3 damage.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,12); playerTakeDamage(G,3,true); } },
 
   leveraged_play:{ id:'leveraged_play', name:'Leveraged Play', cost:1, type:'attack', ico:'💹',
     desc:'Deal 14 damage. Exhaust.', needsTarget:true, exhausts:true,
@@ -1485,25 +1512,25 @@ const CARDS = {
 
   // ——— DEBT / LEVERAGE (risk now, power later) ———
   leverage_up:{ id:'leverage_up', name:'Leverage Up', cost:0, type:'skill', ico:'🏗️',
-    desc:'Gain 2 Capital. Gain 2 Debt.',
+    desc:'Gain 2 Capital. Gain 1 Debt.',
     effect:(G)=>{ G.combat.energy=clamp(G.combat.energy+2,0,9); renderEnergy();
-      applyStatus(G,'player','debt',2); log('Gained 2 Capital!','sts'); } },
+      applyStatus(G,'player','debt',1); log('Gained 2 Capital!','sts'); } },
 
   junk_bonds:{ id:'junk_bonds', name:'Junk Bonds', cost:1, type:'attack', ico:'🧨',
-    desc:'Deal damage equal to 5× your Debt.', needsTarget:true,
-    dyn:(G)=>`Deal ${5*(G.player.statuses.debt||0)} damage right now. (5× your Debt)`,
-    effect:(G,t)=>{ playerDealDamage(G,t,5*(G.player.statuses.debt||0)); } },
+    desc:'Deal damage equal to 6× your Debt.', needsTarget:true,
+    dyn:(G)=>`Deal ${6*(G.player.statuses.debt||0)} damage right now. (6× your Debt)`,
+    effect:(G,t)=>{ playerDealDamage(G,t,6*(G.player.statuses.debt||0)); } },
 
   credit_default_swap:{ id:'credit_default_swap', name:'Credit Default Swap', cost:1, type:'defend', ico:'🧾',
-    desc:'Gain 4 block, +3 per Debt you have.',
-    dyn:(G)=>`Gain ${4+3*(G.player.statuses.debt||0)} block right now. (+3 per Debt)`,
-    effect:(G)=>{ playerGainBlock(G,4+3*(G.player.statuses.debt||0)); } },
+    desc:'Gain 6 block, +3 per Debt you have.',
+    dyn:(G)=>`Gain ${6+3*(G.player.statuses.debt||0)} block right now. (+3 per Debt)`,
+    effect:(G)=>{ playerGainBlock(G,6+3*(G.player.statuses.debt||0)); } },
 
   toxic_assets:{ id:'toxic_assets', name:'Toxic Assets', cost:2, type:'attack', ico:'☢️',
-    desc:'Deal 9 damage to ALL enemies. Apply 1 Vulnerable to ALL. Gain 2 Debt.',
+    desc:'Deal 9 damage to ALL enemies. Apply 1 Vulnerable to ALL. Gain 1 Debt.',
     effect:(G)=>{ G.combat.enemies.forEach((e,i)=>{ if(e.hp>0){ playerDealDamage(G,i,9);
         if(G.combat.enemies[i].hp>0) applyStatus(G,i,'vulnerable',1); } });
-      applyStatus(G,'player','debt',2); } },
+      applyStatus(G,'player','debt',1); } },
 
   // ——— FORTRESS (block as a weapon) ———
   treasury_bonds:{ id:'treasury_bonds', name:'Treasury Bonds', cost:1, type:'defend', ico:'💵',
@@ -1547,9 +1574,9 @@ const CARDS = {
     effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,18); }); } },
 
   ponzi_scheme:{ id:'ponzi_scheme', name:'Ponzi Scheme', cost:2, type:'skill', ico:'🎩',
-    desc:'Gain 5 Strength. Gain 3 Debt.',
+    desc:'Gain 5 Strength. Gain 2 Debt.',
     effect:(G)=>{ G.player.statuses.strength=(G.player.statuses.strength||0)+5;
-      applyStatus(G,'player','debt',3); log('You gain 5 Strength!','sts'); renderCombat(); } },
+      applyStatus(G,'player','debt',2); log('You gain 5 Strength!','sts'); renderCombat(); } },
 
   golden_goose:{ id:'golden_goose', name:'Golden Goose', cost:1, type:'skill', ico:'🪿',
     desc:'Gain 1 Energy. Draw 2 cards.',
@@ -1573,9 +1600,9 @@ const CARDS = {
       if(G.combat.enemies[t].hp<=0){ G.player.gold+=15; log('Stripped for parts: +$15.','heal'); renderCombat(); } } },
 
   liquidation_sale:{ id:'liquidation_sale', name:'Liquidation Sale', cost:1, type:'skill', ico:'🏷️', char:'vulture',
-    desc:'Gain $4 per Debt you have. Exhaust.', exhausts:true,
-    dyn:(G)=>`Gain $${4*(G.player.statuses.debt||0)} right now. ($4 per Debt)`,
-    effect:(G)=>{ const g=4*(G.player.statuses.debt||0); G.player.gold+=g;
+    desc:'Gain $5 per Debt you have. Exhaust.', exhausts:true,
+    dyn:(G)=>`Gain $${5*(G.player.statuses.debt||0)} right now. ($5 per Debt)`,
+    effect:(G)=>{ const g=5*(G.player.statuses.debt||0); G.player.gold+=g;
       log(`Liquidation sale: +$${g}.`,'heal'); renderCombat(); } },
 
   debt_ceiling:{ id:'debt_ceiling', name:'Debt Ceiling', cost:2, type:'skill', ico:'🏛️', char:'vulture', rar:'rare',
@@ -1818,10 +1845,10 @@ const UPGRADES={
   market_order:{desc:'Deal 9 damage.', effect:(G,t)=>{ playerDealDamage(G,t,9); }},
   stop_loss:{desc:'Gain 8 block.', effect:(G)=>{ playerGainBlock(G,8); }},
   short_sell:{desc:'Deal 20 damage.', effect:(G,t)=>{ playerDealDamage(G,t,20); }},
-  bear_raid:{desc:'Deal 8 damage to ALL enemies.', effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,8); }); }},
+  bear_raid:{desc:'Deal 10 damage to ALL enemies.', effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,10); }); }},
   flash_crash:{desc:'Deal 5 damage 3 times.', effect:(G,t)=>{ for(let i=0;i<3;i++) playerDealDamage(G,t,5); }},
   hostile_takeover:{desc:'Deal 34 damage.', effect:(G,t)=>{ playerDealDamage(G,t,34); }},
-  margin_call:{desc:'Deal 13 damage. Take 2 damage.', effect:(G,t)=>{ playerDealDamage(G,t,13); playerTakeDamage(G,2,true); }},
+  margin_call:{desc:'Deal 15 damage. Take 2 damage.', effect:(G,t)=>{ playerDealDamage(G,t,15); playerTakeDamage(G,2,true); }},
   leveraged_play:{desc:'Deal 14 damage.', exhausts:false, effect:(G,t)=>{ playerDealDamage(G,t,14); }},
   pump_dump:{desc:'Deal 9 damage. Apply 3 Vulnerable.', effect:(G,t)=>{ playerDealDamage(G,t,9); applyStatus(G,t,'vulnerable',3); }},
   insider_trade:{desc:'Deal 12 damage. Draw 1.', effect:(G,t)=>{ playerDealDamage(G,t,12); drawCards(G,1); }},
@@ -1848,14 +1875,14 @@ const UPGRADES={
     dyn:(G)=>`Draw ${G.combat.cardsPlayedThisTurn+2} cards right now.`,
     effect:(G)=>{ drawCards(G,G.combat.cardsPlayedThisTurn+1); }},
   all_in:{desc:'Deal 30 damage. Exhaust. (Keeps your hand.)', effect:(G,t)=>{ playerDealDamage(G,t,30); }},
-  leverage_up:{desc:'Gain 2 Capital. Gain 1 Debt.', effect:(G)=>{ G.combat.energy=clamp(G.combat.energy+2,0,9); renderEnergy(); applyStatus(G,'player','debt',1); log('Gained 2 Capital!','sts'); }},
-  junk_bonds:{desc:'Deal damage equal to 7× your Debt.',
-    dyn:(G)=>`Deal ${7*(G.player.statuses.debt||0)} damage right now. (7× your Debt)`,
-    effect:(G,t)=>{ playerDealDamage(G,t,7*(G.player.statuses.debt||0)); }},
-  credit_default_swap:{desc:'Gain 6 block, +4 per Debt you have.',
-    dyn:(G)=>`Gain ${6+4*(G.player.statuses.debt||0)} block right now. (+4 per Debt)`,
-    effect:(G)=>{ playerGainBlock(G,6+4*(G.player.statuses.debt||0)); }},
-  toxic_assets:{desc:'Deal 12 damage to ALL enemies. Apply 2 Vulnerable to ALL. Gain 2 Debt.', effect:(G)=>{ G.combat.enemies.forEach((e,i)=>{ if(e.hp>0){ playerDealDamage(G,i,12); if(G.combat.enemies[i].hp>0) applyStatus(G,i,'vulnerable',2); } }); applyStatus(G,'player','debt',2); }},
+  leverage_up:{desc:'Gain 2 Capital and 1 Debt. Draw 1 card.', effect:(G)=>{ G.combat.energy=clamp(G.combat.energy+2,0,9); renderEnergy(); applyStatus(G,'player','debt',1); drawCards(G,1); log('Gained 2 Capital!','sts'); }},
+  junk_bonds:{desc:'Deal damage equal to 8× your Debt.',
+    dyn:(G)=>`Deal ${8*(G.player.statuses.debt||0)} damage right now. (8× your Debt)`,
+    effect:(G,t)=>{ playerDealDamage(G,t,8*(G.player.statuses.debt||0)); }},
+  credit_default_swap:{desc:'Gain 8 block, +4 per Debt you have.',
+    dyn:(G)=>`Gain ${8+4*(G.player.statuses.debt||0)} block right now. (+4 per Debt)`,
+    effect:(G)=>{ playerGainBlock(G,8+4*(G.player.statuses.debt||0)); }},
+  toxic_assets:{desc:'Deal 12 damage to ALL enemies. Apply 2 Vulnerable to ALL. Gain 1 Debt.', effect:(G)=>{ G.combat.enemies.forEach((e,i)=>{ if(e.hp>0){ playerDealDamage(G,i,12); if(G.combat.enemies[i].hp>0) applyStatus(G,i,'vulnerable',2); } }); applyStatus(G,'player','debt',1); }},
   treasury_bonds:{desc:'Gain 9 block. Retain: your block is not removed next turn.', effect:(G)=>{ playerGainBlock(G,9); G.player.statuses.retain=1; log('Your block will carry over!','blk'); renderCombat(); }},
   collateral_damage:{desc:'Deal damage equal to your current Block, +5.',
     dyn:(G)=>`Deal ${G.player.block+5} damage right now. (Block +5)`,
@@ -1866,7 +1893,7 @@ const UPGRADES={
   volatility_index:{desc:'Apply 3 Vulnerable and 3 Weak to ALL enemies.', effect:(G)=>{ G.combat.enemies.forEach((e,i)=>{ if(e.hp>0){ applyStatus(G,i,'vulnerable',3); applyStatus(G,i,'weak',3); } }); }},
   bailout:{desc:'Gain 40 block. Exhaust.', effect:(G)=>{ playerGainBlock(G,40); }},
   black_swan:{desc:'Deal 24 damage to ALL enemies. Exhaust.', effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,24); }); }},
-  ponzi_scheme:{desc:'Gain 6 Strength. Gain 2 Debt.', effect:(G)=>{ G.player.statuses.strength=(G.player.statuses.strength||0)+6; applyStatus(G,'player','debt',2); log('You gain 6 Strength!','sts'); renderCombat(); }},
+  ponzi_scheme:{desc:'Gain 6 Strength. Gain 1 Debt.', effect:(G)=>{ G.player.statuses.strength=(G.player.statuses.strength||0)+6; applyStatus(G,'player','debt',1); log('You gain 6 Strength!','sts'); renderCombat(); }},
   golden_goose:{desc:'Gain 1 Energy. Draw 3 cards.', effect:(G)=>{ G.combat.energy=clamp(G.combat.energy+1,0,9); drawCards(G,3); renderEnergy(); }},
   // Vulture exclusives
   distressed_debt:{desc:'Deal 10 damage, +4 per Debt you have.',
@@ -2026,7 +2053,7 @@ const RELICS={
   bull_plush:  {ico:'🧸', name:'Lucky Bull Plush',  desc:'Heal 2 HP every time you advance a floor.'},
   short_fuse:  {ico:'🧨', name:'Short Fuse',        desc:'At the start of each turn, deal 2 damage to a random enemy.'},
   golden_gavel:{ico:'🔨', name:'Golden Gavel',      desc:'Weak and Vulnerable you apply get +1 stack.'},
-  vulture_eye: {ico:'🪶', name:"Vulture's Eye",     desc:'Whenever you gain Debt, gain 2 block per stack.', innate:true},
+  vulture_eye: {ico:'🪶', name:"Vulture's Eye",     desc:'Whenever you gain Debt, gain 3 block per stack.', innate:true},
   order_book:  {ico:'📓', name:'Order Book',        desc:'Whenever a Position settles, gain 2 block.', innate:true},
   platinum_card:{ico:'💳', name:'Platinum Card',    desc:'Whenever you spend $ on a card in combat, gain 2 block.', innate:true},
   // boss trade-offs (offered as a choice after Act I/II bosses, never random drops)
@@ -2785,7 +2812,18 @@ function applyFX(){
 }
 function setFX(v){ lsSet('br_fx',v); applyFX(); renderSettings(); snd('click'); }
 function toggleCRT(){ lsSet('br_crt',lsGet('br_crt')==='0'?'1':'0'); applyFX(); renderSettings(); snd('click'); }
-function openSettings(){ renderSettings(); document.getElementById('settings-modal').classList.add('open'); snd('click'); }
+const GAME_VERSION='1.2.0';
+function reportBug(){
+  const body=encodeURIComponent(
+    `**What happened?**\n\n\n---\nversion: ${GAME_VERSION}\n`+
+    (G?`seed: ${G.seed.toString(36)} · ${G.charId} · act ${G.act+1} floor ${G.floor+1}${G.ml?' · ML'+G.ml:''}\n`:'')+
+    `ua: ${navigator.userAgent}`);
+  window.open(`https://github.com/Casmar227/bull-run/issues/new?title=${encodeURIComponent('[bug] ')}&body=${body}`,'_blank');
+}
+function openSettings(){ renderSettings();
+  const v=document.getElementById('ver-line');
+  if(v) v.textContent='BULL RUN v'+GAME_VERSION;
+  document.getElementById('settings-modal').classList.add('open'); snd('click'); }
 function closeSettings(){ document.getElementById('settings-modal').classList.remove('open'); }
 function renderSettings(){
   const lv=lsGet('br_fx')||'full';
@@ -3020,6 +3058,27 @@ fed_reserve:`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
 <animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" dur="2.8s" repeatCount="indefinite"/></g>
 </svg>`,
 };
+
+
+// enemy emblems — same flat-noir language as the portraits
+Object.assign(ART,{
+tax_auditor:`<svg viewBox="0 0 100 100"><rect x="26" y="18" width="40" height="54" rx="3" fill="#e8e4d8" stroke="#9a937f" stroke-width="1.5"/><path d="M32 28h28M32 36h28M32 44h18" stroke="#8a8270" stroke-width="2.4"/><circle cx="58" cy="58" r="15" fill="rgba(180,40,40,.12)" stroke="#c23030" stroke-width="2" transform="rotate(-18 58 58)"/><text x="58" y="63" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="9" fill="#c23030" transform="rotate(-18 58 58)">AUDIT</text><circle cx="40" cy="60" r="13" fill="rgba(120,200,255,.12)" stroke="#cfd8dc" stroke-width="3"/><path d="M50 70 L62 84" stroke="#cfd8dc" stroke-width="5" stroke-linecap="round"/></svg>`,
+day_trader:`<svg viewBox="0 0 100 100"><rect x="30" y="12" width="40" height="72" rx="6" fill="#10131c" stroke="#3a4a66" stroke-width="2"/><rect x="34" y="20" width="32" height="52" fill="#060a12"/><polyline points="36,58 42,48 47,53 53,36 58,44 64,30" fill="none" stroke="#00e676" stroke-width="2"/><polyline points="36,40 44,46 50,42 58,56 64,50" fill="none" stroke="#ff5252" stroke-width="1.6" opacity=".8"/><circle cx="50" cy="78" r="3" fill="#3a4a66"/><path d="M70 26 Q76 30 74 38" stroke="#7ec8ff" stroke-width="2" fill="none" opacity=".7"/></svg>`,
+inflation:`<svg viewBox="0 0 100 100"><path d="M50 14 C66 14 74 28 74 40 C74 54 62 62 50 62 C38 62 26 54 26 40 C26 28 34 14 50 14 Z" fill="#a82828" stroke="#ff6b6b" stroke-width="2"/><path d="M42 26 Q38 32 39 40" stroke="#ff9b9b" stroke-width="2" fill="none" opacity=".7"/><text x="50" y="46" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="18" fill="#ffd2d2">%</text><path d="M50 62 L46 70 L54 70 Z" fill="#a82828"/><path d="M50 70 L50 84" stroke="#caa84a" stroke-width="2"/><rect x="42" y="84" width="16" height="10" rx="2" fill="#3a2d1a" stroke="#caa84a"/><path d="M16 60 L16 44 M12 49 L16 44 L20 49 M84 64 L84 40 M80 46 L84 40 L88 46" stroke="#ff6b6b" stroke-width="2.4" fill="none"/></svg>`,
+short_seller:`<svg viewBox="0 0 100 100"><g transform="translate(50 50) scale(1.22) translate(-50 -50)"><polyline points="10,28 28,38 40,32 56,52 68,46 90,72" fill="none" stroke="#ff5252" stroke-width="3.6"/><path d="M90 72 L84 66 M90 72 L82 74" stroke="#ff5252" stroke-width="2.6"/><g transform="rotate(24 52 46)"><circle cx="44" cy="56" r="7" fill="none" stroke="#cfd8dc" stroke-width="3"/><circle cx="60" cy="56" r="7" fill="none" stroke="#cfd8dc" stroke-width="3"/><path d="M48 50 L72 22 M56 50 L32 22" stroke="#e8f0f4" stroke-width="5" stroke-linecap="round"/></g></g></svg>`,
+fomo_bro:`<svg viewBox="0 0 100 100"><path d="M30 92 Q30 70 42 64 L58 64 Q70 70 70 92 Z" fill="#141a22" stroke="#2c3a4c" stroke-width="1.6"/><rect x="36" y="22" width="28" height="34" rx="12" fill="#1c2530"/><circle cx="45" cy="38" r="6" fill="#0a0e14" stroke="#5af" stroke-width="1.4"/><circle cx="59" cy="38" r="6" fill="#0a0e14" stroke="#5af" stroke-width="1.4"/><path d="M45 38 m-3 0 a3 3 0 1 1 5 2 M59 38 m-3 0 a3 3 0 1 1 5 2" stroke="#9fdcff" stroke-width="1.4" fill="none"/><path d="M46 52 Q50 49 54 52" stroke="#5a7488" stroke-width="1.6" fill="none"/><rect x="58" y="62" width="16" height="24" rx="3" fill="#0a0e14" stroke="#5af" stroke-width="1.6" transform="rotate(-12 66 74)"/><path d="M62 70 l8 6 M62 76 l8 -4" stroke="#00e676" stroke-width="1.4" transform="rotate(-12 66 74)"/></svg>`,
+crypto_bro_e:`<svg viewBox="0 0 100 100"><g transform="translate(50 50) scale(1.15) translate(-50 -50)"><rect x="32" y="20" width="36" height="42" rx="14" fill="#c79b6d"/><path d="M30 30 Q34 12 50 14 Q66 12 70 30 L70 34 Q60 26 50 26 Q40 26 30 34 Z" fill="#2c1c10"/><path d="M30 36 L70 36 L68 44 Q60 47 54 44 L46 44 Q40 47 32 44 Z" fill="#0c0c10" stroke="#ffd700" stroke-width="1.2"/><path d="M42 54 Q50 60 58 54" stroke="#7a5a3a" stroke-width="2" fill="none"/><circle cx="50" cy="80" r="14" fill="#caa030" stroke="#ffe98a" stroke-width="2"/><text x="50" y="86" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="16" fill="#6a4d00">₿</text></g></svg>`,
+pension_fund:`<svg viewBox="0 0 100 100"><polygon points="50,10 88,30 12,30" fill="#1c2026" stroke="#3c444e" stroke-width="1.6"/><rect x="20" y="32" width="60" height="6" fill="#262c34"/><rect x="24" y="40" width="10" height="36" fill="#1a1f25" stroke="#333b44" stroke-width="1.2"/><rect x="45" y="40" width="10" height="36" fill="#1a1f25" stroke="#333b44" stroke-width="1.2"/><rect x="66" y="40" width="10" height="36" fill="#1a1f25" stroke="#333b44" stroke-width="1.2"/><rect x="16" y="78" width="68" height="8" fill="#262c34" stroke="#3c444e" stroke-width="1.2"/><circle cx="50" cy="22" r="7" fill="#0c1014" stroke="#8a98a8" stroke-width="1.4"/><path d="M50 18 L50 22 L53 24" stroke="#8a98a8" stroke-width="1.4" fill="none"/></svg>`,
+stagflation:`<svg viewBox="0 0 100 100"><path d="M14 78 Q14 64 28 64 L60 64 Q66 64 66 72 L66 78 Z" fill="#3a3326" stroke="#5c5238" stroke-width="1.6"/><path d="M22 64 Q20 56 26 54 M34 64 Q32 54 38 53" stroke="#5c5238" stroke-width="2" fill="none"/><circle cx="58" cy="46" r="20" fill="#241e12" stroke="#caa84a" stroke-width="2"/><path d="M58 46 m0 -13 a13 13 0 0 1 9 22 a8 8 0 0 0 -14 -10 a4 4 0 0 1 5 -1" fill="none" stroke="#ff6b6b" stroke-width="2.4"/><path d="M70 30 L78 22 M74 22 L78 22 L78 26" stroke="#ff6b6b" stroke-width="2" fill="none" opacity=".7"/><circle cx="20" cy="58" r="2.4" fill="#caa84a"/><circle cx="28" cy="56" r="2.4" fill="#caa84a"/></svg>`,
+algo_bot:`<svg viewBox="0 0 100 100"><g transform="translate(50 50) scale(1.18) translate(-50 -50)"><rect x="26" y="26" width="48" height="42" rx="6" fill="#1c2c3c" stroke="#5ad0e8" stroke-width="2.4"/><rect x="34" y="36" width="10" height="14" fill="#06343e" stroke="#3ddce8" stroke-width="1.4"/><rect x="56" y="36" width="10" height="14" fill="#06343e" stroke="#3ddce8" stroke-width="1.4"/><rect x="36" y="40" width="6" height="8" fill="#00e676"/><rect x="58" y="42" width="6" height="6" fill="#ff5252"/><path d="M38 58 h24" stroke="#3a8a9e" stroke-width="2.4" stroke-dasharray="4 3"/><path d="M50 26 L50 14 M50 14 m-3 0 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0" stroke="#3ddce8" stroke-width="2" fill="none"/><rect x="32" y="68" width="36" height="12" rx="3" fill="#0c1219" stroke="#28505c" stroke-width="1.4"/><path d="M38 74 h6 M48 74 h6 M58 74 h4" stroke="#3ddce8" stroke-width="1.6"/></g></svg>`,
+rating_agency:`<svg viewBox="0 0 100 100"><path d="M22 34 L62 18 L78 34 L70 78 L30 86 Z" fill="#1e1626" stroke="#7a4a8a" stroke-width="2" transform="rotate(8 50 50)"/><circle cx="32" cy="34" r="4" fill="#0c060e" stroke="#aa77bb" stroke-width="1.4" transform="rotate(8 50 50)"/><g transform="rotate(8 50 50)" fill="#ffd700"><path d="M44 42 l2.4 5 5.4 .6 -4 3.7 1.1 5.3 -4.9 -2.7 -4.9 2.7 1.1 -5.3 -4 -3.7 5.4 -.6 Z"/><path d="M62 44 l2.4 5 5.4 .6 -4 3.7 1.1 5.3 -4.9 -2.7 -4.9 2.7 1.1 -5.3 -4 -3.7 5.4 -.6 Z"/></g><path d="M52 64 l2.4 5 5.4 .6 -4 3.7 1.1 5.3 -4.9 -2.7 -4.9 2.7 1.1 -5.3 -4 -3.7 5.4 -.6 Z" fill="#5c4313" transform="rotate(30 54 70)"/></svg>`,
+liquidity_crisis:`<svg viewBox="0 0 100 100"><rect x="42" y="20" width="14" height="46" fill="#1a1f25" stroke="#333b44" stroke-width="1.4" transform="rotate(9 49 43)"/><path d="M6 70 Q18 52 32 64 Q44 74 56 60 Q70 46 84 60 Q92 66 96 62 L96 92 L6 92 Z" fill="#0c2a3e" stroke="#3a8acc" stroke-width="2"/><path d="M10 74 Q22 62 34 70 M48 70 Q60 58 74 66" stroke="#5ab0e8" stroke-width="2" fill="none" opacity=".7"/><path d="M30 56 Q34 50 30 46 M68 52 Q72 46 68 42" stroke="#9fdcff" stroke-width="1.8" fill="none" opacity=".6"/></svg>`,
+bear_baron:`<svg viewBox="0 0 100 100"><circle cx="34" cy="34" r="9" fill="#241a12"/><circle cx="66" cy="34" r="9" fill="#241a12"/><path d="M50 24 C68 24 76 38 76 52 C76 70 64 80 50 80 C36 80 24 70 24 52 C24 38 32 24 50 24 Z" fill="#2c2014" stroke="#54402a" stroke-width="2"/><rect x="34" y="6" width="32" height="14" rx="2" fill="#10090a"/><rect x="30" y="18" width="40" height="5" rx="2.5" fill="#10090a"/><rect x="34" y="14" width="32" height="4" fill="#a82828"/><circle cx="41" cy="46" r="3.6" fill="#0c0604"/><circle cx="59" cy="46" r="3.6" fill="#0c0604"/><circle cx="59" cy="46" r="7" fill="none" stroke="#ffd700" stroke-width="1.4"/><path d="M66 46 L72 48" stroke="#ffd700" stroke-width="1.2"/><path d="M44 62 Q50 58 56 62 L53 67 L47 67 Z" fill="#1a1208"/><path d="M40 70 Q50 76 60 70" stroke="#54402a" stroke-width="2" fill="none"/></svg>`,
+sec_agent:`<svg viewBox="0 0 100 100"><path d="M50 12 L80 22 L80 48 Q80 74 50 88 Q20 74 20 48 L20 22 Z" fill="#14202c" stroke="#3a5a7c" stroke-width="2.4"/><path d="M50 18 L74 26 L74 48 Q74 68 50 80 Q26 68 26 48 L26 26 Z" fill="#0c161e" stroke="#28435c" stroke-width="1.4"/><rect x="32" y="38" width="36" height="9" rx="4.5" fill="#06090c" stroke="#5a7488" stroke-width="1.2"/><path d="M38 42.5 h8 M54 42.5 h8" stroke="#9fdcff" stroke-width="1.4" opacity=".5"/><path d="M50 54 l3 6.2 6.8 .8 -5 4.6 1.3 6.6 -6.1 -3.4 -6.1 3.4 1.3 -6.6 -5 -4.6 6.8 -.8 Z" fill="#caa030"/><text x="50" y="32" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="8" fill="#5a7488" letter-spacing="2">AGENT</text></svg>`,
+hedge_mgr:`<svg viewBox="0 0 100 100"><rect x="18" y="34" width="64" height="44" rx="5" fill="#1a1410" stroke="#54402a" stroke-width="2"/><path d="M38 34 L38 28 Q38 24 42 24 L58 24 Q62 24 62 28 L62 34" fill="none" stroke="#54402a" stroke-width="3"/><rect x="44" y="50" width="12" height="9" rx="2" fill="#caa030"/><circle cx="50" cy="56" r="20" fill="#0e0a06" stroke="#caa030" stroke-width="1.6"/><path d="M42 64 L42 58 Q40 50 46 47 Q44 44 47 42 Q52 38 57 43 Q61 47 58 53 L58 64 Z" fill="#cfd8dc"/><circle cx="52" cy="45" r="1.4" fill="#0e0a06"/></svg>`,
+activist_investor:`<svg viewBox="0 0 100 100"><polyline points="8,64 26,70 42,62 58,72 74,66 92,74" fill="none" stroke="#3a8acc" stroke-width="2.4" opacity=".7"/><path d="M50 18 C58 30 62 44 58 62 L40 62 C38 44 42 30 50 18 Z" fill="#1c2c3a" stroke="#5a90b8" stroke-width="2"/><path d="M50 18 C54 28 56 38 55 50 L48 50 C47 38 48 28 50 18 Z" fill="#0e161e"/><path d="M40 62 L58 62 L62 74 Q50 70 38 74 Z" fill="#16222c" stroke="#3a5a74" stroke-width="1.6"/><path d="M74 66 L84 56 M80 56 L84 56 L84 61" stroke="#ff5252" stroke-width="2.4" fill="none"/></svg>`,
+whale_elite:`<svg viewBox="0 0 100 100"><path d="M8 58 Q18 34 50 34 Q80 34 92 52 Q88 72 58 76 Q26 80 8 58 Z" fill="#13283c" stroke="#3a6f9e" stroke-width="2"/><path d="M12 62 Q28 58 36 64 Q28 72 12 68 Z" fill="#0c1c2c"/><path d="M88 52 Q96 44 98 50 Q96 58 89 60 Z" fill="#1a3650"/><circle cx="68" cy="48" r="4" fill="#061018"/><circle cx="69" cy="47" r="1.4" fill="#9fdcff"/><path d="M10 60 Q32 52 58 56 Q76 58 88 60" stroke="#5a9ccc" stroke-width="1.4" fill="none" opacity=".4"/><path d="M40 22 L44 32 L50 22 L56 32 L60 22 L62 34 L38 34 Z" fill="#caa030" stroke="#ffe98a" stroke-width="1.4"/><circle cx="40" cy="22" r="2" fill="#ffe98a"/><circle cx="50" cy="20" r="2" fill="#ffe98a"/><circle cx="60" cy="22" r="2" fill="#ffe98a"/></svg>`,
+});
 
 // idle animation rigs per enemy archetype — nothing on screen is ever static
 const RIGS={inflation:'rig-pulse',stagflation:'rig-pulse',crypto_bro_e:'rig-pulse',
@@ -3523,6 +3582,7 @@ function startCombat(enemies, isBoss=false){
   };
   _seenHand=new Set();
   for(const k in _hbPrev) delete _hbPrev[k];
+  setBossDrone(isBoss);
   document.getElementById('clog').innerHTML='';
   // Relic start-of-combat effects
   if(hasRelic('vault')){ G.player.block=6; log('Private Vault: +6 block.','blk'); }
@@ -3652,7 +3712,7 @@ function applyStatus(G,target,type,stacks){
   if(target==='player'){
     G.player.statuses[type]=(G.player.statuses[type]||0)+stacks;
     log(`You gain ${stacks} ${type}.`,'sts');
-    if(type==='debt'&&hasRelic('vulture_eye')) playerGainBlock(G,2*stacks);
+    if(type==='debt'&&hasRelic('vulture_eye')) playerGainBlock(G,3*stacks);
     snd('status');
     const pel=document.querySelector('.player-entity');
     if(pel){ const r=pel.getBoundingClientRect(); spawnPopup(type.toUpperCase()+' +'+stacks,'sts',r.left+r.width/2,r.top); }
