@@ -65,16 +65,20 @@ localization, ads.
 
 **Moves:** D7/D30 retention, runs/player, % starting a 2nd character.
 
-## PHASE 3 — Reach & Virality (~25–35 hrs remaining)
+## ✅ MOSTLY SHIPPED — Phase 3: Reach & Virality
 
-*Mobile + daily shipped in Sprint 0; what remains is packaging and the push.*
-
-| Feature | Design | Est. |
-|---|---|---|
-| **PWA** | `manifest.webmanifest` + `sw.js` (cache-first, versioned) + real 192/512 PNG icons — the first deliberate break of the single-file rule (SW must be a separate same-origin file). Home-screen install + offline; dress rehearsal for the App Store. | 4–6h |
-| **Emoji path-grid in share string** | Wordle-style: one emoji per node visited (🟩 clean fight / 🟧 survived <50% HP / 💀 elite / 🟥 death), boss ✅/❌. Needs per-node HP snapshots in `pathTaken`. | 3–4h |
-| **Seed sharing** | `?seed=` URL param into `startGame`, COPY SEED on end screens — streamer/community challenge tooling, zero backend. | 3–4h |
-| **Launch push + analytics** | GoatCounter snippet (daily players, share CTR — the only external dependency). Then: Show HN ("a full roguelike in one HTML file"), r/WebGames, r/slaythespire, r/wallstreetbets-adjacent, itch.io mirror. Time the posts AFTER PWA + path-grid ship. | 4h |
+- ✅ **PWA**: `manifest.webmanifest` + cache-first versioned `sw.js` + real 192/512 PNG
+  icons (bull-on-CRT, browser-rendered). Installs to home screen, runs fully offline —
+  verified with an offline boot test. Bump `VERSION` in `sw.js` on every deploy.
+- ✅ **Emoji path-grid share**: Wordle-style grid per act in the share string
+  (🟩 clean fight / 🟧 under 50% HP / 💀 elite / 🛒☕❓ / 🟥 death / ✅❌ boss),
+  built from per-node HP snapshots in the run path
+- ✅ **Seed sharing**: non-daily share links carry `?seed=`; opening one shows a
+  "PLAY SEEDED RUN" button (identical map/enemies/shops); COPY SEED on end screens
+- ⏳ **Launch push + analytics** (the remaining work, ~4h, owner-driven):
+  GoatCounter snippet (daily players + share CTR — would be the only external
+  dependency; not added without owner sign-off). Then the posts: Show HN
+  ("a full roguelike in one HTML file"), r/WebGames, r/slaythespire, itch.io mirror.
 
 **Moves:** new players/week, share CTR (target >10% of daily finishers), daily DAU.
 
@@ -97,5 +101,5 @@ localization, ads.
 | ✅ 0 | Growth-loop MVP (shipped) | — | Run completion, shares |
 | ✅ 1 | DAG map, variety, real upgrades (shipped) | — | Sessions/player |
 | ✅ 2 | Meta, Vulture, Margin Levels, Hot Tips (shipped) | — | D7/D30 retention |
-| 3 | PWA, path-grid share, seeds, launch | 25–35 | New players, daily DAU |
+| ✅ 3 | PWA, path-grid share, seeds (shipped) — launch push pending | ~4 | New players, daily DAU |
 | 4 | Whale, iOS app, depth | 50–70 | Revenue, D90 |

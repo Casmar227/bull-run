@@ -8,7 +8,9 @@ A finance-themed roguelike deckbuilder that runs entirely in your browser. Build
 
 - 📅 **Daily Challenge** — everyone worldwide gets the same seeded run with a rotating market condition (ZIRP, Meme Stock Monday, Crypto Winter…); one scored attempt per day, then share your P&L
 - 💾 **Save & resume** — close the tab mid-run and pick up where you left off
-- 📱 **Plays on phones** — fully responsive, drag or tap to play cards
+- 📱 **Plays on phones & installs as an app** — fully responsive PWA, works offline, add to home screen
+- 🌱 **Seed sharing** — every share link carries the run seed; friends play your exact map
+- 🟩 **Wordle-style run grids** — your shared P&L includes an emoji map of the path you took
 - 🦅 **Two playable investors** — The Trader, and the unlockable Vulture (distressed-debt specialist with 12 exclusive cards where Debt is fuel, not poison)
 - 📈 **Meta-progression** — every run advances your account: card packs, relic packs, and the second character unlock as you play
 - 🌡️ **Margin Levels** — a 10-step ascension ladder per character; win at ML N to unlock ML N+1

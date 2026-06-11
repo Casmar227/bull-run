@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050a07">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>BULL RUN — Finance Roguelike</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -509,6 +513,7 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
     <button class="btn big gold" onclick="openCharSelect(true)">▶ EASY MODE — NEW INVESTOR</button>
     <div class="diff-note">Recommended for your first run: more health, gentler enemies</div>
     <button class="btn big" onclick="openCharSelect(false)">▶ NORMAL — WALL STREET VETERAN</button>
+    <button class="btn big" id="seed-btn" style="display:none;border-color:var(--blue);color:var(--blue);"></button>
     <button class="btn big" id="daily-btn" onclick="startDaily()">📅 DAILY RUN</button>
     <div class="diff-note" id="daily-note"></div>
     <button class="btn" onclick="openHelp()">📖 HOW TO PLAY</button>
@@ -652,7 +657,8 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
   <div id="go-stats" class="liq-notice mt8"></div>
   <div class="flex fc gap8 mt16" style="flex-wrap:wrap;">
     <button class="btn gold" onclick="shareResult(this)">📋 SHARE P&amp;L</button>
-    <button class="btn red" onclick="startGame()">▶ NEW PORTFOLIO</button>
+    <button class="btn" onclick="copySeed(this)">🌱 COPY SEED</button>
+    <button class="btn red" onclick="openCharSelect(false)">▶ NEW PORTFOLIO</button>
     <button class="btn" onclick="show('menu-screen')">MAIN MENU</button>
   </div>
 </div>
@@ -664,7 +670,8 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
   <div id="win-stats" class="mt8" style="color:var(--tdim);line-height:1.8;"></div>
   <div class="flex fc gap8 mt16" style="flex-wrap:wrap;">
     <button class="btn gold" onclick="shareResult(this)">📋 SHARE P&amp;L</button>
-    <button class="btn gold" onclick="startGame()">▶ NEW PORTFOLIO</button>
+    <button class="btn" onclick="copySeed(this)">🌱 COPY SEED</button>
+    <button class="btn gold" onclick="openCharSelect(false)">▶ NEW PORTFOLIO</button>
     <button class="btn" onclick="show('menu-screen')">MAIN MENU</button>
   </div>
 </div>
@@ -1925,7 +1932,7 @@ function startGame(easy=false, seed=null, daily=null, charId='trader', ml=0){
     rngCalls:0,
     player:{ hp, maxHp:hp, block:0, statuses:{}, gold:easy?130:99, deck:ch.deck(),
       relics:ch.relic?[ch.relic]:[], potions:[] },
-    act:0, floor:-1, curCol:null, path:[],
+    act:0, floor:-1, curCol:null, path:[], fullPath:[],
     actMap: buildActMap(0,sd),
     combat:null,
     severanceUsed:false,
@@ -1963,7 +1970,7 @@ function saveRun(inNode){
   lsSet(SAVE_KEY,JSON.stringify({
     v:1, seed:G.seed, easy:G.easy, daily:G.daily||null,
     charId:G.charId||'trader', ml:G.ml||0,
-    act:G.act, floor:G.floor, curCol:G.curCol, path:G.path||[],
+    act:G.act, floor:G.floor, curCol:G.curCol, path:G.path||[], fullPath:G.fullPath||[],
     severanceUsed:!!G.severanceUsed,
     rngCalls:G.rngCalls, inNode:inNode||null,
     player:{ hp:G.player.hp, maxHp:G.player.maxHp, gold:G.player.gold,
@@ -1996,7 +2003,7 @@ function loadRun(){
         if(d.upgraded) applyUpgrade(c);
         return c;
       }) },
-    act:s.act, floor:s.floor, curCol:s.curCol??null, path:s.path||[],
+    act:s.act, floor:s.floor, curCol:s.curCol??null, path:s.path||[], fullPath:s.fullPath||[],
     actMap:buildActMap(s.act,s.seed),
     combat:null,
     severanceUsed:!!s.severanceUsed,
@@ -2054,6 +2061,36 @@ function runScore(){
   return G.stats.floorsCleared*10 + G.player.gold + Math.max(0,G.player.hp)*2 + G.act*100;
 }
 
+const SITE_URL='https://casmar227.github.io/bull-run/';
+
+// Wordle-style run grid: one emoji per node visited, grouped by act
+function pathGrid(won){
+  const acts={};
+  const fp=G.fullPath||[];
+  fp.forEach((p,i)=>{
+    const isLast=i===fp.length-1;
+    let sym;
+    if(p.type==='boss') sym=(p.cleared||won)?'✅':'❌';
+    else if(isLast&&!won&&!p.cleared&&(p.type==='fight'||p.type==='elite')) sym='🟥';
+    else if(p.type==='elite') sym='💀';
+    else if(p.type==='shop') sym='🛒';
+    else if(p.type==='rest') sym='☕';
+    else if(p.type==='event') sym='❓';
+    else sym=(p.hpp!=null&&p.hpp<0.5)?'🟧':'🟩';
+    (acts[p.act]=acts[p.act]||[]).push(sym);
+  });
+  return Object.keys(acts).sort().map(a=>`Act${['I','II','III'][a]||'?'} ${acts[a].join('')}`).join('\n');
+}
+
+let _lastSeed=null;
+function copySeed(btn){
+  if(_lastSeed==null) return;
+  const url=SITE_URL+'?seed='+_lastSeed.toString(36);
+  if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>{
+    if(btn) btn.textContent='✅ SEED LINK COPIED';
+  }).catch(()=>{});
+}
+
 function buildShare(won,killer){
   const lines=[];
   lines.push(G.daily
@@ -2062,7 +2099,9 @@ function buildShare(won,killer){
   const ch=CHARACTERS[G.charId]||CHARACTERS.trader;
   lines.push(`${won?'🏆':'📉'} Portfolio: $${runScore().toLocaleString()} · ${ch.ico}${G.ml?' ML'+G.ml:''} · Act ${['I','II','III'][Math.min(G.act,2)]}`);
   lines.push(won?'💰 DEFEATED THE FEDERAL RESERVE':`💀 LIQUIDATED${killer?' by '+killer:''}`);
-  lines.push('https://casmar227.github.io/bull-run/');
+  const grid=pathGrid(won);
+  if(grid) lines.push(grid);
+  lines.push(G.daily?SITE_URL:SITE_URL+'?seed='+G.seed.toString(36));
   return lines.join('\n');
 }
 
@@ -2121,6 +2160,7 @@ function updateTicker(){
 function recordRunEnd(won,killer){
   clearSave();
   const score=runScore();
+  _lastSeed=G.seed;
   _shareTxt=buildShare(won,killer);
   if(G.daily&&!G.daily.practice){
     lsSet('br_daily',JSON.stringify({n:G.daily.n,done:true,won,score}));
@@ -2285,8 +2325,13 @@ function enterNode(fi,col,type){
   G.floor=fi;
   G.curCol=col;
   G.path=G.path||[];
+  G.fullPath=G.fullPath||[];
   const last=G.path[G.path.length-1];
-  if(!last||last.fi!==fi||last.col!==col) G.path.push({fi,col});
+  if(!last||last.fi!==fi||last.col!==col){
+    const entry={fi,col,type,act:G.act};
+    G.path.push(entry);
+    G.fullPath.push(entry);
+  }
   saveRun({fi,col,type}); // snapshot BEFORE the node consumes any RNG
   if(type==='fight'||type==='elite'||type==='boss'){
     startCombat(getEnemies(G.act,type), type==='boss');
@@ -2297,6 +2342,8 @@ function enterNode(fi,col,type){
 
 function advanceFloor(){
   G.stats.floorsCleared++;
+  const lp=(G.fullPath||[])[(G.fullPath||[]).length-1];
+  if(lp&&!lp.cleared){ lp.cleared=true; lp.hpp=G.player.hp/G.player.maxHp; }
   if(hasRelic('bull_plush')) G.player.hp=Math.min(G.player.maxHp,G.player.hp+2);
   if(G.floor>=G.actMap.length-1){
     G.act++;
@@ -3545,6 +3592,19 @@ const TICKERS=['INFLATION +8.4% ↑','MARKET_ORDER BUY 500 @ $142.00','HOSTILE_T
 // INIT
 // ============================================================
 updateMenu();
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+// ?seed=XYZ — community/streamer challenge runs
+(()=>{
+  const s=new URLSearchParams(location.search).get('seed');
+  if(!s) return;
+  const seed=/^[0-9a-z]+$/.test(s)?parseInt(s,36)>>>0:hashStr(s);
+  const btn=document.getElementById('seed-btn');
+  btn.style.display='';
+  btn.textContent=`🌱 PLAY SEEDED RUN — ${s.toUpperCase()}`;
+  btn.onclick=()=>startGame(false,seed);
+})();
 </script>
 </body>
 </html>
