@@ -394,7 +394,66 @@ h2{font-size:1.3rem;color:var(--green);}
 .help-sec .kw{color:var(--green);font-weight:bold;}
 .menu-btns{display:flex;flex-direction:column;gap:10px;align-items:center;}
 .btn.big{font-size:1.05rem;padding:14px 36px;}
-.diff-note{font-size:.72rem;color:var(--tdim);margin-top:-4px;}
+.diff-note{font-size:.72rem;color:var(--tdim);margin-top:-4px;max-width:420px;text-align:center;}
+
+/* ── LIQUIDATION NOTICE (game over) ── */
+.liq-notice{border:1px dashed var(--red);background:#10050514;padding:16px 22px;
+  color:var(--tdim);line-height:1.9;text-align:left;max-width:440px;font-size:.85rem;
+  background:rgba(40,0,0,.25);}
+.ln-head{color:var(--red);letter-spacing:2px;font-weight:bold;border-bottom:1px dashed #441111;
+  padding-bottom:6px;margin-bottom:8px;text-align:center;}
+.ln-fine{display:block;margin-top:10px;font-size:.68rem;opacity:.7;font-style:italic;line-height:1.6;}
+
+/* ── MOBILE ── */
+body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
+.relic.tipon .rtip{display:block;}
+@media (max-width:720px){
+  #game{padding:8px 8px calc(10px + env(safe-area-inset-bottom));}
+  /* screens set min-height:100vh, but #game adds padding — use dvh
+     minus the padding so the hand never slips below the fold */
+  #combat-screen,#menu-screen,#gameover-screen,#victory-screen{
+    min-height:calc(100dvh - 20px);}
+  #mute-btn{bottom:4px;right:4px;padding:3px 7px;font-size:.62rem;opacity:.7;}
+  h1{font-size:1.8rem;}
+  .subtitle{font-size:.7rem;letter-spacing:2px;}
+  .btn{padding:9px 16px;font-size:.82rem;}
+  .btn.big{font-size:.88rem;padding:12px 18px;width:100%;max-width:340px;}
+  .pstats{gap:10px;flex-wrap:wrap;}
+  .map-hdr{flex-wrap:wrap;gap:8px;}
+  .mnode{width:74px;height:60px;font-size:.6rem;}
+  .mnode .ico{font-size:1.15rem;}
+  .map-row{gap:8px;}
+  .ctop{flex-wrap:wrap;gap:8px;justify-content:center;}
+  .combat-area{min-height:160px;gap:6px;padding:6px 0;}
+  .entity{min-width:104px;}
+  .esprite{font-size:2.6rem;}
+  .ename{font-size:.66rem;}
+  .intent{min-width:88px;font-size:.6rem;padding:2px 5px;}
+  .hbar-bg{width:104px!important;}
+  .clog{height:42px;font-size:.64rem;}
+  .energy-orb{width:42px;height:42px;}
+  .energy-orb .ecur{font-size:.95rem;}
+  .energy-orb .emax{font-size:.52rem;}
+  .pile-row{font-size:.64rem;gap:8px;}
+  .hand{min-height:148px;padding-top:22px;}
+  .card{width:84px;min-height:116px;padding:6px;}
+  .cname{font-size:.56rem;}
+  .cico{font-size:1.25rem;margin:1px 0;}
+  .cdesc{font-size:.53rem;line-height:1.3;}
+  .ctype{font-size:.46rem;}
+  .ccost{width:21px;height:21px;font-size:.66rem;top:-7px;left:-7px;}
+  .card:hover:not(.dis):not(.drag-src){transform:translateY(-20px) scale(1.1) rotate(0deg)!important;}
+  .reward-cards,.shop-grid{gap:8px;}
+  .rcrd .card{width:96px;min-height:126px;}
+  .relic{width:30px;height:30px;font-size:.95rem;}
+  .relic .rtip{width:150px;font-size:.62rem;}
+  .modal{padding:12px;max-height:88vh;}
+  .mcards .card{width:80px;min-height:108px;}
+  .rest-opts{gap:12px;}
+  .event-opts{min-width:0;width:100%;}
+  .hand-hdr{font-size:.66rem;}
+  .liq-notice{max-width:100%;font-size:.74rem;padding:12px 14px;}
+}
 </style>
 </head>
 <body>
@@ -410,12 +469,15 @@ h2{font-size:1.3rem;color:var(--green);}
     Defeat the Federal Reserve to win.
   </div>
   <div class="menu-btns">
+    <button class="btn big" id="resume-btn" onclick="resumeRun()" style="display:none;border-color:var(--gold);color:var(--gold);"></button>
     <button class="btn big gold" onclick="startGame(true)">▶ EASY MODE — NEW INVESTOR</button>
     <div class="diff-note">Recommended for your first run: more health, gentler enemies</div>
     <button class="btn big" onclick="startGame(false)">▶ NORMAL — WALL STREET VETERAN</button>
+    <button class="btn big" id="daily-btn" onclick="startDaily()">📅 DAILY RUN</button>
+    <div class="diff-note" id="daily-note"></div>
     <button class="btn" onclick="openHelp()">📖 HOW TO PLAY</button>
   </div>
-  <div style="font-size:.75rem;color:var(--tdim);">10 starter cards • 3 acts • 1 final boss</div>
+  <div style="font-size:.75rem;color:var(--tdim);">43 cards • daily challenge • 3 acts • 1 final boss</div>
 </div>
 
 <!-- MAP -->
@@ -459,6 +521,7 @@ h2{font-size:1.3rem;color:var(--green);}
     </div>
   </div>
   <div id="discard-prompt" class="discard-prompt" style="display:none;"></div>
+  <div id="target-hint" class="discard-prompt" style="display:none;">👆 TAP AN ENEMY TO TARGET — tap the card again to cancel</div>
   <div class="combat-area" id="combat-area"></div>
   <div class="clog" id="clog"></div>
   <div class="hand-hdr">
@@ -536,9 +599,10 @@ h2{font-size:1.3rem;color:var(--green);}
 <!-- GAMEOVER -->
 <div id="gameover-screen" class="screen">
   <h1>MARGIN CALL</h1>
-  <div class="tdim">Your portfolio has been liquidated.</div>
-  <div id="go-stats" class="mt8" style="color:var(--tdim);line-height:1.8;"></div>
-  <div class="flex fc gap8 mt16">
+  <div class="tdim" style="letter-spacing:3px;">⚖ NOTICE OF ACCOUNT LIQUIDATION ⚖</div>
+  <div id="go-stats" class="liq-notice mt8"></div>
+  <div class="flex fc gap8 mt16" style="flex-wrap:wrap;">
+    <button class="btn gold" onclick="shareResult(this)">📋 SHARE P&amp;L</button>
     <button class="btn red" onclick="startGame()">▶ NEW PORTFOLIO</button>
     <button class="btn" onclick="show('menu-screen')">MAIN MENU</button>
   </div>
@@ -549,7 +613,8 @@ h2{font-size:1.3rem;color:var(--green);}
   <h1>🏆 THE BULL MARKET!</h1>
   <div style="color:var(--gold);font-size:1.05rem;">You defeated the Federal Reserve!</div>
   <div id="win-stats" class="mt8" style="color:var(--tdim);line-height:1.8;"></div>
-  <div class="flex fc gap8 mt16">
+  <div class="flex fc gap8 mt16" style="flex-wrap:wrap;">
+    <button class="btn gold" onclick="shareResult(this)">📋 SHARE P&amp;L</button>
     <button class="btn gold" onclick="startGame()">▶ NEW PORTFOLIO</button>
     <button class="btn" onclick="show('menu-screen')">MAIN MENU</button>
   </div>
@@ -873,10 +938,36 @@ function spawnParticles(){
 // ============================================================
 let _uid = 0;
 const uid = () => ++_uid;
-const rand = (a) => a[Math.floor(Math.random()*a.length)];
-const shuffle = (a) => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
+
+// ——— Seeded RNG (mulberry32) ———
+// Game logic draws from grand() so a run is reproducible from its seed
+// (daily challenges, save/resume). Visual jitter and audio stay on
+// Math.random so they never consume game entropy.
+function mulberry32(seed){
+  let a=seed>>>0;
+  return function(){
+    a|=0; a=(a+0x6D2B79F5)|0;
+    let t=Math.imul(a^(a>>>15),1|a);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t;
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+function hashStr(s){
+  let h=2166136261;
+  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
+  return h>>>0;
+}
+let _grand=Math.random;
+function seedRng(seed,calls=0){
+  _grand=mulberry32(seed);
+  for(let i=0;i<calls;i++) _grand();
+}
+function grand(){ const v=_grand(); if(G) G.rngCalls++; return v; }
+
+const rand = (a) => a[Math.floor(grand()*a.length)];
+const shuffle = (a) => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(grand()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
 const clamp = (v,mn,mx) => Math.max(mn,Math.min(mx,v));
-const show = (id) => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); };
+const show = (id) => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='menu-screen') updateMenu(); };
 
 // ============================================================
 // CARD DEFINITIONS
@@ -1108,7 +1199,7 @@ const POOL_BY_RARITY={
   unc:    REWARD_POOL.filter(k=>CARDS[k].rar==='unc'),
   rare:   REWARD_POOL.filter(k=>CARDS[k].rar==='rare'),
 };
-function rollRarity(){ const r=Math.random(); return r<0.60?'common':r<0.90?'unc':'rare'; }
+function rollRarity(){ const r=grand(); return r<0.60?'common':r<0.90?'unc':'rare'; }
 
 // ============================================================
 // RELICS
@@ -1147,6 +1238,7 @@ function renderRelics(containerId){
     const el=document.createElement('div');
     el.className='relic';
     el.innerHTML=`${r.ico}<div class="rtip"><b>${r.name}</b><br>${r.desc}</div>`;
+    el.onclick=()=>el.classList.toggle('tipon'); // touch has no hover
     cont.appendChild(el);
   });
 }
@@ -1256,7 +1348,7 @@ function getEnemies(act,type){
   if(type==='elite') return [rand(['bear_baron','sec_agent','hedge_mgr'].map(k=>ENEMY_DEFS[k]()))];
   // normal fight: 1 or 2 enemies
   const pool=['tax_auditor','day_trader','inflation'];
-  const count=Math.random()<0.28?2:1;
+  const count=grand()<0.28?2:1;
   return Array.from({length:count},()=>ENEMY_DEFS[rand(pool)]());
 }
 
@@ -1273,19 +1365,208 @@ function newPlayerDeck(){
   ];
 }
 
-function startGame(easy=false){
+function startGame(easy=false, seed=null, daily=null){
   const hp=easy?95:75;
   G={
     easy,
+    seed: seed!=null?seed:((Math.random()*4294967296)>>>0),
+    daily,
+    rngCalls:0,
     player:{ hp, maxHp:hp, block:0, statuses:{}, gold:easy?130:99, deck:newPlayerDeck(), relics:[] },
     act:0, floor:-1,
     actMap: buildActMap(0),
     combat:null,
     stats:{ floorsCleared:0, damageDealt:0, damageTaken:0, cardsPlayed:0 },
   };
+  seedRng(G.seed);
+  if(dailyMod('volatile')){
+    G.player.maxHp-=15; G.player.hp-=15;
+    for(let i=0;i<2;i++){
+      const id=rand(POOL_BY_RARITY.rare);
+      G.player.deck.push({...CARDS[id],uid:uid()});
+    }
+  }
   startAmbient();
   snd('click');
   goMap();
+}
+
+// ============================================================
+// SAVE / RESUME
+// ============================================================
+// Card and relic defs contain functions, so saves store ids + flags
+// only and rehydrate from the CARDS/RELICS tables. Saved at map-node
+// granularity: resuming mid-combat restarts that fight, and because
+// the RNG is seeded (and its call count snapshotted BEFORE the node
+// consumed any rolls), it is the exact same fight.
+const SAVE_KEY='br_save_v1';
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+
+function saveRun(inNode){
+  if(!G) return;
+  lsSet(SAVE_KEY,JSON.stringify({
+    v:1, seed:G.seed, easy:G.easy, daily:G.daily||null,
+    act:G.act, floor:G.floor, rngCalls:G.rngCalls, inNode:inNode||null,
+    player:{ hp:G.player.hp, maxHp:G.player.maxHp, gold:G.player.gold,
+      relics:[...G.player.relics],
+      deck:G.player.deck.map(c=>({id:c.id,cost:c.cost,upgraded:!!c.upgraded})) },
+    stats:{...G.stats},
+  }));
+}
+function clearSave(){ lsDel(SAVE_KEY); }
+
+function readSave(){
+  const raw=lsGet(SAVE_KEY);
+  if(!raw) return null;
+  try{ const s=JSON.parse(raw); return (s&&s.v===1&&s.player)?s:null; }catch(e){ return null; }
+}
+
+function loadRun(){
+  const s=readSave();
+  if(!s) return false;
+  G={
+    easy:s.easy, seed:s.seed, daily:s.daily||null, rngCalls:0,
+    player:{ hp:s.player.hp, maxHp:s.player.maxHp, block:0, statuses:{},
+      gold:s.player.gold,
+      // relic ids pushed directly — addRelic would re-apply stock_option's
+      // +10 maxHp, which is already baked into the saved maxHp
+      relics:[...s.player.relics],
+      deck:s.player.deck.filter(d=>CARDS[d.id]).map(d=>{
+        const c={...CARDS[d.id],uid:uid()};
+        if(d.upgraded){ c.upgraded=true; c.cost=d.cost; }
+        return c;
+      }) },
+    act:s.act, floor:s.floor,
+    actMap:buildActMap(s.act),
+    combat:null,
+    stats:s.stats||{floorsCleared:0,damageDealt:0,damageTaken:0,cardsPlayed:0},
+  };
+  seedRng(s.seed, s.rngCalls);
+  G.rngCalls=s.rngCalls;
+  startAmbient();
+  snd('click');
+  if(s.inNode) enterNode(s.inNode.fi, s.inNode.type);
+  else goMap();
+  return true;
+}
+
+function resumeRun(){
+  if(!loadRun()) updateMenu();
+}
+
+// ============================================================
+// DAILY CHALLENGE
+// ============================================================
+// Same UTC date ⇒ same seed ⇒ identical map, enemies, shops and
+// rewards for every player. One scored attempt per day; replays are
+// flagged as practice.
+const DAILY_EPOCH=Date.UTC(2026,5,11);
+const DAILY_MODS=[
+  {id:'zirp',          name:'ZIRP',               desc:'Free money era — 4 Capital every turn.'},
+  {id:'meme',          name:'MEME STOCK MONDAY',  desc:'All damage +50%. Both ways. To the moon or the morgue.'},
+  {id:'bear',          name:'BEAR MARKET',        desc:'Enemies have +20% HP.'},
+  {id:'crypto_winter', name:'CRYPTO WINTER',      desc:'Board meetings can\'t heal. Combats pay double gold.'},
+  {id:'diamond',       name:'DIAMOND HANDS',      desc:'Start every combat with 8 block. HODL.'},
+  {id:'audit',         name:'AUDIT SEASON',       desc:'Start every combat with 1 Debt.'},
+  {id:'volatile',      name:'MAX VOLATILITY',     desc:'Start with 2 random RARE cards. Max HP −15.'},
+];
+const dailyNum=()=>Math.max(1,Math.floor((Date.now()-DAILY_EPOCH)/86400000)+1);
+const todaysMod=()=>DAILY_MODS[dailyNum()%DAILY_MODS.length];
+const dailyMod=(id)=>!!(G&&G.daily&&G.daily.mod===id);
+
+function dailyRecord(){
+  try{ return JSON.parse(lsGet('br_daily')||'null'); }catch(e){ return null; }
+}
+
+function startDaily(){
+  const n=dailyNum(), mod=todaysMod();
+  const seed=hashStr('BULLRUN-'+new Date().toISOString().slice(0,10));
+  const rec=dailyRecord();
+  const practice=!!(rec&&rec.n===n&&rec.done);
+  startGame(false, seed, {n, mod:mod.id, modName:mod.name, practice});
+}
+
+// ============================================================
+// RUN END: SCORE, SHARE, HISTORY
+// ============================================================
+function runScore(){
+  return G.stats.floorsCleared*10 + G.player.gold + Math.max(0,G.player.hp)*2 + G.act*100;
+}
+
+function buildShare(won,killer){
+  const lines=[];
+  lines.push(G.daily
+    ? `🐂 BULL RUN Daily #${G.daily.n} · ${G.daily.modName}${G.daily.practice?' (practice)':''}`
+    : '🐂 BULL RUN');
+  lines.push(`${won?'🏆':'📉'} Portfolio: $${runScore().toLocaleString()} · Act ${['I','II','III'][Math.min(G.act,2)]}`);
+  lines.push(won?'💰 DEFEATED THE FEDERAL RESERVE':`💀 LIQUIDATED${killer?' by '+killer:''}`);
+  lines.push('https://casmar227.github.io/bull-run/');
+  return lines.join('\n');
+}
+
+let _shareTxt='';
+function shareResult(btn){
+  if(!_shareTxt) return;
+  if(navigator.share){
+    navigator.share({text:_shareTxt}).catch(()=>{});
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(_shareTxt).then(()=>{
+      if(btn){ btn.textContent='✅ COPIED TO CLIPBOARD'; }
+    }).catch(()=>{});
+  }
+}
+
+// ——— MENU / TICKER ———
+function updateMenu(){
+  const r=document.getElementById('resume-btn');
+  const s=readSave();
+  if(s){
+    r.style.display='';
+    r.textContent=`▶ RESUME RUN — ACT ${['I','II','III'][Math.min(s.act,2)]} · ${s.player.hp}/${s.player.maxHp} HP · $${s.player.gold}`;
+  } else r.style.display='none';
+  const n=dailyNum(), mod=todaysMod(), rec=dailyRecord();
+  const done=!!(rec&&rec.n===n&&rec.done);
+  document.getElementById('daily-btn').textContent=`📅 DAILY RUN #${n}${done?' — PRACTICE':''}`;
+  document.getElementById('daily-note').textContent=
+    `Today's market: ${mod.name} — ${mod.desc}`+
+    (done?` · Your P&L today: $${(rec.score||0).toLocaleString()}`:'');
+  updateTicker();
+}
+
+function updateTicker(){
+  const t=document.getElementById('ticker');
+  if(!t) return;
+  const msgs=[];
+  msgs.push(`DAILY CONDITIONS: ${todaysMod().name}`);
+  try{
+    const h=JSON.parse(lsGet('br_history')||'[]');
+    if(h.length){
+      const best=Math.max(...h.map(x=>x.score||0));
+      const wins=h.filter(x=>x.won).length;
+      msgs.push(`YOUR ALL-TIME HIGH: $${best.toLocaleString()}`);
+      msgs.push(wins>0?`CAREER RECORD: ${wins}W / ${h.length-wins}L — ANALYSTS IMPRESSED`:`CAREER RECORD: 0W / ${h.length}L — HAVE FUN STAYING POOR`);
+      const last=h[h.length-1];
+      if(last&&!last.won) msgs.push('YOUR LAST POSITION: LIQUIDATED');
+    }
+  }catch(e){}
+  t.textContent=[...msgs,...TICKERS].join('   ◆   ');
+}
+
+function recordRunEnd(won,killer){
+  clearSave();
+  const score=runScore();
+  _shareTxt=buildShare(won,killer);
+  if(G.daily&&!G.daily.practice){
+    lsSet('br_daily',JSON.stringify({n:G.daily.n,done:true,won,score}));
+  }
+  try{
+    const h=JSON.parse(lsGet('br_history')||'[]');
+    h.push({date:Date.now(),won,score,act:G.act,floors:G.stats.floorsCleared,daily:G.daily?G.daily.n:null});
+    lsSet('br_history',JSON.stringify(h.slice(-200)));
+  }catch(e){}
+  return score;
 }
 
 // ============================================================
@@ -1338,6 +1619,7 @@ const KEYWORD_TIPS={
 // MAP
 // ============================================================
 function goMap(){
+  saveRun(null);
   show('map-screen');
   renderMap();
 }
@@ -1371,6 +1653,7 @@ function renderMap(){
 
 function enterNode(fi,type){
   G.floor=fi;
+  saveRun({fi,type}); // snapshot BEFORE the node consumes any RNG
   if(type==='fight'||type==='elite'||type==='boss'){
     startCombat(getEnemies(G.act,type), type==='boss');
   } else if(type==='shop') goShop();
@@ -1396,7 +1679,8 @@ function advanceFloor(){
 function startCombat(enemies, isBoss=false){
   G.player.block=0;
   G.player.statuses={}; // combat statuses don't carry between fights
-  const maxE=hasRelic('espresso')?4:3;
+  if(dailyMod('bear')) enemies.forEach(e=>{ e.maxHp=Math.round(e.maxHp*1.2); e.hp=e.maxHp; });
+  const maxE=(hasRelic('espresso')?4:3)+(dailyMod('zirp')?1:0);
   G.combat={
     enemies,
     hand:[],
@@ -1419,6 +1703,8 @@ function startCombat(enemies, isBoss=false){
   if(hasRelic('vault')){ G.player.block=6; log('Private Vault: +6 block.','blk'); }
   if(hasRelic('bull_horn')){ G.player.statuses.strength=(G.player.statuses.strength||0)+1; log('Bull Horn: +1 Strength.','sts'); }
   if(hasRelic('bear_trap')) enemies.forEach(e=>{ e.statuses.vulnerable=(e.statuses.vulnerable||0)+1; });
+  if(dailyMod('diamond')){ G.player.block+=8; log('DIAMOND HANDS: +8 block. HODL.','blk'); }
+  if(dailyMod('audit')){ G.player.statuses.debt=(G.player.statuses.debt||0)+1; log('AUDIT SEASON: +1 Debt.','sts'); }
   renderRelics('combat-relics');
   drawCards(G,G.combat.drawN);
   updateIntents();
@@ -1432,6 +1718,7 @@ function startCombat(enemies, isBoss=false){
 
 function playerDealDamage(G,targetIdx,base){
   let dmg=base+(G.player.statuses.strength||0);
+  if(dailyMod('meme')) dmg=Math.floor(dmg*1.5);
   if(G.player.statuses.weak>0) dmg=Math.floor(dmg*0.75);
   const e=G.combat.enemies[targetIdx];
   if(!e||e.hp<=0) return;
@@ -1460,6 +1747,7 @@ function playerDealDamage(G,targetIdx,base){
 
 function enemyAttack(G,e,base){
   let dmg=base+(e.statuses.strength||0);
+  if(dailyMod('meme')) dmg=Math.floor(dmg*1.5);
   if(G.easy) dmg=Math.floor(dmg*0.8);
   if(e.statuses.weak>0) dmg=Math.floor(dmg*0.75);
   if(G.player.statuses.vulnerable>0) dmg=Math.floor(dmg*1.5);
@@ -1741,7 +2029,8 @@ function checkCombatEnd(){
 function combatWin(){
   const isBoss=G.combat.isBoss;
   const wasElite=G.combat.enemies.some(e=>['bear_baron','sec_agent','hedge_mgr'].includes(e.id));
-  let goldEarned=isBoss?50+(G.act*25):15+Math.floor(Math.random()*20);
+  let goldEarned=isBoss?50+(G.act*25):15+Math.floor(grand()*20);
+  if(dailyMod('crypto_winter')) goldEarned*=2;
   if(hasRelic('piggy_bank')) goldEarned+=15;
   G.player.gold+=goldEarned;
   log(`Victory! Earned $${goldEarned}`,'heal');
@@ -1755,15 +2044,20 @@ function combatWin(){
 }
 
 function combatLose(){
+  const killer=(G.combat.enemies.find(e=>e.hp>0)||{}).name||'market forces';
   G.combat=null;
+  const score=recordRunEnd(false,killer);
   snd('defeat');
   screenShake();
   show('gameover-screen');
   document.getElementById('go-stats').innerHTML=
-    `Floors cleared: ${G.stats.floorsCleared}<br>
-     Damage dealt: ${G.stats.damageDealt}<br>
-     Damage taken: ${G.stats.damageTaken}<br>
-     Cards played: ${G.stats.cardsPlayed}`;
+    `<div class="ln-head">FINAL ACCOUNT STATEMENT</div>
+     Liquidated by: <span class="tred">${killer}</span><br>
+     Final portfolio value: <span class="tgold">$${score.toLocaleString()}</span><br>
+     Floors cleared: ${G.stats.floorsCleared} &nbsp;·&nbsp; Cards played: ${G.stats.cardsPlayed}<br>
+     Damage dealt: ${G.stats.damageDealt} &nbsp;·&nbsp; Damage taken: ${G.stats.damageTaken}<br>
+     <span class="ln-fine">This decision is final. Per section 12(b) of your account agreement,
+     appeals may be submitted to a shredder of your choosing. The Fed thanks you for your liquidity.</span>`;
 }
 
 // ——— INTENT / RENDER ———
@@ -1888,8 +2182,14 @@ function renderHand(){
   const discarding=G.combat.pendingDiscard>0;
   const n=G.combat.hand.length;
   const mid=(n-1)/2;
-  const overlap=n>8?-30:n>6?-20:n>4?-12:-4;
+  // overlap cards just enough that the whole fan fits the viewport
+  // (the -52 budget also absorbs the bbox growth from fan rotation)
+  const cw=window.innerWidth<=720?84:112;
+  const avail=Math.min(window.innerWidth,960)-52;
+  const overlap=n>1?Math.max(-Math.floor(cw*0.42),Math.min(-4,Math.floor((avail/n-cw)/2))):0;
   const newSeen=new Set();
+  const hint=document.getElementById('target-hint');
+  if(hint) hint.style.display=(!discarding&&G.combat.selectedCard)?'block':'none';
 
   G.combat.hand.forEach((card,i)=>{
     const cantAfford=card.cost>G.combat.energy;
@@ -2137,6 +2437,9 @@ function showReward(relicId=null){
     wrap.onclick=()=>pickReward(card.id);
     cont.appendChild(wrap);
   });
+  // relic + gold are already granted: save so a refresh here doesn't
+  // restart the fight (the card pick is forfeited, nothing duplicates)
+  saveRun(null);
   show('reward-screen');
 }
 
@@ -2181,7 +2484,7 @@ function goShop(){
   const pool=[...REWARD_POOL];
   const items=[];
   while(items.length<5&&pool.length>0){
-    const idx=Math.floor(Math.random()*pool.length);
+    const idx=Math.floor(grand()*pool.length);
     items.push(CARDS[pool.splice(idx,1)[0]]);
   }
 
@@ -2245,7 +2548,7 @@ const EVENTS=[
       {label:'INVEST $30', sub:'50% chance: triple it. 50% chance: rug pull.',
         fn:()=>{ if(G.player.gold<30) return 'You can\'t afford it. He scoffs and skates away.';
           G.player.gold-=30;
-          if(Math.random()<0.5){ G.player.gold+=90; snd('victory'); return 'IT MOONED! +$90!'; }
+          if(grand()<0.5){ G.player.gold+=90; snd('victory'); return 'IT MOONED! +$90!'; }
           snd('defeat'); return 'Rug pulled. The Discord is deleted. -$30.'; }},
       {label:'DECLINE', sub:'Walk away',
         fn:()=>'You keep walking. He yells "HAVE FUN STAYING POOR" behind you.'},
@@ -2318,7 +2621,8 @@ function goRest(){
 }
 
 function restHeal(){
-  const amount=Math.floor(G.player.maxHp*0.3);
+  const amount=dailyMod('crypto_winter')?0:Math.floor(G.player.maxHp*0.3);
+  if(amount===0) log('CRYPTO WINTER: no healing for you.','enm');
   G.player.hp=Math.min(G.player.maxHp,G.player.hp+amount);
   advanceFloor();
 }
@@ -2379,11 +2683,13 @@ function closeDeck(){ document.getElementById('deck-modal').classList.remove('op
 // END STATES
 // ============================================================
 function victory(){
+  const score=recordRunEnd(true,null);
   snd('victory');
   spawnParticles();
   show('victory-screen');
   document.getElementById('win-stats').innerHTML=
-    `Floors cleared: ${G.stats.floorsCleared}<br>
+    `Final portfolio value: <span class="tgold">$${score.toLocaleString()}</span><br>
+     Floors cleared: ${G.stats.floorsCleared}<br>
      Damage dealt: ${G.stats.damageDealt}<br>
      Cards played: ${G.stats.cardsPlayed}<br>
      Final deck size: ${G.player.deck.length} cards`;
@@ -2410,7 +2716,7 @@ const TICKERS=['INFLATION +8.4% ↑','MARKET_ORDER BUY 500 @ $142.00','HOSTILE_T
 // ============================================================
 // INIT
 // ============================================================
-document.getElementById('ticker').textContent = TICKERS.join('   ◆   ');
+updateMenu();
 </script>
 </body>
 </html>

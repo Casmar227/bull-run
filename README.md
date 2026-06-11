@@ -6,6 +6,9 @@ A finance-themed roguelike deckbuilder that runs entirely in your browser. Build
 
 ## Features
 
+- 📅 **Daily Challenge** — everyone worldwide gets the same seeded run with a rotating market condition (ZIRP, Meme Stock Monday, Crypto Winter…); one scored attempt per day, then share your P&L
+- 💾 **Save & resume** — close the tab mid-run and pick up where you left off
+- 📱 **Plays on phones** — fully responsive, drag or tap to play cards
 - 43 cards across attack / defense / skill types, with common, uncommon, and rare tiers
 - Four synergy archetypes to build around: Debt/Leverage (Ponzi Scheme → Junk Bonds), Fortress (big Block → Collateral Damage), Momentum (cheap cards → Momentum Trade / Algo Trading), and Strength scaling (Compound Interest → Reinvest)
 - Drag-and-drop card play with a curved targeting arrow — or click, both work
