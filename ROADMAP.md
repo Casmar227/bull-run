@@ -82,13 +82,26 @@ localization, ads.
 
 **Moves:** new players/week, share CTR (target >10% of daily finishers), daily DAU.
 
-## PHASE 4 — Third Character, Depth & App Store (~50–70 hrs)
+## PHASE 4 — Third Character, Depth & App Store (partially shipped)
 
-| Feature | Design | Est. |
-|---|---|---|
-| **3rd character: THE WHALE 🐋** | Gold-as-combat-resource archetype: *Buy the Dip* (costs $15 + 1⚡), *Too Big To Fail* (fatal hit costs $75 instead). Unlocked by winning as Vulture. | 10–14h |
-| **iOS via Capacitor** | Passes guideline 4.2 because post-PWA it's a real offline game. **$4.99 paid up-front; web stays free as the funnel** (no IAP/account complexity). Costs: $99/yr dev account, Mac+Xcode. Haptics on hits; audio suspend on `visibilitychange`; shell quarantined in `/ios-shell` so the web product stays no-build. Real icon art is the one mandatory art spend. | 16–24h |
-| **Depth backlog** (pick by metrics) | Powers card type (persistent auras), boss trade-off relics, mid-combat save (after making enemy defs data-driven — remove the `inflation` closure), endless mode ("After-Hours Trading"), MLs 11–20, second Act 1 boss. | 15–20h |
+- ✅ **3rd character: THE WHALE 🐋** — shipped. 85 HP institutional money; gold is
+  ammunition via a new gold-cost card mechanic (`gcost`, gold chip on the card frame,
+  affordability greying): Buy the Dip ($15: 18 dmg), Liquidity Wall, Bribe the Regulator
+  (halts all enemies), Too Big To Fail (first death this combat costs $75 instead),
+  Index Everything (damage = 10% of gold). Innate Platinum Card (+2 block per $ spend).
+  11 exclusives with bespoke upgrades. Unlocked by winning as the Vulture (or 10 runs).
+- ✅ **Balance pass via bot playtesting** — a block-aware greedy bot played 16 full
+  honest runs: easy now reaches Act 2 reliably (bot even wins occasionally ⇒ humans
+  clear it comfortably), normal stays a real challenge. Tweaks: easy enemies −10% HP,
+  rest heal 30%→35%. Re-tune from daily-challenge metrics after launch.
+- ⏳ **iOS via Capacitor** (~16–24h, requires Mac + Xcode + $99/yr Apple account —
+  cannot be done from this environment): passes guideline 4.2 since the PWA already
+  runs fully offline. **$4.99 paid up-front; web stays free as the funnel.** Haptics
+  on hits; audio suspend on `visibilitychange`; shell in `/ios-shell` to keep the web
+  product no-build.
+- ⏳ **Depth backlog** (pick by metrics, ~15–20h): Powers card type (persistent auras),
+  boss trade-off relics, mid-combat save (after making enemy defs data-driven — remove
+  the `inflation` closure), endless mode ("After-Hours Trading"), MLs 11–20.
 
 **Moves:** revenue, App Store rating, D90 retention.
 
@@ -102,4 +115,4 @@ localization, ads.
 | ✅ 1 | DAG map, variety, real upgrades (shipped) | — | Sessions/player |
 | ✅ 2 | Meta, Vulture, Margin Levels, Hot Tips (shipped) | — | D7/D30 retention |
 | ✅ 3 | PWA, path-grid share, seeds (shipped) — launch push pending | ~4 | New players, daily DAU |
-| 4 | Whale, iOS app, depth | 50–70 | Revenue, D90 |
+| 4 | ✅ Whale + balance (shipped) — iOS app, depth pending | 30–45 | Revenue, D90 |

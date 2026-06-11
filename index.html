@@ -441,6 +441,8 @@ h2{font-size:1.3rem;color:var(--green);}
   background:#0a140c;border:1px solid var(--gold);padding:8px 10px;border-radius:6px;width:170px;
   font-size:.66rem;color:var(--text);z-index:60;line-height:1.5;}
 .potion:hover .rtip,.potion.tipon .rtip{display:block;}
+.gcost{position:absolute;top:-7px;right:-7px;background:#2a2410;border:1px solid var(--gold);
+  color:var(--gold);border-radius:9px;font-size:.56rem;padding:2px 5px;font-weight:bold;z-index:3;}
 
 /* ── MOBILE ── */
 body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
@@ -620,7 +622,7 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
   <div class="rest-opts">
     <div class="rest-opt">
       <button class="btn" onclick="restHeal()">RECOVER CAPITAL</button>
-      <div class="tdim">Heal 30% of max HP</div>
+      <div class="tdim">Heal 35% of max HP</div>
     </div>
     <div class="rest-opt">
       <button class="btn" onclick="restRemove()">RESTRUCTURE PORTFOLIO</button>
@@ -1297,6 +1299,57 @@ const CARDS = {
     effect:(G)=>{ const d=4*(G.player.statuses.debt||0);
       G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,d); }); } },
 
+  // ——— THE WHALE (character-exclusive: gold as a combat resource) ———
+  deep_pockets:{ id:'deep_pockets', name:'Deep Pockets', cost:1, type:'defend', ico:'🪙', char:'whale',
+    desc:'Gain 6 block, +1 per $25 you hold.',
+    dyn:(G)=>`Gain ${6+Math.floor(G.player.gold/25)} block right now. (+1 per $25)`,
+    effect:(G)=>{ playerGainBlock(G,6+Math.floor(G.player.gold/25)); } },
+
+  buy_the_dip:{ id:'buy_the_dip', name:'Buy the Dip', cost:1, gcost:15, type:'attack', ico:'📉', char:'whale', rar:'unc',
+    desc:'Deal 18 damage. Costs $15.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,18); } },
+
+  market_maker:{ id:'market_maker', name:'Market Maker', cost:1, type:'skill', ico:'🏧', char:'whale',
+    desc:'Gain $10. Exhaust.', exhausts:true,
+    effect:(G)=>{ G.player.gold+=10; log('Spread captured: +$10.','heal'); renderCombat(); } },
+
+  liquidity_wall:{ id:'liquidity_wall', name:'Liquidity Wall', cost:1, gcost:20, type:'defend', ico:'🧱', char:'whale', rar:'unc',
+    desc:'Gain 20 block. Costs $20.',
+    effect:(G)=>{ playerGainBlock(G,20); } },
+
+  hush_money:{ id:'hush_money', name:'Hush Money', cost:0, gcost:10, type:'skill', ico:'🤫', char:'whale',
+    desc:'Apply 2 Weak. Costs $10.', needsTarget:true,
+    effect:(G,t)=>{ applyStatus(G,t,'weak',2); } },
+
+  too_big_to_fail:{ id:'too_big_to_fail', name:'Too Big To Fail', cost:2, type:'skill', ico:'🏦', char:'whale', rar:'rare',
+    desc:'This combat: the first time you would be liquidated, pay $75 instead (if you can). Exhaust.', exhausts:true,
+    effect:(G)=>{ G.combat.tbtf=true; log('Too big to fail. The taxpayer thanks you in advance.','sts'); } },
+
+  bribe_regulator:{ id:'bribe_regulator', name:'Bribe the Regulator', cost:1, gcost:25, type:'skill', ico:'💼', char:'whale', rar:'rare',
+    desc:'ALL enemies skip their next action. Costs $25.',
+    effect:(G)=>{ G.combat.enemies.forEach(e=>{ if(e.hp>0) e.skip=(e.skip||0)+1; });
+      log('The paperwork gets... lost. Enemies halted.','sts'); updateIntents(); } },
+
+  slush_fund:{ id:'slush_fund', name:'Slush Fund', cost:1, type:'skill', ico:'🛢️', char:'whale', rar:'unc',
+    desc:'Gain 1 Capital per $50 you hold (max 3).',
+    dyn:(G)=>`Gain ${Math.min(3,Math.floor(G.player.gold/50))} Capital right now.`,
+    effect:(G)=>{ const e=Math.min(3,Math.floor(G.player.gold/50));
+      G.combat.energy=clamp(G.combat.energy+e,0,9); renderEnergy(); log(`Slush fund: +${e} Capital.`,'sts'); } },
+
+  index_everything:{ id:'index_everything', name:'Index Everything', cost:2, type:'attack', ico:'🗂️', char:'whale', rar:'rare',
+    desc:'Deal 10% of your gold (max 35) to ALL enemies.',
+    dyn:(G)=>`Deal ${Math.min(35,Math.floor(G.player.gold/10))} damage to ALL enemies right now.`,
+    effect:(G)=>{ const d=Math.min(35,Math.floor(G.player.gold/10));
+      G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,d); }); } },
+
+  blue_chip:{ id:'blue_chip', name:'Blue Chip', cost:1, type:'attack', ico:'💠', char:'whale',
+    desc:'Deal 8 damage. Gain $3.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,8); G.player.gold+=3; renderCombat(); } },
+
+  whale_splash:{ id:'whale_splash', name:'Whale Splash', cost:2, gcost:10, type:'attack', ico:'🌊', char:'whale', rar:'unc',
+    desc:'Deal 11 damage to ALL enemies. Costs $10.',
+    effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,11); }); } },
+
   // ——— CURSE ———
   red_tape:{ id:'red_tape', name:'Red Tape', cost:0, type:'skill', ico:'🧻',
     desc:'Unplayable. Pure bureaucracy. Remove it at a Board Meeting.',
@@ -1436,6 +1489,36 @@ const UPGRADES={
     dyn:(G)=>`Deal ${5*(G.player.statuses.debt||0)} damage to ALL enemies right now.`,
     effect:(G)=>{ const d=5*(G.player.statuses.debt||0);
       G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,d); }); }},
+  // Whale exclusives
+  deep_pockets:{desc:'Gain 8 block, +1 per $20 you hold.',
+    dyn:(G)=>`Gain ${8+Math.floor(G.player.gold/20)} block right now. (+1 per $20)`,
+    effect:(G)=>{ playerGainBlock(G,8+Math.floor(G.player.gold/20)); }},
+  buy_the_dip:{desc:'Deal 24 damage. Costs $15.',
+    effect:(G,t)=>{ playerDealDamage(G,t,24); }},
+  market_maker:{desc:'Gain $15. Exhaust.',
+    effect:(G)=>{ G.player.gold+=15; log('Spread captured: +$15.','heal'); renderCombat(); }},
+  liquidity_wall:{desc:'Gain 26 block. Costs $20.',
+    effect:(G)=>{ playerGainBlock(G,26); }},
+  hush_money:{desc:'Apply 3 Weak. Costs $10.',
+    effect:(G,t)=>{ applyStatus(G,t,'weak',3); }},
+  too_big_to_fail:{desc:'This combat: the first time you would be liquidated, pay $50 instead (if you can). Exhaust.',
+    effect:(G)=>{ G.combat.tbtf=true; G.combat.tbtfCost=50;
+      log('Too big to fail. Now with a friendlier bailout rate.','sts'); }},
+  bribe_regulator:{desc:'ALL enemies skip their next action. Costs $15.', gcost:15,
+    effect:(G)=>{ G.combat.enemies.forEach(e=>{ if(e.hp>0) e.skip=(e.skip||0)+1; });
+      log('The paperwork gets... lost. Enemies halted.','sts'); updateIntents(); }},
+  slush_fund:{desc:'Gain 1 Capital per $40 you hold (max 4).',
+    dyn:(G)=>`Gain ${Math.min(4,Math.floor(G.player.gold/40))} Capital right now.`,
+    effect:(G)=>{ const e=Math.min(4,Math.floor(G.player.gold/40));
+      G.combat.energy=clamp(G.combat.energy+e,0,9); renderEnergy(); log(`Slush fund: +${e} Capital.`,'sts'); }},
+  index_everything:{desc:'Deal 15% of your gold (max 45) to ALL enemies.',
+    dyn:(G)=>`Deal ${Math.min(45,Math.floor(G.player.gold*0.15))} damage to ALL enemies right now.`,
+    effect:(G)=>{ const d=Math.min(45,Math.floor(G.player.gold*0.15));
+      G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,d); }); }},
+  blue_chip:{desc:'Deal 11 damage. Gain $5.',
+    effect:(G,t)=>{ playerDealDamage(G,t,11); G.player.gold+=5; renderCombat(); }},
+  whale_splash:{desc:'Deal 15 damage to ALL enemies. Costs $10.',
+    effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,15); }); }},
 };
 
 function applyUpgrade(card){
@@ -1445,6 +1528,7 @@ function applyUpgrade(card){
     if(u.cost!==undefined) card.cost=u.cost;
     if(u.effect) card.effect=u.effect;
     if(u.dyn!==undefined) card.dyn=u.dyn;
+    if(u.gcost!==undefined) card.gcost=u.gcost;
     if(u.exhausts!==undefined) card.exhausts=u.exhausts;
   } else {
     card.cost=Math.max(0,card.cost-1); // fallback for unlisted cards
@@ -1480,6 +1564,7 @@ const RELICS={
   short_fuse:  {ico:'🧨', name:'Short Fuse',        desc:'At the start of each turn, deal 2 damage to a random enemy.'},
   golden_gavel:{ico:'🔨', name:'Golden Gavel',      desc:'Weak and Vulnerable you apply get +1 stack.'},
   vulture_eye: {ico:'🪶', name:"Vulture's Eye",     desc:'Whenever you gain Debt, gain 2 block per stack.', innate:true},
+  platinum_card:{ico:'💳', name:'Platinum Card',    desc:'Whenever you spend $ on a card in combat, gain 2 block.', innate:true},
 };
 // Relics gated behind meta-progression unlocks
 ['golden_rolodex','severance_package','short_fuse'].forEach(id=>{ RELICS[id].unlock='exec_perks'; });
@@ -1678,6 +1763,7 @@ const UNLOCKS=[
   {id:'derivatives', icon:'📦', name:'DERIVATIVES DESK — 3 powerful cards join the pool', hint:'play 3 runs', test:m=>m.runs>=3},
   {id:'exec_perks',  icon:'💼', name:'EXECUTIVE PERKS — 3 new relics join the pool',      hint:'reach Act II', test:m=>m.bestAct>=1},
   {id:'vulture',     icon:'🦅', name:'NEW INVESTOR UNLOCKED: THE VULTURE',                hint:'win a run (or play 5)', test:m=>m.wins>=1||m.runs>=5},
+  {id:'whale',       icon:'🐋', name:'NEW INVESTOR UNLOCKED: THE WHALE',                  hint:'win as the Vulture (or play 10)', test:m=>(m.winsBy&&m.winsBy.vulture>=1)||m.runs>=10},
 ];
 let _lastUnlocks=[];
 const unlocksHTML=()=>_lastUnlocks.length
@@ -1699,6 +1785,12 @@ const CHARACTERS={
               ...Array(3).fill(0).map(()=>mkCard('stop_loss')),
               mkCard('due_diligence'), mkCard('leverage_up'), mkCard('junk_bonds')],
     relic:'vulture_eye', unlock:'vulture' },
+  whale:{ id:'whale', name:'THE WHALE', ico:'🐋', hp:[85,105],
+    blurb:'Institutional money. Gold is ammunition — spend it to win. 11 exclusive cards.',
+    deck:()=>[...Array(4).fill(0).map(()=>mkCard('market_order')),
+              ...Array(3).fill(0).map(()=>mkCard('stop_loss')),
+              mkCard('due_diligence'), mkCard('deep_pockets'), mkCard('deep_pockets')],
+    relic:'platinum_card', unlock:'whale' },
 };
 
 let _selEasy=false;
@@ -2361,6 +2453,7 @@ function advanceFloor(){
 function startCombat(enemies, isBoss=false){
   G.player.block=0;
   G.player.statuses={}; // combat statuses don't carry between fights
+  if(G.easy) enemies.forEach(e=>{ e.maxHp=Math.round(e.maxHp*0.9); e.hp=e.maxHp; });
   if(dailyMod('bear')) enemies.forEach(e=>{ e.maxHp=Math.round(e.maxHp*1.2); e.hp=e.maxHp; });
   if(mlAt(1)) enemies.forEach(e=>{ e.maxHp=Math.round(e.maxHp*1.15); e.hp=e.maxHp; });
   if(mlAt(6)) enemies.forEach(e=>{ if(ELITE_IDS.includes(e.id)){
@@ -2553,6 +2646,7 @@ function playCard(cardUid){
   const card=G.combat.hand[ci];
   if(card.unplayable){ log(`${card.name} is unplayable. Bureaucracy wins again.`,'sts'); return; }
   if(card.cost>G.combat.energy) return;
+  if(card.gcost&&G.player.gold<card.gcost){ log(`Need $${card.gcost} to play ${card.name}.`,'sts'); return; }
 
   // If card needs a target and we have multiple enemies — select mode
   const aliveEnemies=G.combat.enemies.filter(e=>e.hp>0);
@@ -2595,6 +2689,7 @@ function playCardAt(cardUid,targetIdx,skipAnim){
   const card=G.combat.hand[ci];
   if(card.unplayable){ log(`${card.name} is unplayable. Bureaucracy wins again.`,'sts'); return; }
   if(card.cost>G.combat.energy) return;
+  if(card.gcost&&G.player.gold<card.gcost){ log(`Need $${card.gcost} to play ${card.name}.`,'sts'); return; }
   if(card.needsTarget){
     const e=G.combat.enemies[targetIdx];
     if(!e||e.hp<=0) return;
@@ -2631,6 +2726,11 @@ function animateCardPlay(card,targetIdx){
 function executeCard(ci,card,targetIdx,skipAnim){
   if(!skipAnim) animateCardPlay(card,targetIdx);
   G.combat.energy-=card.cost;
+  if(card.gcost){
+    G.player.gold-=card.gcost;
+    log(`Spent $${card.gcost}.`,'sts');
+    if(hasRelic('platinum_card')) playerGainBlock(G,2);
+  }
   G.combat.hand.splice(ci,1);
   G.stats.cardsPlayed++;
   G.combat.cardsPlayedThisTurn++;
@@ -2734,7 +2834,15 @@ function tickStatuses(sts, who){
 function checkCombatEnd(){
   if(!G||!G.combat) return;
   if(G.player.hp<=0){
-    if(hasRelic('severance_package')&&!G.severanceUsed){
+    const bailCost=G.combat.tbtfCost||75;
+    if(G.combat.tbtf&&G.player.gold>=bailCost){
+      G.combat.tbtf=false;
+      G.player.gold-=bailCost;
+      G.player.hp=1;
+      log(`🏦 TOO BIG TO FAIL: bailed out for $${bailCost}. You survive at 1 HP!`,'heal');
+      snd('heal');
+      renderCombat();
+    } else if(hasRelic('severance_package')&&!G.severanceUsed){
       G.severanceUsed=true;
       G.player.hp=1;
       log('🧳 SEVERANCE PACKAGE: you survive at 1 HP!','heal');
@@ -2923,10 +3031,12 @@ function renderHand(){
     const cantAfford=card.cost>G.combat.energy;
     const isSel=G.combat.selectedCard===card.uid;
     const el=document.createElement('div');
-    el.className=`card ${card.type} ${card.rar||''} ${card.upgraded?'upg':''} ${(cantAfford&&!discarding)?'dis':''} ${isSel?'sel':''} ${card.exhausts?'exhaust':''}`;
+    const goldShort=card.gcost&&G.player.gold<card.gcost;
+    el.className=`card ${card.type} ${card.rar||''} ${card.upgraded?'upg':''} ${((cantAfford||goldShort)&&!discarding)?'dis':''} ${isSel?'sel':''} ${card.exhausts?'exhaust':''}`;
     el.dataset.uid=card.uid;
     el.innerHTML=`
       <div class="ccost">${card.cost}</div>
+      ${card.gcost?`<div class="gcost">$${card.gcost}</div>`:''}
       <div class="cname">${card.name}</div>
       <div class="cico">${card.ico}</div>
       <div class="cdesc">${card.dyn?card.dyn(G):card.desc}</div>
@@ -3184,6 +3294,7 @@ function cardHTML(card){
   const rar=card.rar||'';
   return `<div class="card ${card.type} ${rar} ${card.exhausts?'exhaust':''} ${card.upgraded?'upg':''}">
     <div class="ccost">${card.cost}</div>
+    ${card.gcost?`<div class="gcost">$${card.gcost}</div>`:''}
     <div class="cname">${card.name}</div>
     <div class="cico">${card.ico}</div>
     <div class="cdesc">${card.desc}</div>
@@ -3482,7 +3593,7 @@ function goRest(){
 }
 
 function restHeal(){
-  let amount=dailyMod('crypto_winter')?0:Math.floor(G.player.maxHp*0.3);
+  let amount=dailyMod('crypto_winter')?0:Math.floor(G.player.maxHp*0.35);
   if(mlAt(9)) amount=Math.ceil(amount*0.67);
   if(amount===0) log('CRYPTO WINTER: no healing for you.','enm');
   G.player.hp=Math.min(G.player.maxHp,G.player.hp+amount);
