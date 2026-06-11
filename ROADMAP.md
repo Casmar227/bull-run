@@ -122,3 +122,28 @@ localization, ads.
 | ✅ 2 | Meta, Vulture, Margin Levels, Hot Tips (shipped) | — | D7/D30 retention |
 | ✅ 3 | PWA, path-grid share, seeds (shipped) — launch push pending | ~4 | New players, daily DAU |
 | 4 | ✅ Whale + balance (shipped) — iOS app, depth pending | 30–45 | Revenue, D90 |
+
+---
+
+## ✅ SHIPPED — v1.2: The Improvement Pass (post-launch)
+
+- **Industrialized balance loop**: policy-bot harness (synergy drafting, block-aware
+  combat, shop/rest logic) ran 1,650+ full headless games; per-card pick-rate and
+  picked-vs-skipped progress deltas drove a buff-only debt package (Leverage Up,
+  Junk Bonds 6×/8×, Ponzi, Toxic Assets, CDS, Bear Raid, Margin Call, Vulture's Eye 3).
+  Verified: Trader 64.5% / Vulture 80.5% / Whale 78.5% bot win-rate on easy.
+  `BR_HEADLESS` flag no-ops visuals for harness speed.
+- **Reactive enemies**: pattern slots as state-pure functions — Short Seller squeezes
+  block, Stagflation feeds on Debt, Rating Agency punishes Powers, Hedge Mgr poaches
+  gold, The Whale's Undertow pierces. Boss mechanics: SEC Injunctions (cards cost +1),
+  Fed QT/QE 3-turn policy regimes.
+- **Trader identity — POSITIONS**: delayed payoffs (9 exclusives + Order Book innate).
+- **Run-variance polish**: events never repeat per run, shop card-removal ($75) and
+  relic slot ($150), idempotent shop stock, rare pity timer, act-scaled rarity.
+- **Curses expanded**: Bag Holding (hand-penalty), FOMO (on-draw), curse card type.
+- **Cross-platform art**: 16 enemy SVG emblems (no more platform-emoji dependence in
+  combat); act-themed beep scales + boss drone; bug-report button with prefilled
+  GitHub issue; GAME_VERSION surfaced in settings.
+
+**Open for the next patch:** degenerate-combo verdicts from forced-archetype bot runs;
+re-tune Vulture if human data confirms it runs hot; mid-combat save; MLs 11–20.

@@ -2054,7 +2054,7 @@ const RELICS={
   short_fuse:  {ico:'🧨', name:'Short Fuse',        desc:'At the start of each turn, deal 2 damage to a random enemy.'},
   golden_gavel:{ico:'🔨', name:'Golden Gavel',      desc:'Weak and Vulnerable you apply get +1 stack.'},
   vulture_eye: {ico:'🪶', name:"Vulture's Eye",     desc:'Whenever you gain Debt, gain 3 block per stack.', innate:true},
-  order_book:  {ico:'📓', name:'Order Book',        desc:'Whenever a Position settles, gain 2 block.', innate:true},
+  order_book:  {ico:'📓', name:'Order Book',        desc:'Whenever a Position settles, gain 3 block.', innate:true},
   platinum_card:{ico:'💳', name:'Platinum Card',    desc:'Whenever you spend $ on a card in combat, gain 2 block.', innate:true},
   // boss trade-offs (offered as a choice after Act I/II bosses, never random drops)
   faustian_term_sheet:{ico:'📑', name:'Faustian Term Sheet', desc:'+1 max Capital every combat. Signing costs 8 max HP.', boss:true},
@@ -2479,7 +2479,7 @@ function tickPositions(G){
   due.forEach(p=>{
     log(`💹 Position settles: ${p.label}!`,'heal');
     p.fire(G);
-    if(hasRelic('order_book')) playerGainBlock(G,2);
+    if(hasRelic('order_book')) playerGainBlock(G,3);
     if(G.combat&&G.combat.pmBlock) playerGainBlock(G,4);
   });
   if(due.length) snd('victory');
