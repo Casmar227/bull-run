@@ -9,7 +9,11 @@ A finance-themed roguelike deckbuilder that runs entirely in your browser. Build
 - 📅 **Daily Challenge** — everyone worldwide gets the same seeded run with a rotating market condition (ZIRP, Meme Stock Monday, Crypto Winter…); one scored attempt per day, then share your P&L
 - 💾 **Save & resume** — close the tab mid-run and pick up where you left off
 - 📱 **Plays on phones** — fully responsive, drag or tap to play cards
-- 43 cards across attack / defense / skill types, with common, uncommon, and rare tiers
+- 🦅 **Two playable investors** — The Trader, and the unlockable Vulture (distressed-debt specialist with 12 exclusive cards where Debt is fuel, not poison)
+- 📈 **Meta-progression** — every run advances your account: card packs, relic packs, and the second character unlock as you play
+- 🌡️ **Margin Levels** — a 10-step ascension ladder per character; win at ML N to unlock ML N+1
+- 🍸 **Hot Tips** — consumables (Hot Tip, Circuit Breaker, Stimulus Check…) dropped after fights and sold under the counter at the Exchange
+- 55 cards across attack / defense / skill types, with common, uncommon, and rare tiers
 - Four synergy archetypes to build around: Debt/Leverage (Ponzi Scheme → Junk Bonds), Fortress (big Block → Collateral Damage), Momentum (cheap cards → Momentum Trade / Algo Trading), and Strength scaling (Compound Interest → Reinvest)
 - Drag-and-drop card play with a curved targeting arrow — or click, both work
 - Juicy combat feedback: fanned hand, card-fly animations, impact particles, damage ghosting on health bars, CRT scanline aesthetic

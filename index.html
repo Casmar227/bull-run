@@ -409,6 +409,35 @@ h2{font-size:1.3rem;color:var(--green);}
   padding-bottom:6px;margin-bottom:8px;text-align:center;}
 .ln-fine{display:block;margin-top:10px;font-size:.68rem;opacity:.7;font-style:italic;line-height:1.6;}
 
+/* ── CHARACTER SELECT / META ── */
+#char-screen{align-items:center;justify-content:center;gap:14px;}
+#char-cards{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;}
+.char-card{border:1px solid var(--bord);border-radius:10px;background:linear-gradient(180deg,var(--surf2),var(--surf));
+  padding:18px 20px;width:250px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+  box-shadow:0 4px 14px rgba(0,0,0,.5);}
+.char-card.locked{opacity:.45;filter:grayscale(.6);}
+.ch-ico{font-size:3rem;}
+.ch-name{color:var(--gold);letter-spacing:2px;font-weight:bold;}
+.ch-blurb{font-size:.72rem;color:var(--tdim);line-height:1.5;}
+.ch-hp{font-size:.72rem;color:var(--text);}
+.ml-row{display:flex;align-items:center;gap:8px;font-size:.7rem;color:var(--gold);}
+.ml-desc{font-size:.6rem;color:var(--tdim);line-height:1.5;max-width:220px;}
+.unlock-row{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+.unlock-pop{border:1px solid var(--gold);color:var(--gold);padding:7px 12px;border-radius:6px;
+  font-size:.74rem;background:rgba(60,45,0,.3);animation:relic-pop .5s ease;}
+.bar-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+.relic-bar.potions{border-left:1px dashed var(--bord);padding-left:12px;}
+.potion{width:34px;height:34px;border:1px solid var(--gold);border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:1.05rem;cursor:pointer;position:relative;
+  background:radial-gradient(circle at 35% 30%,#2a2410,#171307);}
+.potion.empty{border-style:dashed;border-color:var(--bord);color:var(--bord);cursor:default;}
+.potion.big{width:46px;height:46px;font-size:1.4rem;}
+.potion.dis{opacity:.35;cursor:default;}
+.potion .rtip{display:none;position:absolute;top:110%;left:50%;transform:translateX(-50%);
+  background:#0a140c;border:1px solid var(--gold);padding:8px 10px;border-radius:6px;width:170px;
+  font-size:.66rem;color:var(--text);z-index:60;line-height:1.5;}
+.potion:hover .rtip,.potion.tipon .rtip{display:block;}
+
 /* ── MOBILE ── */
 body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
 .relic.tipon .rtip{display:block;}
@@ -458,6 +487,8 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
   .event-opts{min-width:0;width:100%;}
   .hand-hdr{font-size:.66rem;}
   .liq-notice{max-width:100%;font-size:.74rem;padding:12px 14px;}
+  .char-card{width:100%;max-width:300px;padding:12px;}
+  .potion{width:30px;height:30px;font-size:.9rem;}
 }
 </style>
 </head>
@@ -475,14 +506,23 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
   </div>
   <div class="menu-btns">
     <button class="btn big" id="resume-btn" onclick="resumeRun()" style="display:none;border-color:var(--gold);color:var(--gold);"></button>
-    <button class="btn big gold" onclick="startGame(true)">▶ EASY MODE — NEW INVESTOR</button>
+    <button class="btn big gold" onclick="openCharSelect(true)">▶ EASY MODE — NEW INVESTOR</button>
     <div class="diff-note">Recommended for your first run: more health, gentler enemies</div>
-    <button class="btn big" onclick="startGame(false)">▶ NORMAL — WALL STREET VETERAN</button>
+    <button class="btn big" onclick="openCharSelect(false)">▶ NORMAL — WALL STREET VETERAN</button>
     <button class="btn big" id="daily-btn" onclick="startDaily()">📅 DAILY RUN</button>
     <div class="diff-note" id="daily-note"></div>
     <button class="btn" onclick="openHelp()">📖 HOW TO PLAY</button>
+    <div class="diff-note" id="profile-strip"></div>
   </div>
   <div style="font-size:.75rem;color:var(--tdim);">43 cards • daily challenge • 3 acts • 1 final boss</div>
+</div>
+
+<!-- CHARACTER SELECT -->
+<div id="char-screen" class="screen">
+  <h2>CHOOSE YOUR INVESTOR</h2>
+  <div class="tdim" id="char-mode"></div>
+  <div id="char-cards"></div>
+  <button class="btn mt16" onclick="show('menu-screen')">← BACK</button>
 </div>
 
 <!-- MAP -->
@@ -499,7 +539,7 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
       <button class="btn sm" onclick="openDeck()">VIEW DECK</button>
     </div>
   </div>
-  <div class="relic-bar" id="map-relics"></div>
+  <div class="bar-row"><div class="relic-bar" id="map-relics"></div><div class="relic-bar potions" id="map-potions"></div></div>
   <div id="map-nodes"></div>
 </div>
 
@@ -515,9 +555,10 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
       <span title="Cards waiting to be drawn. When it runs out, your discard pile is shuffled back in.">DRAW:<span id="draw-cnt"> 0</span></span>
       <span title="Cards you've played or didn't use this turn. They come back when the draw pile empties.">DISC:<span id="disc-cnt"> 0</span></span>
       <span title="Exhausted cards are gone for the rest of this battle only.">EXHS:<span id="exhs-cnt"> 0</span></span>
+      <button class="btn sm" onclick="openDeck()" title="View your full deck">📂</button>
     </div>
   </div>
-  <div class="relic-bar" id="combat-relics"></div>
+  <div class="bar-row"><div class="relic-bar" id="combat-relics"></div><div class="relic-bar potions" id="combat-potions"></div></div>
   <div class="tut-banner" id="tut-banner">
     <div class="tut-txt" id="tut-txt"></div>
     <div class="tut-btns">
@@ -539,6 +580,7 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
 <!-- REWARD -->
 <div id="reward-screen" class="screen">
   <h2>⬆ MARKET OPPORTUNITY</h2>
+  <div id="potion-reward" class="tgold" style="display:none;"></div>
   <div id="relic-reward" style="display:none;">
     <div class="big" id="relic-reward-ico"></div>
     <div class="tgold" id="relic-reward-name"></div>
@@ -561,6 +603,8 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
     </div>
   </div>
   <div class="shop-grid" id="shop-items"></div>
+  <div class="tdim mt8">— UNDER THE COUNTER —</div>
+  <div class="shop-grid" id="shop-potions"></div>
   <button class="btn mt16" onclick="leaveShop()">LEAVE EXCHANGE →</button>
 </div>
 
@@ -1081,7 +1125,7 @@ const CARDS = {
 
   ipo:{ id:'ipo', name:'IPO', cost:1, type:'skill', ico:'🚀',
     desc:'Add a random card to your hand.',
-    effect:(G)=>{ const pool=Object.values(CARDS).filter(c=>!['market_order','stop_loss','red_tape'].includes(c.id));
+    effect:(G)=>{ const pool=rewardPool().map(k=>CARDS[k]);
       const cd={...rand(pool),uid:uid()};
       G.combat.hand.push(cd); renderHand(); log(`IPO: drew ${cd.name}!`,'sts'); } },
 
@@ -1183,6 +1227,69 @@ const CARDS = {
     desc:'Gain 1 Energy. Draw 2 cards.',
     effect:(G)=>{ G.combat.energy=clamp(G.combat.energy+1,0,9); drawCards(G,2); renderEnergy(); } },
 
+  // ——— THE VULTURE (character-exclusive: Debt is fuel) ———
+  distressed_debt:{ id:'distressed_debt', name:'Distressed Debt', cost:1, type:'attack', ico:'📜', char:'vulture', rar:'unc',
+    desc:'Deal 8 damage, +3 per Debt you have.', needsTarget:true,
+    dyn:(G)=>`Deal ${8+3*(G.player.statuses.debt||0)} damage right now. (+3 per Debt)`,
+    effect:(G,t)=>{ playerDealDamage(G,t,8+3*(G.player.statuses.debt||0)); } },
+
+  chapter_11:{ id:'chapter_11', name:'Chapter 11', cost:1, type:'skill', ico:'⚖️', char:'vulture', rar:'rare',
+    desc:'Convert ALL your Debt into Strength. Exhaust.', exhausts:true,
+    effect:(G)=>{ const d=G.player.statuses.debt||0; delete G.player.statuses.debt;
+      G.player.statuses.strength=(G.player.statuses.strength||0)+d;
+      log(`Restructured: ${d} Debt → ${d} Strength!`,'sts'); renderCombat(); } },
+
+  asset_stripping:{ id:'asset_stripping', name:'Asset Stripping', cost:2, type:'attack', ico:'🔩', char:'vulture', rar:'unc',
+    desc:'Deal 14 damage. If this kills the enemy, gain $15.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,14);
+      if(G.combat.enemies[t].hp<=0){ G.player.gold+=15; log('Stripped for parts: +$15.','heal'); renderCombat(); } } },
+
+  liquidation_sale:{ id:'liquidation_sale', name:'Liquidation Sale', cost:1, type:'skill', ico:'🏷️', char:'vulture',
+    desc:'Gain $4 per Debt you have. Exhaust.', exhausts:true,
+    dyn:(G)=>`Gain $${4*(G.player.statuses.debt||0)} right now. ($4 per Debt)`,
+    effect:(G)=>{ const g=4*(G.player.statuses.debt||0); G.player.gold+=g;
+      log(`Liquidation sale: +$${g}.`,'heal'); renderCombat(); } },
+
+  debt_ceiling:{ id:'debt_ceiling', name:'Debt Ceiling', cost:2, type:'skill', ico:'🏛️', char:'vulture', rar:'rare',
+    desc:'This combat, Debt no longer costs you HP. Exhaust.', exhausts:true,
+    effect:(G)=>{ G.combat.debtFrozen=true; log('Debt ceiling raised. Consequences postponed indefinitely!','sts'); } },
+
+  carrion_call:{ id:'carrion_call', name:'Carrion Call', cost:1, type:'skill', ico:'🦴', char:'vulture', rar:'unc',
+    desc:'Draw 1 card per Debt you have (max 5).',
+    dyn:(G)=>`Draw ${Math.min(5,G.player.statuses.debt||0)} cards right now. (1 per Debt)`,
+    effect:(G)=>{ drawCards(G,Math.min(5,G.player.statuses.debt||0)); } },
+
+  predatory_loan:{ id:'predatory_loan', name:'Predatory Loan', cost:1, type:'attack', ico:'🦈', char:'vulture',
+    desc:'Deal 10 damage. Gain 1 Debt.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,10); applyStatus(G,'player','debt',1); } },
+
+  restructure:{ id:'restructure', name:'Restructure', cost:1, type:'defend', ico:'📐', char:'vulture',
+    desc:'Gain 9 block. Convert 1 Debt into 1 Strength.',
+    effect:(G)=>{ playerGainBlock(G,9); if((G.player.statuses.debt||0)>0){
+      G.player.statuses.debt--; if(G.player.statuses.debt===0) delete G.player.statuses.debt;
+      G.player.statuses.strength=(G.player.statuses.strength||0)+1;
+      log('1 Debt → 1 Strength.','sts'); renderCombat(); } } },
+
+  default_swap:{ id:'default_swap', name:'Default Swap', cost:1, type:'defend', ico:'🔁', char:'vulture',
+    desc:'Gain 11 block. Gain 1 Debt.',
+    effect:(G)=>{ playerGainBlock(G,11); applyStatus(G,'player','debt',1); } },
+
+  bottom_feeder:{ id:'bottom_feeder', name:'Bottom Feeder', cost:0, type:'attack', ico:'🐟', char:'vulture',
+    desc:'Deal 3 damage, +2 if you have any Debt.', needsTarget:true,
+    dyn:(G)=>`Deal ${(G.player.statuses.debt||0)>0?5:3} damage right now.`,
+    effect:(G,t)=>{ playerDealDamage(G,t,(G.player.statuses.debt||0)>0?5:3); } },
+
+  vulture_swoop:{ id:'vulture_swoop', name:'Vulture Swoop', cost:2, type:'attack', ico:'🦅', char:'vulture', rar:'unc',
+    desc:'Deal 16 damage, +8 if the target is Vulnerable.', needsTarget:true,
+    effect:(G,t)=>{ const e=G.combat.enemies[t];
+      playerDealDamage(G,t,16+((e.statuses.vulnerable||0)>0?8:0)); } },
+
+  toxic_yield:{ id:'toxic_yield', name:'Toxic Yield', cost:2, type:'skill', ico:'☣️', char:'vulture', rar:'rare',
+    desc:'Deal 4 damage to ALL enemies per Debt you have. Exhaust.', exhausts:true,
+    dyn:(G)=>`Deal ${4*(G.player.statuses.debt||0)} damage to ALL enemies right now.`,
+    effect:(G)=>{ const d=4*(G.player.statuses.debt||0);
+      G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,d); }); } },
+
   // ——— CURSE ———
   red_tape:{ id:'red_tape', name:'Red Tape', cost:0, type:'skill', ico:'🧻',
     desc:'Unplayable. Pure bureaucracy. Remove it at a Board Meeting.',
@@ -1203,12 +1310,24 @@ const CARD_RARITY={
 Object.entries(CARD_RARITY).forEach(([k,r])=>{ if(CARDS[k]) CARDS[k].rar=r; });
 
 // Card pool for rewards / shop (excludes starter)
-const REWARD_POOL = Object.keys(CARDS).filter(k=>!['market_order','stop_loss','red_tape'].includes(k));
-const POOL_BY_RARITY={
-  common: REWARD_POOL.filter(k=>!CARDS[k].rar),
-  unc:    REWARD_POOL.filter(k=>CARDS[k].rar==='unc'),
-  rare:   REWARD_POOL.filter(k=>CARDS[k].rar==='rare'),
-};
+// Cards gated behind meta-progression unlocks
+['golden_goose','all_in','toxic_assets'].forEach(k=>{ CARDS[k].unlock='derivatives'; });
+
+// Pools are computed per call: they respect the current character's
+// exclusive cards and the account's unlocks.
+function rewardPool(){
+  return Object.keys(CARDS).filter(k=>{
+    const c=CARDS[k];
+    if(['market_order','stop_loss','red_tape'].includes(k)) return false;
+    if(c.char&&(!G||c.char!==G.charId)) return false;
+    if(c.unlock&&!metaHas(c.unlock)) return false;
+    return true;
+  });
+}
+function poolByRarity(r){
+  const p=rewardPool();
+  return r==='common'?p.filter(k=>!CARDS[k].rar):p.filter(k=>CARDS[k].rar===r);
+}
 function rollRarity(){ const r=grand(); return r<0.60?'common':r<0.90?'unc':'rare'; }
 
 // ============================================================
@@ -1241,7 +1360,7 @@ const UPGRADES={
   compound_interest:{desc:'Gain 4 Strength.', effect:(G)=>{ G.player.statuses.strength=(G.player.statuses.strength||0)+4; log('You gain 4 Strength!','sts'); renderCombat(); }},
   market_research:{desc:'Draw 3 cards. Exhaust.', effect:(G)=>{ drawCards(G,3); }},
   tax_shelter:{desc:'Remove all Debt stacks. Gain 10 block.', effect:(G)=>{ const d=G.player.statuses.debt||0; delete G.player.statuses.debt; playerGainBlock(G,10); log(`Cleared ${d} Debt. Gained 10 block.`,'heal'); }},
-  ipo:{desc:'Add 2 random cards to your hand.', effect:(G)=>{ const pool=Object.values(CARDS).filter(c=>!['market_order','stop_loss','red_tape'].includes(c.id)); for(let i=0;i<2;i++){ const cd={...rand(pool),uid:uid()}; G.combat.hand.push(cd); log(`IPO: drew ${cd.name}!`,'sts'); } renderHand(); }},
+  ipo:{desc:'Add 2 random cards to your hand.', effect:(G)=>{ const pool=rewardPool().map(k=>CARDS[k]); for(let i=0;i<2;i++){ const cd={...rand(pool),uid:uid()}; G.combat.hand.push(cd); log(`IPO: drew ${cd.name}!`,'sts'); } renderHand(); }},
   leveraged_buyout:{desc:'Gain 4 block, then double your block.', effect:(G)=>{ playerGainBlock(G,4); const b=G.player.block; G.player.block*=2; log(`Block doubled: ${b} → ${G.player.block}`,'blk'); renderCombat(); }},
   hft:{desc:'Deal 5 damage. Draw 1 card.', effect:(G,t)=>{ playerDealDamage(G,t,5); drawCards(G,1); }},
   momentum_trade:{desc:'Deal 7 damage, +4 for each other card played this turn.',
@@ -1271,6 +1390,45 @@ const UPGRADES={
   black_swan:{desc:'Deal 24 damage to ALL enemies. Exhaust.', effect:(G)=>{ G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,24); }); }},
   ponzi_scheme:{desc:'Gain 6 Strength. Gain 2 Debt.', effect:(G)=>{ G.player.statuses.strength=(G.player.statuses.strength||0)+6; applyStatus(G,'player','debt',2); log('You gain 6 Strength!','sts'); renderCombat(); }},
   golden_goose:{desc:'Gain 1 Energy. Draw 3 cards.', effect:(G)=>{ G.combat.energy=clamp(G.combat.energy+1,0,9); drawCards(G,3); renderEnergy(); }},
+  // Vulture exclusives
+  distressed_debt:{desc:'Deal 10 damage, +4 per Debt you have.',
+    dyn:(G)=>`Deal ${10+4*(G.player.statuses.debt||0)} damage right now. (+4 per Debt)`,
+    effect:(G,t)=>{ playerDealDamage(G,t,10+4*(G.player.statuses.debt||0)); }},
+  chapter_11:{desc:'Convert ALL your Debt into Strength, +2. Exhaust.',
+    effect:(G)=>{ const d=(G.player.statuses.debt||0)+2; delete G.player.statuses.debt;
+      G.player.statuses.strength=(G.player.statuses.strength||0)+d;
+      log(`Restructured: +${d} Strength!`,'sts'); renderCombat(); }},
+  asset_stripping:{desc:'Deal 18 damage. If this kills the enemy, gain $20.',
+    effect:(G,t)=>{ playerDealDamage(G,t,18);
+      if(G.combat.enemies[t].hp<=0){ G.player.gold+=20; log('Stripped for parts: +$20.','heal'); renderCombat(); } }},
+  liquidation_sale:{desc:'Gain $6 per Debt you have. Exhaust.',
+    dyn:(G)=>`Gain $${6*(G.player.statuses.debt||0)} right now. ($6 per Debt)`,
+    effect:(G)=>{ const g=6*(G.player.statuses.debt||0); G.player.gold+=g;
+      log(`Liquidation sale: +$${g}.`,'heal'); renderCombat(); }},
+  debt_ceiling:{desc:'This combat, Debt no longer costs you HP. Exhaust.', cost:1,
+    effect:(G)=>{ G.combat.debtFrozen=true; log('Debt ceiling raised. Consequences postponed indefinitely!','sts'); }},
+  carrion_call:{desc:'Draw 1 card per Debt you have, +1 (max 6).',
+    dyn:(G)=>`Draw ${Math.min(6,(G.player.statuses.debt||0)+1)} cards right now.`,
+    effect:(G)=>{ drawCards(G,Math.min(6,(G.player.statuses.debt||0)+1)); }},
+  predatory_loan:{desc:'Deal 14 damage. Gain 1 Debt.',
+    effect:(G,t)=>{ playerDealDamage(G,t,14); applyStatus(G,'player','debt',1); }},
+  restructure:{desc:'Gain 12 block. Convert up to 2 Debt into Strength.',
+    effect:(G)=>{ playerGainBlock(G,12); const d=Math.min(2,G.player.statuses.debt||0);
+      if(d>0){ G.player.statuses.debt-=d; if(G.player.statuses.debt===0) delete G.player.statuses.debt;
+        G.player.statuses.strength=(G.player.statuses.strength||0)+d;
+        log(`${d} Debt → ${d} Strength.`,'sts'); renderCombat(); } }},
+  default_swap:{desc:'Gain 15 block. Gain 1 Debt.',
+    effect:(G)=>{ playerGainBlock(G,15); applyStatus(G,'player','debt',1); }},
+  bottom_feeder:{desc:'Deal 5 damage, +3 if you have any Debt.',
+    dyn:(G)=>`Deal ${(G.player.statuses.debt||0)>0?8:5} damage right now.`,
+    effect:(G,t)=>{ playerDealDamage(G,t,(G.player.statuses.debt||0)>0?8:5); }},
+  vulture_swoop:{desc:'Deal 20 damage, +10 if the target is Vulnerable.',
+    effect:(G,t)=>{ const e=G.combat.enemies[t];
+      playerDealDamage(G,t,20+((e.statuses.vulnerable||0)>0?10:0)); }},
+  toxic_yield:{desc:'Deal 5 damage to ALL enemies per Debt you have. Exhaust.',
+    dyn:(G)=>`Deal ${5*(G.player.statuses.debt||0)} damage to ALL enemies right now.`,
+    effect:(G)=>{ const d=5*(G.player.statuses.debt||0);
+      G.combat.enemies.forEach((_,i)=>{ if(G.combat.enemies[i].hp>0) playerDealDamage(G,i,d); }); }},
 };
 
 function applyUpgrade(card){
@@ -1314,7 +1472,10 @@ const RELICS={
   bull_plush:  {ico:'🧸', name:'Lucky Bull Plush',  desc:'Heal 2 HP every time you advance a floor.'},
   short_fuse:  {ico:'🧨', name:'Short Fuse',        desc:'At the start of each turn, deal 2 damage to a random enemy.'},
   golden_gavel:{ico:'🔨', name:'Golden Gavel',      desc:'Weak and Vulnerable you apply get +1 stack.'},
+  vulture_eye: {ico:'🪶', name:"Vulture's Eye",     desc:'Whenever you gain Debt, gain 2 block per stack.', innate:true},
 };
+// Relics gated behind meta-progression unlocks
+['golden_rolodex','severance_package','short_fuse'].forEach(id=>{ RELICS[id].unlock='exec_perks'; });
 
 const hasRelic=(id)=>G&&G.player.relics.includes(id);
 
@@ -1327,7 +1488,8 @@ function addRelic(id){
 }
 
 function randomNewRelic(){
-  const pool=Object.keys(RELICS).filter(id=>!hasRelic(id));
+  const pool=Object.keys(RELICS).filter(id=>!hasRelic(id)&&!RELICS[id].innate
+    &&(!RELICS[id].unlock||metaHas(RELICS[id].unlock)));
   return pool.length?rand(pool):null;
 }
 
@@ -1496,6 +1658,172 @@ const ENEMY_DEFS = {
 };
 
 // ============================================================
+// META-PROGRESSION (persists across runs)
+// ============================================================
+function getMeta(){
+  let m=null; try{ m=JSON.parse(lsGet('br_meta')||'null'); }catch(e){}
+  return Object.assign({runs:0,wins:0,bestAct:0,winsBy:{},mlBy:{},unlocks:[]},m||{});
+}
+function setMeta(m){ lsSet('br_meta',JSON.stringify(m)); }
+function metaHas(u){ return getMeta().unlocks.includes(u); }
+
+const UNLOCKS=[
+  {id:'derivatives', icon:'📦', name:'DERIVATIVES DESK — 3 powerful cards join the pool', hint:'play 3 runs', test:m=>m.runs>=3},
+  {id:'exec_perks',  icon:'💼', name:'EXECUTIVE PERKS — 3 new relics join the pool',      hint:'reach Act II', test:m=>m.bestAct>=1},
+  {id:'vulture',     icon:'🦅', name:'NEW INVESTOR UNLOCKED: THE VULTURE',                hint:'win a run (or play 5)', test:m=>m.wins>=1||m.runs>=5},
+];
+let _lastUnlocks=[];
+const unlocksHTML=()=>_lastUnlocks.length
+  ?`<div class="unlock-row">${_lastUnlocks.map(u=>`<div class="unlock-pop">🔓 ${u.icon} ${u.name}</div>`).join('')}</div>`:'';
+
+// ============================================================
+// CHARACTERS
+// ============================================================
+const mkCard=(id)=>({...CARDS[id],uid:uid()});
+const CHARACTERS={
+  trader:{ id:'trader', name:'THE TRADER', ico:'🧑‍💼', hp:[75,95],
+    blurb:'The classic. A balanced book and a strong cup of coffee.',
+    deck:()=>[...Array(5).fill(0).map(()=>mkCard('market_order')),
+              ...Array(4).fill(0).map(()=>mkCard('stop_loss')), mkCard('due_diligence')],
+    relic:null },
+  vulture:{ id:'vulture', name:'THE VULTURE', ico:'🦅', hp:[70,88],
+    blurb:'Distressed-debt specialist. Debt is fuel, not poison. 12 exclusive cards.',
+    deck:()=>[...Array(4).fill(0).map(()=>mkCard('market_order')),
+              ...Array(3).fill(0).map(()=>mkCard('stop_loss')),
+              mkCard('due_diligence'), mkCard('leverage_up'), mkCard('junk_bonds')],
+    relic:'vulture_eye', unlock:'vulture' },
+};
+
+let _selEasy=false;
+const _mlSel={};
+function openCharSelect(easy){ _selEasy=easy; renderCharSelect(); show('char-screen'); snd('click'); }
+
+function renderCharSelect(){
+  const m=getMeta();
+  document.getElementById('char-mode').textContent=_selEasy?'EASY MODE — NEW INVESTOR':'NORMAL — WALL STREET VETERAN';
+  const cont=document.getElementById('char-cards');
+  cont.innerHTML='';
+  Object.values(CHARACTERS).forEach(ch=>{
+    const locked=ch.unlock&&!m.unlocks.includes(ch.unlock);
+    const maxMl=m.mlBy[ch.id]||0;
+    _mlSel[ch.id]=clamp(_mlSel[ch.id]||0,0,maxMl);
+    const cur=_mlSel[ch.id];
+    const div=document.createElement('div');
+    div.className='char-card'+(locked?' locked':'');
+    if(locked){
+      const u=UNLOCKS.find(u=>u.id===ch.unlock);
+      div.innerHTML=`<div class="ch-ico">❓</div><div class="ch-name">???</div>
+        <div class="ch-blurb">Locked — ${u?u.hint:'keep playing'}.</div>`;
+    } else {
+      div.innerHTML=`<div class="ch-ico">${ch.ico}</div><div class="ch-name">${ch.name}</div>
+        <div class="ch-blurb">${ch.blurb}</div>
+        <div class="ch-hp">${ch.hp[_selEasy?1:0]} HP${ch.relic?` · starts with ${RELICS[ch.relic].ico} ${RELICS[ch.relic].name}`:''}</div>
+        ${maxMl>0?`<div class="ml-row">
+            <button class="btn sm" onclick="mlAdj('${ch.id}',-1)">−</button>
+            <span>MARGIN LEVEL <b>${cur}</b>/${maxMl}</span>
+            <button class="btn sm" onclick="mlAdj('${ch.id}',1)">+</button>
+          </div>
+          <div class="ml-desc">${mlDesc(cur)}</div>`:''}
+        <button class="btn gold" onclick="startGame(_selEasy,null,null,'${ch.id}',_mlSel['${ch.id}']||0)">▶ START RUN</button>`;
+    }
+    cont.appendChild(div);
+  });
+}
+function mlAdj(id,d){
+  const mx=getMeta().mlBy[id]||0;
+  _mlSel[id]=clamp((_mlSel[id]||0)+d,0,mx);
+  renderCharSelect(); snd('click');
+}
+
+// ============================================================
+// MARGIN LEVELS (ascension — cumulative, win at N unlocks N+1)
+// ============================================================
+const ML_MODS=[
+  {name:'ML1 BEAR MARKET: enemies +15% HP'},
+  {name:'ML2 TRADING FEES: card removal costs $20'},
+  {name:'ML3 OVERLEVERAGED: start combats with 1 Debt'},
+  {name:'ML4 HAWKISH FED: bosses start with +3 Strength'},
+  {name:'ML5 LIQUIDITY CRUNCH: combat gold −25%'},
+  {name:'ML6 HOSTILE MARKET: elites +15% HP, +1 Strength'},
+  {name:'ML7 NO BAILOUTS: −10 max HP'},
+  {name:'ML8 AUDIT SEASON: gain a Red Tape curse each act'},
+  {name:'ML9 STAGNATION: healing −33%'},
+  {name:'ML10 BLACK SWAN ERA: the Fed +40 HP, +3 Strength'},
+];
+const mlAt=(n)=>!!(G&&!G.daily&&(G.ml||0)>=n);
+const mlDesc=(n)=>n===0?'Standard market conditions.':ML_MODS.slice(0,n).map(m=>m.name).join('  ·  ');
+
+// ============================================================
+// HOT TIPS (consumables)
+// ============================================================
+const POTIONS={
+  hot_tip:       {ico:'📞', name:'Hot Tip',             desc:'Deal 12 damage to a random enemy.', combat:true},
+  liquidity_shot:{ico:'💉', name:'Liquidity Injection', desc:'Gain 2 Capital this turn.', combat:true},
+  earnings_leak: {ico:'🗞️', name:'Earnings Leak',       desc:'Draw 3 cards.', combat:true},
+  liquid_courage:{ico:'🥃', name:'Liquid Courage',      desc:'Gain 2 Strength.', combat:true},
+  the_bubble:    {ico:'🫧', name:'The Bubble',          desc:'Gain 15 block.', combat:true},
+  circuit_cut:   {ico:'🧯', name:'Circuit Breaker',     desc:'ALL enemies skip their next action.', combat:true},
+  stimulus:      {ico:'💊', name:'Stimulus Check',      desc:'Heal 12 HP. Usable anywhere.', combat:false},
+  shredder:      {ico:'🗑️', name:'Shred-It Service',    desc:'Remove a card from your deck. Use from the map.', combat:false, mapOnly:true},
+};
+
+function usePotion(i){
+  const id=G.player.potions[i]; if(!id) return;
+  const p=POTIONS[id];
+  const inCombat=!!G.combat;
+  if(p.combat&&!inCombat) return;
+  if(p.mapOnly&&inCombat) return;
+  if(id==='shredder'){
+    // consume only on an actual pick; canceling returns to the map
+    showCardPicker('🗑️ SHRED-IT SERVICE','Select a card to permanently remove',
+      G.player.deck,(card)=>{
+        const ix=G.player.potions.indexOf('shredder');
+        if(ix>=0) G.player.potions.splice(ix,1);
+        G.player.deck=G.player.deck.filter(c=>c.uid!==card.uid);
+        snd('heal');
+        saveRun(null); goMap();
+      },()=>goMap());
+    return;
+  }
+  G.player.potions.splice(i,1);
+  snd('heal');
+  switch(id){
+    case 'hot_tip':{ const alive=G.combat.enemies.map((e,j)=>e.hp>0?j:-1).filter(j=>j>=0);
+      if(alive.length) playerDealDamage(G,rand(alive),12); checkCombatEnd(); break; }
+    case 'liquidity_shot': G.combat.energy=clamp(G.combat.energy+2,0,9); renderEnergy();
+      log('💉 +2 Capital.','sts'); break;
+    case 'earnings_leak': drawCards(G,3); log('🗞️ The leak was accurate. Draw 3.','sts'); break;
+    case 'liquid_courage': G.player.statuses.strength=(G.player.statuses.strength||0)+2;
+      log('🥃 Liquid courage: +2 Strength.','sts'); renderCombat(); break;
+    case 'the_bubble': playerGainBlock(G,15); break;
+    case 'circuit_cut': G.combat.enemies.forEach(e=>{ if(e.hp>0) e.skip=(e.skip||0)+1; });
+      log('🧯 Circuit breaker tripped! All enemies halted.','sts'); updateIntents(); break;
+    case 'stimulus': healPlayer(G,12); break;
+  }
+  renderPotions();
+  if(!inCombat){ saveRun(null); renderMap(); }
+}
+
+function renderPotions(){
+  ['map-potions','combat-potions'].forEach(cid=>{
+    const cont=document.getElementById(cid); if(!cont) return;
+    cont.innerHTML='';
+    for(let i=0;i<3;i++){
+      const id=G.player.potions[i];
+      const el=document.createElement('div');
+      el.className='potion'+(id?'':' empty');
+      if(id){
+        const p=POTIONS[id];
+        el.innerHTML=`${p.ico}<div class="rtip"><b>${p.name}</b><br>${p.desc}<br><i>tap twice to use</i></div>`;
+        let armed=false;
+        el.onclick=()=>{ if(armed) usePotion(i); else { armed=true; el.classList.add('tipon'); setTimeout(()=>{armed=false;el.classList.remove('tipon');},2500); } };
+      } else el.textContent='·';
+      cont.appendChild(el);
+    }
+  });
+}
+
+// ============================================================
 // MAP STRUCTURE
 // ============================================================
 const ACT_TITLES=['THE BEAR TRAP','THE VOLATILE MARKET','THE FINAL QUARTER'];
@@ -1583,23 +1911,20 @@ function getEnemies(act,type){
 // ============================================================
 let G = null;
 
-function newPlayerDeck(){
-  return [
-    ...Array(5).fill(0).map(()=>({...CARDS.market_order,uid:uid()})),
-    ...Array(4).fill(0).map(()=>({...CARDS.stop_loss,uid:uid()})),
-    {...CARDS.due_diligence,uid:uid()},
-  ];
-}
-
-function startGame(easy=false, seed=null, daily=null){
-  const hp=easy?95:75;
+function startGame(easy=false, seed=null, daily=null, charId='trader', ml=0){
+  const ch=CHARACTERS[charId]||CHARACTERS.trader;
+  if(daily){ charId='trader'; ml=0; }
+  let hp=ch.hp[easy?1:0];
+  if(ml>=7) hp-=10; // ML7 NO BAILOUTS
   const sd=seed!=null?seed:((Math.random()*4294967296)>>>0);
   G={
     easy,
     seed:sd,
     daily,
+    charId, ml,
     rngCalls:0,
-    player:{ hp, maxHp:hp, block:0, statuses:{}, gold:easy?130:99, deck:newPlayerDeck(), relics:[] },
+    player:{ hp, maxHp:hp, block:0, statuses:{}, gold:easy?130:99, deck:ch.deck(),
+      relics:ch.relic?[ch.relic]:[], potions:[] },
     act:0, floor:-1, curCol:null, path:[],
     actMap: buildActMap(0,sd),
     combat:null,
@@ -1607,10 +1932,11 @@ function startGame(easy=false, seed=null, daily=null){
     stats:{ floorsCleared:0, damageDealt:0, damageTaken:0, cardsPlayed:0 },
   };
   seedRng(G.seed);
+  if(mlAt(8)) G.player.deck.push({...CARDS.red_tape,uid:uid()}); // ML8 AUDIT SEASON
   if(dailyMod('volatile')){
     G.player.maxHp-=15; G.player.hp-=15;
     for(let i=0;i<2;i++){
-      const id=rand(POOL_BY_RARITY.rare);
+      const id=rand(poolByRarity('rare'));
       G.player.deck.push({...CARDS[id],uid:uid()});
     }
   }
@@ -1636,11 +1962,12 @@ function saveRun(inNode){
   if(!G) return;
   lsSet(SAVE_KEY,JSON.stringify({
     v:1, seed:G.seed, easy:G.easy, daily:G.daily||null,
+    charId:G.charId||'trader', ml:G.ml||0,
     act:G.act, floor:G.floor, curCol:G.curCol, path:G.path||[],
     severanceUsed:!!G.severanceUsed,
     rngCalls:G.rngCalls, inNode:inNode||null,
     player:{ hp:G.player.hp, maxHp:G.player.maxHp, gold:G.player.gold,
-      relics:[...G.player.relics],
+      relics:[...G.player.relics], potions:[...(G.player.potions||[])],
       deck:G.player.deck.map(c=>({id:c.id,upgraded:!!c.upgraded})) },
     stats:{...G.stats},
   }));
@@ -1658,8 +1985,9 @@ function loadRun(){
   if(!s) return false;
   G={
     easy:s.easy, seed:s.seed, daily:s.daily||null, rngCalls:0,
+    charId:s.charId||'trader', ml:s.ml||0,
     player:{ hp:s.player.hp, maxHp:s.player.maxHp, block:0, statuses:{},
-      gold:s.player.gold,
+      gold:s.player.gold, potions:[...(s.player.potions||[])].filter(id=>POTIONS[id]),
       // relic ids pushed directly — addRelic would re-apply stock_option's
       // +10 maxHp, which is already baked into the saved maxHp
       relics:[...s.player.relics],
@@ -1731,7 +2059,8 @@ function buildShare(won,killer){
   lines.push(G.daily
     ? `🐂 BULL RUN Daily #${G.daily.n} · ${G.daily.modName}${G.daily.practice?' (practice)':''}`
     : '🐂 BULL RUN');
-  lines.push(`${won?'🏆':'📉'} Portfolio: $${runScore().toLocaleString()} · Act ${['I','II','III'][Math.min(G.act,2)]}`);
+  const ch=CHARACTERS[G.charId]||CHARACTERS.trader;
+  lines.push(`${won?'🏆':'📉'} Portfolio: $${runScore().toLocaleString()} · ${ch.ico}${G.ml?' ML'+G.ml:''} · Act ${['I','II','III'][Math.min(G.act,2)]}`);
   lines.push(won?'💰 DEFEATED THE FEDERAL RESERVE':`💀 LIQUIDATED${killer?' by '+killer:''}`);
   lines.push('https://casmar227.github.io/bull-run/');
   return lines.join('\n');
@@ -1757,6 +2086,10 @@ function updateMenu(){
     r.style.display='';
     r.textContent=`▶ RESUME RUN — ACT ${['I','II','III'][Math.min(s.act,2)]} · ${s.player.hp}/${s.player.maxHp} HP · $${s.player.gold}`;
   } else r.style.display='none';
+  const m=getMeta();
+  document.getElementById('profile-strip').textContent=
+    m.runs?`📊 Runs ${m.runs} · Wins ${m.wins} · Unlocks ${m.unlocks.length}/${UNLOCKS.length}`
+          :'📊 Fresh account — the market awaits.';
   const n=dailyNum(), mod=todaysMod(), rec=dailyRecord();
   const done=!!(rec&&rec.n===n&&rec.done);
   document.getElementById('daily-btn').textContent=`📅 DAILY RUN #${n}${done?' — PRACTICE':''}`;
@@ -1794,9 +2127,21 @@ function recordRunEnd(won,killer){
   }
   try{
     const h=JSON.parse(lsGet('br_history')||'[]');
-    h.push({date:Date.now(),won,score,act:G.act,floors:G.stats.floorsCleared,daily:G.daily?G.daily.n:null});
+    h.push({date:Date.now(),won,score,act:G.act,floors:G.stats.floorsCleared,daily:G.daily?G.daily.n:null,charId:G.charId,ml:G.ml||0});
     lsSet('br_history',JSON.stringify(h.slice(-200)));
   }catch(e){}
+  // meta-progression: every run moves a number up
+  const m=getMeta();
+  m.runs++;
+  if(won) m.wins++;
+  m.bestAct=Math.max(m.bestAct,Math.min(G.act,2));
+  if(won){
+    m.winsBy[G.charId]=(m.winsBy[G.charId]||0)+1;
+    if(!G.daily) m.mlBy[G.charId]=Math.min(10,Math.max(m.mlBy[G.charId]||0,(G.ml||0)+1));
+  }
+  _lastUnlocks=UNLOCKS.filter(u=>!m.unlocks.includes(u.id)&&u.test(m));
+  _lastUnlocks.forEach(u=>m.unlocks.push(u.id));
+  setMeta(m);
   return score;
 }
 
@@ -1860,8 +2205,10 @@ function renderMap(){
   document.getElementById('map-hp').textContent=`${G.player.hp}/${G.player.maxHp}`;
   document.getElementById('map-gold').textContent=`$${G.player.gold}`;
   document.getElementById('map-deck').textContent=G.player.deck.length;
-  document.getElementById('floor-lbl').textContent=`Floor ${G.floor+1}/${G.actMap.length}`;
+  document.getElementById('floor-lbl').textContent=
+    `Floor ${G.floor+1}/${G.actMap.length}`+((G.ml||0)>0?` · ML${G.ml}`:'');
   renderRelics('map-relics');
+  renderPotions();
 
   const cont=document.getElementById('map-nodes');
   cont.innerHTML='';
@@ -1956,6 +2303,7 @@ function advanceFloor(){
     if(G.act>=3){ victory(); return; }
     G.floor=-1; G.curCol=null; G.path=[];
     G.actMap=buildActMap(G.act,G.seed);
+    if(mlAt(8)) G.player.deck.push({...CARDS.red_tape,uid:uid()}); // ML8 AUDIT SEASON
   }
   goMap();
 }
@@ -1967,6 +2315,13 @@ function startCombat(enemies, isBoss=false){
   G.player.block=0;
   G.player.statuses={}; // combat statuses don't carry between fights
   if(dailyMod('bear')) enemies.forEach(e=>{ e.maxHp=Math.round(e.maxHp*1.2); e.hp=e.maxHp; });
+  if(mlAt(1)) enemies.forEach(e=>{ e.maxHp=Math.round(e.maxHp*1.15); e.hp=e.maxHp; });
+  if(mlAt(6)) enemies.forEach(e=>{ if(ELITE_IDS.includes(e.id)){
+    e.maxHp=Math.round(e.maxHp*1.15); e.hp=e.maxHp;
+    e.statuses.strength=(e.statuses.strength||0)+1; } });
+  if(mlAt(4)&&isBoss) enemies.forEach(e=>{ e.statuses.strength=(e.statuses.strength||0)+3; });
+  if(mlAt(10)&&isBoss&&G.act===2) enemies.forEach(e=>{ e.maxHp+=40; e.hp=e.maxHp;
+    e.statuses.strength=(e.statuses.strength||0)+3; });
   const maxE=(hasRelic('espresso')?4:3)+(dailyMod('zirp')?1:0);
   G.combat={
     enemies,
@@ -1994,7 +2349,9 @@ function startCombat(enemies, isBoss=false){
   if(hasRelic('lucky_cufflinks')){ G.combat.energy+=1; log('Lucky Cufflinks: +1 Capital.','sts'); }
   if(dailyMod('diamond')){ G.player.block+=8; log('DIAMOND HANDS: +8 block. HODL.','blk'); }
   if(dailyMod('audit')){ G.player.statuses.debt=(G.player.statuses.debt||0)+1; log('AUDIT SEASON: +1 Debt.','sts'); }
+  if(mlAt(3)){ G.player.statuses.debt=(G.player.statuses.debt||0)+1; log('ML3 OVERLEVERAGED: +1 Debt.','sts'); }
   renderRelics('combat-relics');
+  renderPotions();
   drawCards(G,G.combat.drawN+(hasRelic('insider_newsletter')?1:0));
   updateIntents();
   show('combat-screen');
@@ -2087,6 +2444,7 @@ function playerGainBlock(G,amount){
 }
 
 function healPlayer(G,amount){
+  if(mlAt(9)) amount=Math.ceil(amount*0.67);
   const prev=G.player.hp;
   G.player.hp=Math.min(G.player.maxHp,G.player.hp+amount);
   const actual=G.player.hp-prev;
@@ -2103,6 +2461,7 @@ function applyStatus(G,target,type,stacks){
   if(target==='player'){
     G.player.statuses[type]=(G.player.statuses[type]||0)+stacks;
     log(`You gain ${stacks} ${type}.`,'sts');
+    if(type==='debt'&&hasRelic('vulture_eye')) playerGainBlock(G,2*stacks);
     snd('status');
     const pel=document.querySelector('.player-entity');
     if(pel){ const r=pel.getBoundingClientRect(); spawnPopup(type.toUpperCase()+' +'+stacks,'sts',r.left+r.width/2,r.top); }
@@ -2275,6 +2634,8 @@ function endTurn(){
   G.combat.enemies.forEach((e,i)=>{
     if(e.hp<=0) return;
     e.block=0; // enemies lose block each turn
+    if(e.skip>0){ e.skip--; log(`${e.name} is halted by the circuit breaker!`,'sts');
+      tickStatuses(e.statuses,null); return; }
     const action=e.pattern[e.pi];
     log(`${e.name}: ${action.label}`,'enm');
     action.ef(G,e);
@@ -2287,7 +2648,7 @@ function endTurn(){
 
   // Player tick — Debt
   const debt=G.player.statuses.debt||0;
-  if(debt>0){ playerTakeDamage(G,debt,true); log(`Debt costs you ${debt} HP!`,'enm'); }
+  if(debt>0&&!G.combat.debtFrozen){ playerTakeDamage(G,debt,true); log(`Debt costs you ${debt} HP!`,'enm'); }
   checkCombatEnd();
   if(!G.combat) return;
 
@@ -2342,8 +2703,14 @@ function combatWin(){
   const wasElite=G.combat.enemies.some(e=>ELITE_IDS.includes(e.id));
   let goldEarned=isBoss?50+(G.act*25):15+Math.floor(grand()*20);
   if(dailyMod('crypto_winter')) goldEarned*=2;
+  if(mlAt(5)) goldEarned=Math.floor(goldEarned*0.75);
   if(hasRelic('piggy_bank')) goldEarned+=15;
   if(wasElite&&hasRelic('golden_handshake')) goldEarned+=25;
+  _potionDrop=null;
+  if((G.player.potions||[]).length<3&&grand()<0.3){
+    _potionDrop=rand(Object.keys(POTIONS));
+    G.player.potions.push(_potionDrop);
+  }
   G.player.gold+=goldEarned;
   log(`Victory! Earned $${goldEarned}`,'heal');
   if(hasRelic('calculator')) G.player.hp=Math.min(G.player.maxHp,G.player.hp+5);
@@ -2369,7 +2736,8 @@ function combatLose(){
      Floors cleared: ${G.stats.floorsCleared} &nbsp;·&nbsp; Cards played: ${G.stats.cardsPlayed}<br>
      Damage dealt: ${G.stats.damageDealt} &nbsp;·&nbsp; Damage taken: ${G.stats.damageTaken}<br>
      <span class="ln-fine">This decision is final. Per section 12(b) of your account agreement,
-     appeals may be submitted to a shredder of your choosing. The Fed thanks you for your liquidity.</span>`;
+     appeals may be submitted to a shredder of your choosing. The Fed thanks you for your liquidity.</span>`
+     +unlocksHTML();
 }
 
 // ——— INTENT / RENDER ———
@@ -2430,9 +2798,10 @@ function renderPlayerEntity(){
   }
   const pct=clamp(G.player.hp/G.player.maxHp,0,1)*100;
   const sts=G.player.statuses;
+  const ch=CHARACTERS[G.charId]||CHARACTERS.trader;
   pel.innerHTML=`
-    <div class="esprite">🧑‍💼</div>
-    <div class="ename">YOU — THE TRADER</div>
+    <div class="esprite">${ch.ico}</div>
+    <div class="ename">YOU — ${ch.name}</div>
     <div class="hbar-bg" style="width:150px"><div class="hbar-ghost"></div><div class="hbar-fill p"></div></div>
     <div class="hptxt p">${G.player.hp}/${G.player.maxHp} HP</div>
     <div class="blk-badge ${G.player.block>0?'on':''}" title="Block: absorbs damage before HP is lost. Resets at the start of your turn.">🛡 ${G.player.block}</div>
@@ -2717,7 +3086,13 @@ function hideDiscardPrompt(){
 // ============================================================
 // CARD REWARD
 // ============================================================
+let _potionDrop=null;
 function showReward(relicId=null){
+  const pr=document.getElementById('potion-reward');
+  if(_potionDrop){ const p=POTIONS[_potionDrop];
+    pr.style.display='block';
+    pr.innerHTML=`${p.ico} <b>${p.name}</b> acquired — ${p.desc}`;
+  } else pr.style.display='none';
   // Grant relic immediately and display it
   const rr=document.getElementById('relic-reward');
   if(relicId){
@@ -2735,8 +3110,8 @@ function showReward(relicId=null){
   const used=new Set();
   const nChoices=hasRelic('golden_rolodex')?4:3;
   while(choices.length<nChoices){
-    const pool=POOL_BY_RARITY[rollRarity()].filter(k=>!used.has(k));
-    const pick=pool.length?rand(pool):rand(REWARD_POOL.filter(k=>!used.has(k)));
+    const pool=poolByRarity(rollRarity()).filter(k=>!used.has(k));
+    const pick=pool.length?rand(pool):rand(rewardPool().filter(k=>!used.has(k)));
     if(!pick) break;
     used.add(pick);
     choices.push(CARDS[pick]);
@@ -2784,9 +3159,10 @@ const SHOP_PRICES={attack:75,defend:60,skill:70};
 function goShop(){
   show('shop-screen');
   document.getElementById('shop-gold').textContent=`$${G.player.gold}`;
+  goShopPotions();
 
   // Generate 5 random cards for sale
-  const pool=[...REWARD_POOL];
+  const pool=rewardPool();
   const items=[];
   while(items.length<5&&pool.length>0){
     const idx=Math.floor(grand()*pool.length);
@@ -2819,6 +3195,34 @@ function goShop(){
   });
 }
 
+function goShopPotions(){
+  const cont=document.getElementById('shop-potions');
+  cont.innerHTML='';
+  const picks=[];
+  const keys=Object.keys(POTIONS);
+  while(picks.length<2){ const k=rand(keys); if(!picks.includes(k)) picks.push(k); }
+  picks.forEach((id,i)=>{
+    const p=POTIONS[id];
+    const wrap=document.createElement('div');
+    wrap.className='shop-item';
+    wrap.innerHTML=`<div class="potion big" id="pot_${i}">${p.ico}</div>
+      <div style="font-size:.7rem;color:var(--gold);">${p.name}</div>
+      <div style="font-size:.62rem;color:var(--tdim);max-width:110px;">${p.desc}</div>
+      <div class="sprice" id="potp_${i}">$35</div>`;
+    wrap.querySelector('.potion').onclick=()=>{
+      if(G.player.gold<35||(G.player.potions||[]).length>=3) return;
+      G.player.gold-=35;
+      G.player.potions.push(id);
+      snd('victory');
+      document.getElementById('shop-gold').textContent=`$${G.player.gold}`;
+      document.getElementById(`pot_${i}`).classList.add('dis');
+      document.getElementById(`pot_${i}`).onclick=null;
+      document.getElementById(`potp_${i}`).innerHTML='<span class="sprice sold">SOLD</span>';
+    };
+    cont.appendChild(wrap);
+  });
+}
+
 function buyCard(cardId,price){
   if(G.player.gold<price) return;
   G.player.gold-=price;
@@ -2844,7 +3248,7 @@ const EVENTS=[
         fn:()=>{ G.player.gold+=45; return 'You pocket the folder. +$45.'; }},
       {label:'REPORT TO AUTHORITIES', sub:'Lose 8 HP, gain a random RARE card',
         fn:()=>{ G.player.hp=Math.max(1,G.player.hp-8);
-          const id=rand(POOL_BY_RARITY.rare);
+          const id=rand(poolByRarity('rare'));
           G.player.deck.push({...CARDS[id],uid:uid()});
           return `The press conference is brutal (-8 HP), but you gain ${CARDS[id].name}!`; }},
     ]},
@@ -2904,7 +3308,7 @@ const EVENTS=[
         fn:()=>{ showCardPicker('🧑‍💼 THE INTERN','Select a card to transform into something new',
             G.player.deck, (card)=>{
               G.player.deck=G.player.deck.filter(c=>c.uid!==card.uid);
-              const id=rand(REWARD_POOL);
+              const id=rand(rewardPool());
               G.player.deck.push({...CARDS[id],uid:uid()});
               snd('heal');
               advanceFloor();
@@ -2917,7 +3321,7 @@ const EVENTS=[
     body:'A rival fund offers you a signing bonus you can\'t refuse. The contract is 340 pages. Page 217 is... concerning.',
     opts:[
       {label:'SIGN IT', sub:'Gain a random RARE card + a Red Tape curse',
-        fn:()=>{ const id=rand(POOL_BY_RARITY.rare);
+        fn:()=>{ const id=rand(poolByRarity('rare'));
           G.player.deck.push({...CARDS[id],uid:uid()});
           G.player.deck.push({...CARDS.red_tape,uid:uid()});
           return `You gain ${CARDS[id].name}... and a Red Tape curse. Read page 217 next time.`; }},
@@ -3031,13 +3435,16 @@ function goRest(){
 }
 
 function restHeal(){
-  const amount=dailyMod('crypto_winter')?0:Math.floor(G.player.maxHp*0.3);
+  let amount=dailyMod('crypto_winter')?0:Math.floor(G.player.maxHp*0.3);
+  if(mlAt(9)) amount=Math.ceil(amount*0.67);
   if(amount===0) log('CRYPTO WINTER: no healing for you.','enm');
   G.player.hp=Math.min(G.player.maxHp,G.player.hp+amount);
   advanceFloor();
 }
 
-function showCardPicker(title, sub, cards, onPick){
+let _pickerCancel=null;
+function showCardPicker(title, sub, cards, onPick, onCancel){
+  _pickerCancel=onCancel||null;
   show('remove-screen');
   document.querySelector('#remove-screen h2').textContent=title;
   document.querySelector('#remove-screen .tdim').textContent=sub;
@@ -3047,14 +3454,21 @@ function showCardPicker(title, sub, cards, onPick){
     const wrap=document.createElement('div');
     wrap.innerHTML=cardHTML(card);
     wrap.style.cursor='pointer';
-    wrap.onclick=()=>onPick(card);
+    wrap.onclick=()=>{ _pickerCancel=null; onPick(card); };
     cont.appendChild(wrap);
   });
 }
 
 function restRemove(){
-  showCardPicker('📋 PORTFOLIO RESTRUCTURE','Select a card to permanently remove from your deck',
-    G.player.deck, (card)=>{ removeCard(card.uid); });
+  const fee=mlAt(2)?20:0;
+  if(fee&&G.player.gold<fee){
+    document.querySelector('#rest-screen .tdim').textContent=
+      'ML2 TRADING FEES: removal costs $20 — you can\'t afford it.';
+    return;
+  }
+  showCardPicker('📋 PORTFOLIO RESTRUCTURE',
+    fee?`Select a card to remove — TRADING FEES apply ($${fee})`:'Select a card to permanently remove from your deck',
+    G.player.deck, (card)=>{ if(fee) G.player.gold-=fee; removeCard(card.uid); });
 }
 
 function restUpgrade(){
@@ -3072,7 +3486,10 @@ function removeCard(uid){
   G.player.deck=G.player.deck.filter(c=>c.uid!==uid);
   advanceFloor();
 }
-function skipRemove(){ advanceFloor(); }
+function skipRemove(){
+  if(_pickerCancel){ const f=_pickerCancel; _pickerCancel=null; f(); }
+  else advanceFloor();
+}
 
 // ============================================================
 // DECK VIEW
@@ -3098,10 +3515,12 @@ function victory(){
   show('victory-screen');
   document.getElementById('win-stats').innerHTML=
     `Final portfolio value: <span class="tgold">$${score.toLocaleString()}</span><br>
+     ${(G.ml||0)>0?`Margin Level ${G.ml} cleared!<br>`:''}
      Floors cleared: ${G.stats.floorsCleared}<br>
      Damage dealt: ${G.stats.damageDealt}<br>
      Cards played: ${G.stats.cardsPlayed}<br>
-     Final deck size: ${G.player.deck.length} cards`;
+     Final deck size: ${G.player.deck.length} cards`
+     +unlocksHTML();
 }
 
 // ============================================================

@@ -47,17 +47,21 @@ localization, ads.
 
 **Moves:** sessions/player, run completion; a player's 5th run should still contain new content.
 
-## PHASE 2 — The Comeback Loop (~35–45 hrs)
+## ✅ SHIPPED — Phase 2: The Comeback Loop
 
-*Make losing produce progress. The D7/D30-retention phase.*
-
-| Feature | Design | Est. |
-|---|---|---|
-| **Meta-progression & unlocks** | `br_meta` in localStorage. Ladder: 3 runs → "Derivatives Desk" card pack; first Act 2 → relic pack; first win → unlock 2nd character. Reward pools computed per-run, filtered by unlocks. Menu profile strip. Every run ends with a green number going up. | 6–8h |
-| **2nd character: THE VULTURE 🦅** | Distressed-debt investor — Debt is fuel, not poison. HP 70; starter deck includes Leverage Up + Junk Bonds; innate relic: +1 block per Debt gained. 12 exclusive cards (*Chapter 11*: convert Debt→Strength; *Debt Ceiling*: Debt stops ticking this combat; *Predatory Loan*: Debt as an enemy status). `CHARACTERS` table, `char:` tag on cards, char-select screen. | 10–14h |
-| **Margin Levels (ascension 1–10)** | Per-character difficulty ladder: ML1 Bear Market (+15% enemy HP) … ML8 Audit Season (curse card per act) … ML10 Black Swan Era. `ML_MODS` table — same plumbing as daily modifiers. | 5–6h |
-| **Hot Tips (consumables)** | 3 potion slots: 📞 Hot Tip (10 dmg), 💉 Liquidity Injection (+2 Capital), 🧯 Circuit Breaker (enemy skips a turn), 🗞 Shred It (remove a card on the map). ~30% combat drop + 2 shop slots. Ids serialize trivially. | 5–6h |
-| **Quality pass** | Deck view during combat, fast-mode toggle, codex with ❓ silhouettes teasing locked content. | 4–5h |
+- **Meta-progression & unlocks** (`br_meta`): 3 runs → Derivatives Desk card pack; reach
+  Act II → Executive Perks relic pack; win a run (or play 5) → THE VULTURE. Reward pools
+  computed per call, filtered by character + unlocks; unlock reveals on end screens;
+  menu profile strip — every run ends with a green number going up
+- **2nd character: THE VULTURE 🦅**: HP 70, starter deck with Leverage Up + Junk Bonds,
+  innate Vulture's Eye (2 block per Debt gained), 12 exclusive cards with bespoke
+  upgrades (Chapter 11, Debt Ceiling, Carrion Call, Toxic Yield…); character select
+  screen with per-character Margin Level steppers
+- **Margin Levels 1–10**: cumulative per-character ascension (Bear Market → Trading
+  Fees → Overleveraged → … → Black Swan Era); win at ML N unlocks N+1
+- **Hot Tips**: 8 consumables in 3 slots (Hot Tip, Circuit Breaker halts all enemies,
+  Shred-It removes a card from the map…); ~30% post-combat drop, 2 sold per shop
+- **Quality pass**: deck view during combat; codex deferred
 
 **Moves:** D7/D30 retention, runs/player, % starting a 2nd character.
 
@@ -92,6 +96,6 @@ localization, ads.
 |---|---|---|---|
 | ✅ 0 | Growth-loop MVP (shipped) | — | Run completion, shares |
 | ✅ 1 | DAG map, variety, real upgrades (shipped) | — | Sessions/player |
-| 2 | Meta, Vulture, Margin Levels, Hot Tips | 35–45 | D7/D30 retention |
+| ✅ 2 | Meta, Vulture, Margin Levels, Hot Tips (shipped) | — | D7/D30 retention |
 | 3 | PWA, path-grid share, seeds, launch | 25–35 | New players, daily DAU |
 | 4 | Whale, iOS app, depth | 50–70 | Revenue, D90 |
