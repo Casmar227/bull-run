@@ -1,6 +1,9 @@
-// BULL RUN service worker — cache-first so the game runs fully offline.
-// Bump VERSION on every deploy so clients pick up the new build.
-const VERSION = 'br-v1';
+// BULL RUN service worker.
+// Navigations are NETWORK-FIRST (cache fallback) so players always get the
+// newest build when online and a missed VERSION bump can never strand them.
+// Static assets (icons, manifest) stay cache-first. Bump VERSION per deploy
+// to clear old caches.
+const VERSION = 'br-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -25,8 +28,26 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  // Cross-origin (e.g. analytics) goes straight to the network, untouched.
+  if (url.origin !== self.location.origin) return;
+
+  // Navigations: network-first, fall back to the cached shell offline.
+  // Cached under a fixed key so ?seed=... URLs don't multiply entries.
+  if (e.request.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
+    e.respondWith(
+      fetch(e.request).then((res) => {
+        const copy = res.clone();
+        caches.open(VERSION).then((c) => c.put('./index.html', copy));
+        return res;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // Static assets: cache-first (ignoreSearch collapses query-string variants).
   e.respondWith(
-    caches.match(e.request).then((hit) =>
+    caches.match(e.request, { ignoreSearch: true }).then((hit) =>
       hit ||
       fetch(e.request).then((res) => {
         const copy = res.clone();

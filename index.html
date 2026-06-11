@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#050a07">
+<meta name="description" content="BULL RUN — a finance roguelike deckbuilder. Build a portfolio of financial instruments, battle market forces, defeat the Federal Reserve. Free, no install, plays offline.">
+<meta property="og:title" content="BULL RUN — A Finance Roguelike Deckbuilder">
+<meta property="og:description" content="Build a portfolio. Battle market forces. Defeat the Federal Reserve. 66 cards, 3 investors, a daily challenge — free in your browser.">
+<meta property="og:image" content="https://casmar227.github.io/bull-run/icons/og-card.png">
+<meta property="og:url" content="https://casmar227.github.io/bull-run/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="BULL RUN — A Finance Roguelike Deckbuilder">
+<meta name="twitter:description" content="Build a portfolio. Battle market forces. Defeat the Federal Reserve. Free in your browser.">
+<meta name="twitter:image" content="https://casmar227.github.io/bull-run/icons/og-card.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -426,6 +436,8 @@ h2{font-size:1.3rem;color:var(--green);}
 .ch-hp{font-size:.72rem;color:var(--text);}
 .ml-row{display:flex;align-items:center;gap:8px;font-size:.7rem;color:var(--gold);}
 .ml-desc{font-size:.6rem;color:var(--tdim);line-height:1.5;max-width:220px;}
+@keyframes cta-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,.5);}50%{box-shadow:0 0 14px 4px rgba(255,215,0,.25);}}
+.pulse-cta{animation:cta-pulse 1.4s ease infinite;}
 .unlock-row{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
 .unlock-pop{border:1px solid var(--gold);color:var(--gold);padding:7px 12px;border-radius:6px;
   font-size:.74rem;background:rgba(60,45,0,.3);animation:relic-pop .5s ease;}
@@ -511,6 +523,7 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
     Defeat the Federal Reserve to win.
   </div>
   <div class="menu-btns">
+    <button class="btn sm gold" id="update-pill" style="display:none;" onclick="location.reload()">📈 NEW BUILD AVAILABLE — TAP TO RELOAD</button>
     <button class="btn big" id="resume-btn" onclick="resumeRun()" style="display:none;border-color:var(--gold);color:var(--gold);"></button>
     <button class="btn big gold" onclick="openCharSelect(true)">▶ EASY MODE — NEW INVESTOR</button>
     <div class="diff-note">Recommended for your first run: more health, gentler enemies</div>
@@ -521,7 +534,8 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
     <button class="btn" onclick="openHelp()">📖 HOW TO PLAY</button>
     <div class="diff-note" id="profile-strip"></div>
   </div>
-  <div style="font-size:.75rem;color:var(--tdim);">43 cards • daily challenge • 3 acts • 1 final boss</div>
+  <div style="font-size:.75rem;color:var(--tdim);">66 cards • 3 investors • daily challenge • seeded runs</div>
+  <div style="font-size:.62rem;color:var(--tdim);opacity:.7;">anonymous play counts via GoatCounter — no cookies, no tracking</div>
 </div>
 
 <!-- CHARACTER SELECT -->
@@ -547,6 +561,8 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
     </div>
   </div>
   <div class="bar-row"><div class="relic-bar" id="map-relics"></div><div class="relic-bar potions" id="map-potions"></div></div>
+  <div id="map-tip" class="discard-prompt" style="display:none;">🗺️ Routes are one-way: you can only move along connected lines, so scout ahead before you commit.
+    <button class="btn sm" onclick="dismissMapTip()">GOT IT</button></div>
   <div id="map-nodes"></div>
 </div>
 
@@ -563,6 +579,7 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
       <span title="Cards you've played or didn't use this turn. They come back when the draw pile empties.">DISC:<span id="disc-cnt"> 0</span></span>
       <span title="Exhausted cards are gone for the rest of this battle only.">EXHS:<span id="exhs-cnt"> 0</span></span>
       <button class="btn sm" onclick="openDeck()" title="View your full deck">📂</button>
+      <button class="btn sm" onclick="openHelp()" title="How to play">?</button>
     </div>
   </div>
   <div class="bar-row"><div class="relic-bar" id="combat-relics"></div><div class="relic-bar potions" id="combat-potions"></div></div>
@@ -660,7 +677,7 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
   <div class="flex fc gap8 mt16" style="flex-wrap:wrap;">
     <button class="btn gold" onclick="shareResult(this)">📋 SHARE P&amp;L</button>
     <button class="btn" onclick="copySeed(this)">🌱 COPY SEED</button>
-    <button class="btn red" onclick="openCharSelect(false)">▶ NEW PORTFOLIO</button>
+    <button class="btn red" onclick="openCharSelect(G?G.easy:false)">▶ NEW PORTFOLIO</button>
     <button class="btn" onclick="show('menu-screen')">MAIN MENU</button>
   </div>
 </div>
@@ -673,7 +690,7 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
   <div class="flex fc gap8 mt16" style="flex-wrap:wrap;">
     <button class="btn gold" onclick="shareResult(this)">📋 SHARE P&amp;L</button>
     <button class="btn" onclick="copySeed(this)">🌱 COPY SEED</button>
-    <button class="btn gold" onclick="openCharSelect(false)">▶ NEW PORTFOLIO</button>
+    <button class="btn gold" onclick="openCharSelect(G?G.easy:false)">▶ NEW PORTFOLIO</button>
     <button class="btn" onclick="show('menu-screen')">MAIN MENU</button>
   </div>
 </div>
@@ -752,6 +769,12 @@ body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
 // ============================================================
 let _actx = null;
 let _muted = false;
+try{ _muted = localStorage.getItem('br_muted')==='1'; }catch(e){}
+document.addEventListener('visibilitychange',()=>{
+  if(!_actx) return;
+  if(document.hidden) _actx.suspend();
+  else if(_actx.state==='suspended') _actx.resume();
+});
 let _ambientStarted = false;
 let _ambientGain = null;
 
@@ -763,6 +786,7 @@ function getACtx(){
 
 function toggleMute(){
   _muted=!_muted;
+  try{ localStorage.setItem('br_muted',_muted?'1':'0'); }catch(e){}
   document.getElementById('mute-btn').textContent=_muted?'🔇 MUTED':'🔊 SOUND';
   if(_ambientGain) _ambientGain.gain.value=_muted?0:0.04;
 }
@@ -1823,7 +1847,7 @@ function renderCharSelect(){
             <button class="btn sm" onclick="mlAdj('${ch.id}',1)">+</button>
           </div>
           <div class="ml-desc">${mlDesc(cur)}</div>`:''}
-        <button class="btn gold" onclick="startGame(_selEasy,null,null,'${ch.id}',_mlSel['${ch.id}']||0)">▶ START RUN</button>`;
+        <button class="btn gold ${m.runs===0?'pulse-cta':''}" onclick="startGame(_selEasy,null,null,'${ch.id}',_mlSel['${ch.id}']||0)">▶ START RUN</button>`;
     }
     cont.appendChild(div);
   });
@@ -2011,6 +2035,8 @@ function getEnemies(act,type){
 let G = null;
 
 function startGame(easy=false, seed=null, daily=null, charId='trader', ml=0){
+  // a saved run is 40 minutes of someone's life — don't vaporize it on a mistap
+  if(readSave()&&!confirm('You have a saved run in progress. Abandon it and start fresh?')) return;
   const ch=CHARACTERS[charId]||CHARACTERS.trader;
   if(daily){ charId='trader'; ml=0; }
   let hp=ch.hp[easy?1:0];
@@ -2031,6 +2057,7 @@ function startGame(easy=false, seed=null, daily=null, charId='trader', ml=0){
     stats:{ floorsCleared:0, damageDealt:0, damageTaken:0, cardsPlayed:0 },
   };
   seedRng(G.seed);
+  track('run-start');
   if(mlAt(8)) G.player.deck.push({...CARDS.red_tape,uid:uid()}); // ML8 AUDIT SEASON
   if(dailyMod('volatile')){
     G.player.maxHp-=15; G.player.hp-=15;
@@ -2144,6 +2171,11 @@ function startDaily(){
   const rec=dailyRecord();
   const practice=!!(rec&&rec.n===n&&rec.done);
   startGame(false, seed, {n, mod:mod.id, modName:mod.name, practice});
+  if(!G||!G.daily) return; // start was cancelled at the save-confirm
+  // lock the scored attempt the moment it STARTS — abandoning a bad map
+  // doesn't grant a do-over (resuming the saved run still counts normally)
+  if(!practice) lsSet('br_daily',JSON.stringify({n,done:true,won:false,score:0}));
+  track('daily-start');
 }
 
 // ============================================================
@@ -2154,6 +2186,13 @@ function runScore(){
 }
 
 const SITE_URL='https://casmar227.github.io/bull-run/';
+
+function dismissMapTip(){ lsSet('br_map_tip','1'); document.getElementById('map-tip').style.display='none'; snd('click'); }
+
+// Anonymous event counts (GoatCounter). No-ops if the script is blocked or absent.
+function track(ev){
+  try{ if(window.goatcounter&&window.goatcounter.count) window.goatcounter.count({path:ev,event:true}); }catch(e){}
+}
 
 // Wordle-style run grid: one emoji per node visited, grouped by act
 function pathGrid(won){
@@ -2200,6 +2239,7 @@ function buildShare(won,killer){
 let _shareTxt='';
 function shareResult(btn){
   if(!_shareTxt) return;
+  track('share-click');
   if(navigator.share){
     navigator.share({text:_shareTxt}).catch(()=>{});
   } else if(navigator.clipboard){
@@ -2226,7 +2266,7 @@ function updateMenu(){
   document.getElementById('daily-btn').textContent=`📅 DAILY RUN #${n}${done?' — PRACTICE':''}`;
   document.getElementById('daily-note').textContent=
     `Today's market: ${mod.name} — ${mod.desc}`+
-    (done?` · Your P&L today: $${(rec.score||0).toLocaleString()}`:'');
+    (done?` · Your P&L today: $${(rec.score||0).toLocaleString()}`:' · One scored attempt per day.');
   updateTicker();
 }
 
@@ -2251,6 +2291,7 @@ function updateTicker(){
 
 function recordRunEnd(won,killer){
   clearSave();
+  track(won?'run-won':'run-lost');
   const score=runScore();
   _lastSeed=G.seed;
   _shareTxt=buildShare(won,killer);
@@ -2293,7 +2334,7 @@ const TUT_STEPS=[
 let tutStep=-1;
 
 function maybeStartTutorial(){
-  if(localStorage.getItem('br_tut_done')) return;
+  if(lsGet('br_tut_done')) return;
   tutStep=0; showTutStep();
 }
 function showTutStep(){
@@ -2310,7 +2351,7 @@ function tutNext(){
 }
 function tutSkip(){
   document.getElementById('tut-banner').classList.remove('on');
-  localStorage.setItem('br_tut_done','1');
+  lsSet('br_tut_done','1');
   tutStep=-1;
 }
 
@@ -2339,6 +2380,7 @@ function renderMap(){
   document.getElementById('map-deck').textContent=G.player.deck.length;
   document.getElementById('floor-lbl').textContent=
     `Floor ${G.floor+1}/${G.actMap.length}`+((G.ml||0)>0?` · ML${G.ml}`:'');
+  document.getElementById('map-tip').style.display=lsGet('br_map_tip')?'none':'block';
   renderRelics('map-relics');
   renderPotions();
 
@@ -3248,7 +3290,10 @@ function showReward(relicId=null){
   const pr=document.getElementById('potion-reward');
   if(_potionDrop){ const p=POTIONS[_potionDrop];
     pr.style.display='block';
-    pr.innerHTML=`${p.ico} <b>${p.name}</b> acquired — ${p.desc}`;
+    const firstTime=!lsGet('br_potion_tip');
+    if(firstTime) lsSet('br_potion_tip','1');
+    pr.innerHTML=`${p.ico} <b>${p.name}</b> acquired — ${p.desc}`+
+      (firstTime?`<br><span class="tdim" style="font-size:.7rem;">Hot Tips live in the top bar — tap one twice to use it.</span>`:'');
   } else pr.style.display='none';
   // Grant relic immediately and display it
   const rr=document.getElementById('relic-reward');
@@ -3704,8 +3749,29 @@ const TICKERS=['INFLATION +8.4% ↑','MARKET_ORDER BUY 500 @ $142.00','HOSTILE_T
 // ============================================================
 updateMenu();
 if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    reg.addEventListener('updatefound',()=>{
+      const w=reg.installing;
+      if(!w) return;
+      w.addEventListener('statechange',()=>{
+        // a new build installed behind a controlled page → offer a reload
+        if(w.state==='installed'&&navigator.serviceWorker.controller){
+          const pill=document.getElementById('update-pill');
+          if(pill) pill.style.display='';
+        }
+      });
+    });
+  }).catch(()=>{});
 }
+// analytics: anonymous counts only, no cookies (disclosed on the menu + README)
+(()=>{
+  if(location.protocol!=='https:') return; // skip locally/offline
+  const s=document.createElement('script');
+  s.async=true;
+  s.src='https://gc.zgo.at/count.js';
+  s.dataset.goatcounter='https://bullrun-game.goatcounter.com/count';
+  document.head.appendChild(s);
+})();
 // ?seed=XYZ — community/streamer challenge runs
 (()=>{
   const s=new URLSearchParams(location.search).get('seed');
