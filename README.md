@@ -13,10 +13,12 @@ A finance-themed roguelike deckbuilder that runs entirely in your browser. Build
 - Four synergy archetypes to build around: Debt/Leverage (Ponzi Scheme → Junk Bonds), Fortress (big Block → Collateral Damage), Momentum (cheap cards → Momentum Trade / Algo Trading), and Strength scaling (Compound Interest → Reinvest)
 - Drag-and-drop card play with a curved targeting arrow — or click, both work
 - Juicy combat feedback: fanned hand, card-fly animations, impact particles, damage ghosting on health bars, CRT scanline aesthetic
-- 8 relics (permanent passive bonuses) dropped by elite enemies and bosses
-- Card upgrades, deck thinning, and shops between fights
-- Random events with risk/reward choices
-- 3 acts capped by boss fights against The SEC and the Federal Reserve
+- 22 relics (permanent passive bonuses) dropped by elite enemies and bosses
+- Bespoke card upgrades (every card has a hand-tuned ★ version), deck thinning, and shops between fights
+- 14 random events with risk/reward choices — and a Red Tape curse if you sign the wrong contract
+- A branching map with path commitment: choose your route, scout elites, plan rest stops
+- 3 acts capped by boss fights: The SEC, Black Monday, and the Federal Reserve
+- 19 enemy types across per-act pools, including the FOMO Mob swarm and the anti-momentum Algo Bot
 - Procedural sound (Web Audio API) — trading floor ambience, no audio files
 - Built-in tutorial and Easy Mode for newcomers
 

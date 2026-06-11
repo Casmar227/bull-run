@@ -30,15 +30,20 @@ localization, ads.
 
 ---
 
-## PHASE 1 — Foundation & Variety (~25–35 hrs remaining)
+## ✅ SHIPPED — Phase 1: Foundation & Variety
 
-*Stop runs 2–5 feeling identical. Highest-leverage unshipped work.*
-
-| Feature | Design | Est. |
-|---|---|---|
-| **Branching DAG map with path commitment** | Procedural 12–14-floor acts (also fixes Act 3 being one boss node); 3 path tracks with seeded jitter; constraints: ≥1 shop/rest per act, guaranteed pre-boss rest, no elites before floor 4. Nodes gain `{col, next:[]}`; reachable = `next` of current node. Draw edges with positioned SVG (same technique as the drag arrow). Consolidate duplicated act-rollover in `advanceFloor`/`afterReward`. | 10–14h |
-| **Content variety** | +8 normal enemies with per-act pools (FOMO Mob, Short Seller, Crypto Bro, Pension Fund / Stagflation, Algo Bot, Rating Agency, Liquidity Crisis); +2 elites (Activist Investor, The Whale); alternate Act 2 boss **BLACK MONDAY** (countdown-to-crash race, seeded 50/50 vs THE SEC); events 5→14; relics 8→22 (e.g. *Severance Package*: survive lethal at 1 HP). Pure data-table appends + `ACT_POOLS` in `getEnemies`; replace hardcoded elite-id list with `elite:true` flag. | 10–14h |
-| **Real card upgrades** | Per-card `UPGRADES` table (Market Order+ 6→9 dmg; Junk Bonds+ 5×→7× Debt; All In+ keeps your hand). Requires effects reading numbers off the card (`c.dmg`) instead of literals — also makes upgrades a clean boolean in saves. Side-by-side upgrade preview at rest sites. | 5–6h |
+- **Branching DAG map with path commitment**: procedural 9/10/8-floor acts (Act 3 is now a
+  real act, not one boss node); 3 seeded path tracks down a 4-column grid; constraints
+  enforced (acts open with fights, guaranteed pre-boss rest row, ≥1 shop + mid-act rest,
+  2 elites on middle/late rows); SVG edges show taken/open/abandoned paths
+- **Content variety**: 8 new normal enemies in per-act pools (Short Seller, FOMO Mob swarm,
+  Crypto Bro, Pension Fund, Stagflation, Algo Bot, Rating Agency, Liquidity Crisis);
+  2 new elites (Activist Investor, The Whale); new Act 2 boss **BLACK MONDAY** (escalating
+  crash cycle) — each act now has a distinct boss; events 5→14 (incl. the Red Tape curse);
+  relics 8→22 (incl. Severance Package: survive lethal once per run)
+- **Real card upgrades**: all 43 cards have bespoke ★ versions via an `UPGRADES` override
+  table (Market Order 6→9, Junk Bonds 5×→7× Debt, All In keeps your hand, Leveraged Play
+  loses Exhaust…); saves store a single boolean and rehydrate through `applyUpgrade`
 
 **Moves:** sessions/player, run completion; a player's 5th run should still contain new content.
 
@@ -86,7 +91,7 @@ localization, ads.
 | Phase | Theme | Est. hours | Primary metric |
 |---|---|---|---|
 | ✅ 0 | Growth-loop MVP (shipped) | — | Run completion, shares |
-| 1 | DAG map, variety, real upgrades | 25–35 | Sessions/player |
+| ✅ 1 | DAG map, variety, real upgrades (shipped) | — | Sessions/player |
 | 2 | Meta, Vulture, Margin Levels, Hot Tips | 35–45 | D7/D30 retention |
 | 3 | PWA, path-grid share, seeds, launch | 25–35 | New players, daily DAU |
 | 4 | Whale, iOS app, depth | 50–70 | Revenue, D90 |
