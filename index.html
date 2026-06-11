@@ -7,15 +7,34 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --bg:#060d06;--surf:#0e1a0e;--surf2:#152415;--bord:#1e3a1e;
+  --bg:#050a07;--surf:#0c1810;--surf2:#13261a;--bord:#1e3a26;
   --green:#00ff41;--gdim:#00aa2a;--gdark:#004d15;
   --red:#ff4444;--gold:#ffd700;--blue:#4af;--text:#c0e8c0;--tdim:#6a986a;
   --atk:#ff6644;--def:#4af;--skl:#aa88ff;
 }
-body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
-  min-height:100vh;display:flex;justify-content:center;align-items:flex-start;}
-#game{width:960px;max-width:100vw;min-height:100vh;padding:16px;position:relative;}
-h1{font-size:2.4rem;color:var(--green);text-shadow:0 0 20px var(--green);}
+html{background:#020503;}
+body{color:var(--text);font-family:'Courier New',monospace;
+  min-height:100vh;display:flex;justify-content:center;align-items:flex-start;
+  background:radial-gradient(ellipse 120% 70% at 50% -10%,#0c2415 0%,#06120a 45%,#020503 100%);
+  background-attachment:fixed;overflow-x:hidden;}
+/* slowly drifting trading-floor grid */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    linear-gradient(rgba(0,255,65,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,255,65,.045) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(ellipse 90% 85% at 50% 45%,#000 25%,transparent 100%);
+  mask-image:radial-gradient(ellipse 90% 85% at 50% 45%,#000 25%,transparent 100%);
+  animation:grid-pan 70s linear infinite;}
+/* CRT scanlines + vignette */
+body::after{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg,rgba(0,0,0,.09) 0 1px,transparent 1px 3px),
+    radial-gradient(ellipse 130% 110% at 50% 50%,transparent 62%,rgba(0,0,0,.45) 100%);}
+@keyframes grid-pan{0%{background-position:0 0}100%{background-position:0 880px}}
+#game{width:960px;max-width:100vw;min-height:100vh;padding:16px;position:relative;z-index:1;}
+h1{font-size:2.6rem;color:var(--green);text-shadow:0 0 20px var(--green);animation:title-glow 3s ease-in-out infinite;}
+@keyframes title-glow{0%,100%{text-shadow:0 0 14px var(--green)}50%{text-shadow:0 0 30px var(--green),0 0 70px #00aa2a}}
 h2{font-size:1.3rem;color:var(--green);}
 .screen{display:none;flex-direction:column;}
 .screen.active{display:flex;}
@@ -27,10 +46,11 @@ h2{font-size:1.3rem;color:var(--green);}
   font-size:.8rem;color:var(--gdim);width:100%;overflow:hidden;white-space:nowrap;}
 
 /* BUTTONS */
-.btn{background:var(--surf);border:1px solid var(--gdim);color:var(--green);
-  padding:10px 28px;font-family:inherit;font-size:.95rem;cursor:pointer;
-  transition:all .15s;letter-spacing:1px;}
-.btn:hover:not(:disabled){background:var(--gdark);border-color:var(--green);box-shadow:0 0 10px var(--gdark);}
+.btn{background:linear-gradient(180deg,var(--surf2),var(--surf));border:1px solid var(--gdim);color:var(--green);
+  padding:10px 28px;font-family:inherit;font-size:.95rem;cursor:pointer;border-radius:5px;
+  transition:all .15s;letter-spacing:1px;text-shadow:0 0 6px rgba(0,255,65,.35);}
+.btn:hover:not(:disabled){background:var(--gdark);border-color:var(--green);
+  box-shadow:0 0 14px rgba(0,255,65,.3);transform:translateY(-1px);}
 .btn:disabled{opacity:.4;cursor:not-allowed;}
 .btn.red{border-color:var(--red);color:var(--red);}
 .btn.red:hover:not(:disabled){background:#2a0000;}
@@ -48,15 +68,20 @@ h2{font-size:1.3rem;color:var(--green);}
 .sval{color:var(--green);font-weight:bold;}
 .sval.hp{color:#ff9999;}
 .sval.gold{color:var(--gold);}
-#map-nodes{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
-.map-row{display:flex;gap:12px;justify-content:center;}
-.mnode{width:90px;height:66px;border:1px solid var(--bord);background:var(--surf);
+#map-nodes{display:flex;flex-direction:column;gap:12px;margin-top:8px;position:relative;}
+#map-nodes::before{content:'';position:absolute;left:50%;top:8px;bottom:8px;width:2px;
+  background:repeating-linear-gradient(180deg,var(--gdark) 0 6px,transparent 6px 13px);opacity:.55;}
+.map-row{display:flex;gap:14px;justify-content:center;position:relative;}
+.mnode{width:96px;height:72px;border:1px solid var(--bord);border-radius:8px;
+  background:linear-gradient(180deg,var(--surf2),var(--surf));
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  cursor:pointer;font-size:.72rem;gap:3px;transition:all .15s;}
-.mnode:hover:not(.locked){border-color:var(--green);background:var(--surf2);}
+  cursor:pointer;font-size:.72rem;gap:3px;transition:all .18s;box-shadow:0 3px 8px rgba(0,0,0,.45);}
+.mnode:hover:not(.locked):not(.done){border-color:var(--green);transform:translateY(-3px);
+  box-shadow:0 8px 16px rgba(0,0,0,.5),0 0 14px rgba(0,255,65,.2);}
 .mnode.locked{opacity:.25;cursor:not-allowed;}
-.mnode.done{opacity:.45;border-style:dashed;}
-.mnode.cur{border-color:var(--green);box-shadow:0 0 10px var(--gdark);}
+.mnode.done{opacity:.4;border-style:dashed;cursor:default;}
+.mnode.cur{border-color:var(--green);animation:node-pulse 1.6s ease infinite;}
+@keyframes node-pulse{0%,100%{box-shadow:0 0 6px rgba(0,255,65,.25)}50%{box-shadow:0 0 20px rgba(0,255,65,.55)}}
 .mnode .ico{font-size:1.5rem;}
 .mnode.elite .ico{filter:sepia(1) saturate(5) hue-rotate(10deg);}
 .mnode.boss .ico{filter:sepia(1) saturate(5) hue-rotate(300deg);}
@@ -65,36 +90,63 @@ h2{font-size:1.3rem;color:var(--green);}
 #combat-screen{gap:10px;min-height:100vh;}
 .ctop{display:flex;justify-content:space-between;align-items:center;
   padding-bottom:8px;border-bottom:1px solid var(--bord);}
-.energy-row{display:flex;gap:5px;align-items:center;}
-.epip{width:26px;height:26px;border:1px solid var(--gold);background:#1a1400;
-  display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--gold);}
-.epip.on{background:#2a2200;}
+.energy-row{display:flex;gap:8px;align-items:center;}
+.energy-orb{width:54px;height:54px;border-radius:50%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;color:#241a00;font-weight:bold;
+  background:radial-gradient(circle at 35% 28%,#fff3b0,#ffd700 38%,#8a6400 82%,#4d3800);
+  border:2px solid #ffe98a;box-shadow:0 0 18px rgba(255,215,0,.5),inset 0 -6px 12px rgba(0,0,0,.35);
+  animation:orb-pulse 2.4s ease-in-out infinite;cursor:help;}
+.energy-orb .ecur{font-size:1.2rem;line-height:1;}
+.energy-orb .emax{font-size:.62rem;opacity:.85;}
+.energy-orb.empty{filter:grayscale(.85) brightness(.6);animation:none;}
+.elbl{font-size:.68rem;color:var(--gold);letter-spacing:1px;}
+@keyframes orb-pulse{0%,100%{box-shadow:0 0 12px rgba(255,215,0,.4),inset 0 -6px 12px rgba(0,0,0,.35)}
+  50%{box-shadow:0 0 26px rgba(255,215,0,.75),inset 0 -6px 12px rgba(0,0,0,.35)}}
 .pile-row{display:flex;gap:14px;font-size:.75rem;color:var(--tdim);}
 .combat-area{display:flex;justify-content:space-around;align-items:flex-end;
-  flex:1;padding:10px 0;min-height:210px;flex-wrap:wrap;gap:12px;}
+  flex:1;padding:10px 0;min-height:210px;flex-wrap:wrap;gap:12px;border-radius:12px;
+  transition:background .2s,outline-color .2s;outline:1px dashed transparent;outline-offset:-6px;}
+.combat-area.drop-ready{outline-color:rgba(0,255,65,.4);background:rgba(0,255,65,.035);}
 .entity{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:140px;}
-.esprite{font-size:3.5rem;line-height:1;}
+.esprite{font-size:3.6rem;line-height:1;transition:transform .15s,filter .15s;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.55));animation:idle-bob 3.2s ease-in-out infinite;}
+.enemy-entity:nth-of-type(2) .esprite{animation-delay:-1.1s;}
+.enemy-entity:nth-of-type(3) .esprite{animation-delay:-2.2s;}
+@keyframes idle-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.enemy-entity.targetable{cursor:crosshair;}
+.enemy-entity.targetable .esprite{filter:drop-shadow(0 0 8px var(--atk));}
+.enemy-entity.target-hover .esprite{animation:none;transform:scale(1.18);
+  filter:drop-shadow(0 0 16px var(--atk)) brightness(1.35);}
 .ename{font-size:.8rem;color:var(--tdim);letter-spacing:1px;text-align:center;}
-.hbar-bg{background:#1a0000;border:1px solid #440000;height:13px;width:100%;}
-.hbar-fill{background:linear-gradient(90deg,#880000,#dd2222);height:100%;transition:width .3s;}
-.hbar-fill.p{background:linear-gradient(90deg,#006600,#00cc44);}
+.hbar-bg{background:#160707;border:1px solid #481414;height:14px;width:100%;
+  border-radius:8px;position:relative;overflow:hidden;}
+.hbar-ghost{position:absolute;top:0;left:0;height:100%;background:#ffd27d;opacity:.55;
+  transition:width .9s ease .35s;}
+.hbar-fill{position:absolute;top:0;left:0;height:100%;
+  background:linear-gradient(180deg,#ff5555,#990000);transition:width .25s ease;}
+.hbar-fill.p{background:linear-gradient(180deg,#33dd66,#007722);}
+.hbar-fill::after{content:'';position:absolute;left:0;right:0;top:0;height:50%;
+  background:rgba(255,255,255,.18);}
 .hptxt{font-size:.72rem;color:#ff9999;text-align:center;margin-top:2px;}
 .hptxt.p{color:#99ff99;}
 .blk-badge{background:#001833;border:1px solid var(--blue);color:var(--blue);
-  padding:2px 8px;font-size:.78rem;display:none;}
+  padding:2px 8px;font-size:.78rem;display:none;border-radius:5px;
+  box-shadow:0 0 8px rgba(68,170,255,.25);}
 .blk-badge.on{display:block;}
 .statuses{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;}
-.sbadge{padding:1px 5px;font-size:.68rem;border:1px solid;}
+.sbadge{padding:1px 5px;font-size:.68rem;border:1px solid;border-radius:4px;}
 .sbadge.vulnerable{border-color:#ff8800;color:#ff8800;background:#180800;}
 .sbadge.weak{border-color:#aaaaff;color:#aaaaff;background:#08081a;}
 .sbadge.debt{border-color:var(--red);color:var(--red);background:#180000;}
 .sbadge.strength{border-color:var(--green);color:var(--green);background:#001800;}
+.sbadge.retain{border-color:#7ec8ff;color:#7ec8ff;background:#04101a;}
 .intent{font-size:.72rem;color:var(--tdim);text-align:center;border:1px solid var(--bord);
-  padding:3px 7px;background:var(--surf);min-width:110px;}
-.intent.atk{border-color:var(--atk);color:var(--atk);}
+  padding:3px 8px;background:var(--surf);min-width:110px;border-radius:5px;}
+.intent.atk{border-color:var(--atk);color:var(--atk);animation:intent-pulse 2s ease infinite;}
 .intent.def{border-color:var(--def);color:var(--def);}
 .intent.buf{border-color:var(--skl);color:var(--skl);}
 .intent.deb{border-color:var(--red);color:var(--red);}
+@keyframes intent-pulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 10px rgba(255,102,68,.4)}}
 .clog{background:var(--surf);border:1px solid var(--bord);padding:7px;
   font-size:.73rem;height:68px;overflow-y:auto;}
 .clog-e{line-height:1.5;}
@@ -105,30 +157,71 @@ h2{font-size:1.3rem;color:var(--green);}
 .clog-e.enm{color:#ff9999;}
 .hand-hdr{display:flex;justify-content:space-between;align-items:center;
   margin-bottom:7px;font-size:.75rem;color:var(--tdim);padding-top:10px;border-top:1px solid var(--bord);}
-.hand{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;min-height:135px;}
+.hand{display:flex;justify-content:center;align-items:flex-end;min-height:175px;
+  padding-top:30px;position:relative;}
+.hand .card{transform:rotate(var(--fr,0deg)) translateY(var(--fy,0px));
+  transform-origin:50% 130%;margin:0 var(--fm,-6px);flex-shrink:0;}
 
 /* CARD */
-.card{width:105px;min-height:132px;border:1px solid var(--bord);background:var(--surf);
-  padding:7px;cursor:pointer;transition:transform .12s,border-color .12s;
-  display:flex;flex-direction:column;gap:3px;position:relative;user-select:none;}
-.card:hover:not(.dis){transform:translateY(-10px);border-color:var(--green);z-index:10;}
-.card.dis{opacity:.45;cursor:not-allowed;}
-.card.sel{border-color:var(--green);box-shadow:0 0 12px var(--gdark);}
-.card.attack{border-top:2px solid var(--atk);}
-.card.defend{border-top:2px solid var(--def);}
-.card.skill{border-top:2px solid var(--skl);}
+.card{width:112px;min-height:148px;border:1px solid #28482e;border-radius:9px;
+  background:linear-gradient(170deg,#142b1a 0%,#0a150d 55%,#081109 100%);
+  padding:8px;cursor:grab;position:relative;user-select:none;touch-action:none;
+  display:flex;flex-direction:column;gap:3px;
+  box-shadow:0 4px 10px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05);
+  transition:transform .22s cubic-bezier(.18,1.4,.4,1),box-shadow .22s,
+    border-color .22s,opacity .2s,filter .2s;}
+.card::before{content:'';position:absolute;inset:0;border-radius:8px;pointer-events:none;
+  background:linear-gradient(120deg,transparent 32%,rgba(255,255,255,.05) 48%,transparent 62%);}
+.card:active{cursor:grabbing;}
+.card.attack{border-top:3px solid var(--atk);border-color:#52302a;
+  background:linear-gradient(170deg,#2b1410 0%,#140a08 55%,#0e0705 100%);border-top-color:var(--atk);}
+.card.defend{border-top:3px solid var(--def);border-color:#27405c;
+  background:linear-gradient(170deg,#101e30 0%,#080e18 55%,#060a10 100%);border-top-color:var(--def);}
+.card.skill{border-top:3px solid var(--skl);border-color:#3c2f5c;
+  background:linear-gradient(170deg,#1c1430 0%,#0e0a1a 55%,#090710 100%);border-top-color:var(--skl);}
+.card:hover:not(.dis):not(.drag-src){transform:translateY(-30px) scale(1.13) rotate(0deg)!important;
+  border-color:var(--green);z-index:60;
+  box-shadow:0 18px 34px rgba(0,0,0,.7),0 0 22px rgba(0,255,65,.22);}
+.card.attack:hover:not(.dis):not(.drag-src){border-color:var(--atk);
+  box-shadow:0 18px 34px rgba(0,0,0,.7),0 0 22px rgba(255,102,68,.3);}
+.card.defend:hover:not(.dis):not(.drag-src){border-color:var(--def);
+  box-shadow:0 18px 34px rgba(0,0,0,.7),0 0 22px rgba(68,170,255,.3);}
+.card.skill:hover:not(.dis):not(.drag-src){border-color:var(--skl);
+  box-shadow:0 18px 34px rgba(0,0,0,.7),0 0 22px rgba(170,136,255,.3);}
+.card.dis{opacity:.4;cursor:not-allowed;filter:grayscale(.6);}
+.card.sel{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,65,.45);
+  transform:translateY(-22px) scale(1.06)!important;z-index:55;}
 .card.exhaust{border-style:dashed;}
-.ccost{position:absolute;top:4px;right:5px;width:20px;height:20px;
-  background:#1a1400;border:1px solid var(--gold);color:var(--gold);
-  font-size:.72rem;display:flex;align-items:center;justify-content:center;}
-.cname{font-size:.68rem;font-weight:bold;line-height:1.2;padding-right:20px;color:var(--text);}
-.cico{font-size:1.4rem;text-align:center;}
-.cdesc{font-size:.63rem;color:var(--tdim);line-height:1.3;flex:1;}
-.ctype{font-size:.58rem;color:var(--tdim);text-transform:uppercase;letter-spacing:1px;}
+.ccost{position:absolute;top:-9px;left:-9px;width:26px;height:26px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ffe98a,#c79400 65%,#6a4d00);
+  border:1px solid #ffe98a;color:#241a00;font-weight:bold;
+  font-size:.8rem;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 8px rgba(255,215,0,.45);z-index:2;}
+.cname{font-size:.68rem;font-weight:bold;line-height:1.2;color:var(--text);
+  text-align:center;margin-top:2px;}
+.cico{font-size:1.7rem;text-align:center;margin:2px 0;
+  filter:drop-shadow(0 3px 5px rgba(0,0,0,.6));}
+.cdesc{font-size:.63rem;color:var(--tdim);line-height:1.35;flex:1;text-align:center;}
+.ctype{font-size:.56rem;color:var(--tdim);text-transform:uppercase;letter-spacing:1px;text-align:center;}
 .card.attack .ctype{color:var(--atk);}
 .card.defend .ctype{color:var(--def);}
 .card.skill .ctype{color:var(--skl);}
 .card.exhaust .ctype::after{content:' • EXHAUST';}
+
+/* ── DRAG & DROP ── */
+.card.drag-src{opacity:.25;}
+.drag-ghost{position:fixed;z-index:900;pointer-events:none;margin:0;
+  transform:translate(-50%,-60%) scale(1.15) rotate(3deg);transition:none;
+  box-shadow:0 24px 48px rgba(0,0,0,.8),0 0 26px rgba(0,255,65,.2);}
+.drag-ghost.ghost-ready{border-color:var(--green);
+  box-shadow:0 24px 48px rgba(0,0,0,.8),0 0 38px rgba(0,255,65,.6);}
+#drag-arrow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;
+  z-index:850;display:none;}
+#drag-arrow path{animation:dash-flow .45s linear infinite;
+  filter:drop-shadow(0 0 5px currentColor);}
+@keyframes dash-flow{to{stroke-dashoffset:-15;}}
+#etbtn.pulse{border-color:var(--gold);color:var(--gold);animation:btn-pulse 1.2s ease infinite;}
+@keyframes btn-pulse{0%,100%{box-shadow:0 0 0 rgba(255,215,0,0)}50%{box-shadow:0 0 16px rgba(255,215,0,.6)}}
 
 /* REWARD */
 #reward-screen{align-items:center;gap:20px;padding:28px 0;}
@@ -192,7 +285,7 @@ h2{font-size:1.3rem;color:var(--green);}
 /* ── ANIMATIONS ── */
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 @keyframes shake-v{0%,100%{transform:translateY(0)}20%{transform:translateY(-5px)}50%{transform:translateY(5px)}80%{transform:translateY(-3px)}}
-@keyframes dmg-float{0%{opacity:1;transform:translateY(0) scale(1)}60%{opacity:1}100%{opacity:0;transform:translateY(-60px) scale(0.8)}}
+@keyframes dmg-float{0%{opacity:0;transform:translateY(10px) scale(.4)}12%{opacity:1;transform:translateY(0) scale(1.3)}26%{transform:scale(1)}70%{opacity:1}100%{opacity:0;transform:translateY(-72px) scale(.85)}}
 @keyframes card-out{0%{opacity:1;transform:scale(1) translateY(0)}100%{opacity:0;transform:scale(0.6) translateY(-40px)}}
 @keyframes card-in{0%{opacity:0;transform:translateY(28px) scale(0.85)}100%{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes hbar-flash{0%,100%{filter:brightness(1)}40%{filter:brightness(2.5) saturate(0)}}
@@ -215,12 +308,20 @@ h2{font-size:1.3rem;color:var(--green);}
 
 /* Damage / heal popups */
 .popup{position:fixed;pointer-events:none;font-weight:bold;font-family:'Courier New',monospace;
-  z-index:500;animation:dmg-float 0.85s ease forwards;text-shadow:0 0 6px currentColor;}
-.popup.hit{font-size:1.5rem;color:var(--atk);}
-.popup.blk{font-size:1.2rem;color:var(--blue);}
-.popup.heal{font-size:1.2rem;color:#88ff88;}
+  z-index:500;animation:dmg-float 0.95s ease forwards;text-shadow:0 0 8px currentColor;}
+.popup.hit{font-size:1.7rem;color:var(--atk);}
+.popup.crit{font-size:2.3rem;color:#ffae00;}
+.popup.blk{font-size:1.25rem;color:var(--blue);}
+.popup.heal{font-size:1.25rem;color:#88ff88;}
 .popup.sts{font-size:1rem;color:var(--gold);}
 .popup.miss{font-size:1rem;color:var(--tdim);}
+
+/* Impact burst particles */
+.burst{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:600;}
+
+/* Screen transitions */
+.screen.active{animation:screen-in .35s ease;}
+@keyframes screen-in{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}
 
 /* Ticker scroll */
 .ticker{overflow:hidden;white-space:nowrap;position:relative;}
@@ -239,7 +340,10 @@ h2{font-size:1.3rem;color:var(--green);}
 /* ── RARITY ── */
 .card.unc .cname{color:#7ec8ff;}
 .card.rare .cname{color:var(--gold);text-shadow:0 0 6px #553f00;}
-.card.rare{background:linear-gradient(160deg,var(--surf) 70%,#1a1500 100%);}
+.card.rare::after{content:'';position:absolute;inset:0;border-radius:8px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,215,0,.15) 50%,transparent 65%);
+  background-size:250% 100%;animation:shimmer 3s linear infinite;}
+@keyframes shimmer{0%{background-position:120% 0}100%{background-position:-130% 0}}
 .rar-tag{font-size:.55rem;letter-spacing:1px;}
 .rar-tag.unc{color:#7ec8ff;}
 .rar-tag.rare{color:var(--gold);}
@@ -455,6 +559,12 @@ h2{font-size:1.3rem;color:var(--green);}
 
 <button id="mute-btn" onclick="toggleMute()">🔊 SOUND</button>
 
+<!-- Drag targeting arrow -->
+<svg id="drag-arrow">
+  <path id="drag-arrow-path" fill="none" stroke="#ff6644" stroke-width="3" stroke-dasharray="8 7" stroke-linecap="round"/>
+  <polygon id="drag-arrow-head" fill="#ff6644"/>
+</svg>
+
 <!-- HELP MODAL -->
 <div class="moverlay" id="help-modal">
   <div class="modal">
@@ -469,7 +579,7 @@ h2{font-size:1.3rem;color:var(--green);}
     <div class="help-sec">
       <h3>YOUR TURN, STEP BY STEP</h3>
       1. Each turn you get <span class="kw">3 Capital ($)</span> — this is your budget for playing cards.<br>
-      2. Every card shows its cost in the top-right corner. Click a card to play it.<br>
+      2. Every card shows its cost in the gold coin on its corner. <span class="kw">Drag a card onto an enemy</span> to attack it, or drag it up to the battlefield to play it. Clicking works too.<br>
       3. <span class="kw">Red cards attack</span>, <span class="kw">blue cards protect you</span>, <span class="kw">purple cards do tricks</span> (draw more cards, heal, power up).<br>
       4. When you're done (or out of Capital), press <span class="kw">END TURN</span>. The enemy acts, then you get a fresh hand of 5 cards and full Capital.
     </div>
@@ -483,7 +593,8 @@ h2{font-size:1.3rem;color:var(--green);}
       <span class="kw">Vulnerable</span> — takes 50% MORE damage. Great to put on enemies.<br>
       <span class="kw">Weak</span> — deals 25% LESS damage. Great to put on enemies, bad on you.<br>
       <span class="kw">Strength</span> — all your attacks hit harder (+1 damage per point).<br>
-      <span class="kw">Debt</span> — you lose that much HP at the end of every turn. Clear it with Tax Shelter.<br>
+      <span class="kw">Debt</span> — you lose that much HP at the end of every turn. Clear it with Tax Shelter — or weaponize it with Junk Bonds.<br>
+      <span class="kw">Retain</span> — your Block survives into next turn instead of expiring.<br>
       <span class="kw">Exhaust</span> — the card is used ONCE per battle, then gone until the next battle.
     </div>
     <div class="help-sec">
@@ -718,12 +829,28 @@ function screenShake(){
 }
 
 function flashHbar(selector){
-  const el=document.querySelector(selector);
+  const el=typeof selector==='string'?document.querySelector(selector):selector;
   if(!el) return;
   el.classList.remove('hbar-flash');
   void el.offsetWidth;
   el.classList.add('hbar-flash');
   el.addEventListener('animationend',()=>el.classList.remove('hbar-flash'),{once:true});
+}
+
+// Burst of glowing particles at a screen point (impacts, blocks, heals)
+function spawnBurst(x,y,color,n=10){
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');
+    p.className='burst';
+    p.style.left=x+'px'; p.style.top=y+'px';
+    p.style.background=color; p.style.boxShadow=`0 0 6px ${color}`;
+    document.body.appendChild(p);
+    const a=Math.random()*Math.PI*2, d=28+Math.random()*52;
+    p.animate([
+      {transform:'translate(-50%,-50%) scale(1)',opacity:1},
+      {transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(.15)`,opacity:0}
+    ],{duration:380+Math.random()*260,easing:'cubic-bezier(.1,.8,.3,1)'}).onfinish=()=>p.remove();
+  }
 }
 
 function spawnParticles(){
@@ -867,6 +994,81 @@ const CARDS = {
     effect:(G)=>{ const b=G.player.block; G.player.block*=2;
       log(`Block doubled: ${b} → ${G.player.block}`,'blk'); renderCombat(); } },
 
+  // ——— MOMENTUM / TEMPO (rewards playing many cards) ———
+  hft:{ id:'hft', name:'High-Freq Trade', cost:0, type:'attack', ico:'🤖',
+    desc:'Deal 3 damage. Draw 1 card.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,3); drawCards(G,1); } },
+
+  momentum_trade:{ id:'momentum_trade', name:'Momentum Trade', cost:1, type:'attack', ico:'🌊',
+    desc:'Deal 5 damage, +3 for each other card played this turn.', needsTarget:true,
+    dyn:(G)=>`Deal ${5+G.combat.cardsPlayedThisTurn*3} damage right now. (+3 per card played this turn)`,
+    effect:(G,t)=>{ playerDealDamage(G,t,5+(G.combat.cardsPlayedThisTurn-1)*3); } },
+
+  algo_trading:{ id:'algo_trading', name:'Algo Trading', cost:1, type:'skill', ico:'🧠',
+    desc:'Draw 1 card for each card played this turn.',
+    dyn:(G)=>`Draw ${G.combat.cardsPlayedThisTurn+1} cards right now. (1 per card played this turn)`,
+    effect:(G)=>{ drawCards(G,G.combat.cardsPlayedThisTurn); } },
+
+  all_in:{ id:'all_in', name:'All In', cost:3, type:'attack', ico:'🎰',
+    desc:'Deal 30 damage. Discard your hand. Exhaust.', needsTarget:true, exhausts:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,30);
+      G.combat.discard.push(...G.combat.hand); G.combat.hand=[];
+      log('You shove your whole stack in.','sts'); renderHand(); updatePileCounts(); } },
+
+  // ——— DEBT / LEVERAGE (risk now, power later) ———
+  leverage_up:{ id:'leverage_up', name:'Leverage Up', cost:0, type:'skill', ico:'🏗️',
+    desc:'Gain 2 Capital. Gain 2 Debt.',
+    effect:(G)=>{ G.combat.energy=clamp(G.combat.energy+2,0,9); renderEnergy();
+      applyStatus(G,'player','debt',2); log('Gained 2 Capital!','sts'); } },
+
+  junk_bonds:{ id:'junk_bonds', name:'Junk Bonds', cost:1, type:'attack', ico:'🧨',
+    desc:'Deal damage equal to 5× your Debt.', needsTarget:true,
+    dyn:(G)=>`Deal ${5*(G.player.statuses.debt||0)} damage right now. (5× your Debt)`,
+    effect:(G,t)=>{ playerDealDamage(G,t,5*(G.player.statuses.debt||0)); } },
+
+  credit_default_swap:{ id:'credit_default_swap', name:'Credit Default Swap', cost:1, type:'defend', ico:'🧾',
+    desc:'Gain 4 block, +3 per Debt you have.',
+    dyn:(G)=>`Gain ${4+3*(G.player.statuses.debt||0)} block right now. (+3 per Debt)`,
+    effect:(G)=>{ playerGainBlock(G,4+3*(G.player.statuses.debt||0)); } },
+
+  toxic_assets:{ id:'toxic_assets', name:'Toxic Assets', cost:2, type:'attack', ico:'☢️',
+    desc:'Deal 9 damage to ALL enemies. Apply 1 Vulnerable to ALL. Gain 2 Debt.',
+    effect:(G)=>{ G.combat.enemies.forEach((e,i)=>{ if(e.hp>0){ playerDealDamage(G,i,9);
+        if(G.combat.enemies[i].hp>0) applyStatus(G,i,'vulnerable',1); } });
+      applyStatus(G,'player','debt',2); } },
+
+  // ——— FORTRESS (block as a weapon) ———
+  treasury_bonds:{ id:'treasury_bonds', name:'Treasury Bonds', cost:1, type:'defend', ico:'💵',
+    desc:'Gain 6 block. Retain: your block is not removed next turn.',
+    effect:(G)=>{ playerGainBlock(G,6); G.player.statuses.retain=1;
+      log('Your block will carry over!','blk'); renderCombat(); } },
+
+  collateral_damage:{ id:'collateral_damage', name:'Collateral Damage', cost:1, type:'attack', ico:'🧱',
+    desc:'Deal damage equal to your current Block.', needsTarget:true,
+    dyn:(G)=>`Deal ${G.player.block} damage right now. (equal to your Block)`,
+    effect:(G,t)=>{ playerDealDamage(G,t,G.player.block); } },
+
+  buyback:{ id:'buyback', name:'Stock Buyback', cost:2, type:'defend', ico:'🔄',
+    desc:'Gain 11 block. Draw 1 card.',
+    effect:(G)=>{ playerGainBlock(G,11); drawCards(G,1); } },
+
+  // ——— BULL (strength scaling) ———
+  bull_rush:{ id:'bull_rush', name:'Bull Rush', cost:2, type:'attack', ico:'🐮',
+    desc:'Deal 8 damage. Gain 2 Strength.', needsTarget:true,
+    effect:(G,t)=>{ playerDealDamage(G,t,8);
+      G.player.statuses.strength=(G.player.statuses.strength||0)+2;
+      log('You gain 2 Strength!','sts'); renderCombat(); } },
+
+  reinvest:{ id:'reinvest', name:'Reinvest', cost:2, type:'skill', ico:'♻️',
+    desc:'Double your Strength.',
+    effect:(G)=>{ const s=G.player.statuses.strength||0; G.player.statuses.strength=s*2;
+      log(`Strength doubled: ${s} → ${s*2}`,'sts'); renderCombat(); } },
+
+  volatility_index:{ id:'volatility_index', name:'Volatility Index', cost:2, type:'skill', ico:'🌪️',
+    desc:'Apply 2 Vulnerable and 2 Weak to ALL enemies.',
+    effect:(G)=>{ G.combat.enemies.forEach((e,i)=>{ if(e.hp>0){
+      applyStatus(G,i,'vulnerable',2); applyStatus(G,i,'weak',2); } }); } },
+
   // ——— RARE ———
   bailout:{ id:'bailout', name:'Government Bailout', cost:2, type:'defend', ico:'🏛️',
     desc:'Gain 30 block. Exhaust.', exhausts:true,
@@ -891,8 +1093,11 @@ const CARD_RARITY={
   flash_crash:'unc', pump_dump:'unc', insider_trade:'unc', short_squeeze:'unc',
   circuit_breaker:'unc', golden_parachute:'unc', quant_easing:'unc',
   compound_interest:'unc', ipo:'unc', leveraged_buyout:'unc', bear_raid:'unc',
+  junk_bonds:'unc', credit_default_swap:'unc', collateral_damage:'unc',
+  buyback:'unc', bull_rush:'unc', leverage_up:'unc', volatility_index:'unc',
   hostile_takeover:'rare', bull_market:'rare', tax_shelter:'rare',
   bailout:'rare', black_swan:'rare', ponzi_scheme:'rare', golden_goose:'rare',
+  algo_trading:'rare', all_in:'rare', toxic_assets:'rare', reinvest:'rare',
 };
 Object.entries(CARD_RARITY).forEach(([k,r])=>{ if(CARDS[k]) CARDS[k].rar=r; });
 
@@ -1090,7 +1295,7 @@ function openHelp(){ document.getElementById('help-modal').classList.add('open')
 function closeHelp(){ document.getElementById('help-modal').classList.remove('open'); }
 
 const TUT_STEPS=[
-  'Welcome to your first trade! 👇 The cards below are your <b>hand</b>. Each card costs <b>Capital ($)</b> — see the gold pips at the top. You get <b>3 Capital every turn</b>.',
+  'Welcome to your first trade! 👇 The cards below are your <b>hand</b>. Each card costs <b>Capital ($)</b> — see the gold orb at the top. You get <b>3 Capital every turn</b>. <b>Drag a card onto an enemy</b> (or just click it) to play it.',
   '👆 Look above the enemy: that box shows <b>exactly what it will do next turn</b>. "8 dmg" means it will hit you for 8 health. No surprises — you can always plan around it.',
   '<b>Red cards deal damage</b> to enemies. <b>Blue cards give you Block 🛡</b> — a shield that soaks up damage but disappears next turn. Rule of thumb: block when a big hit is coming, attack when it\'s safe.',
   'When you\'re out of Capital or done playing cards, press <b>END TURN ▶</b> on the right. The enemy acts, then you draw a fresh hand of 5 with full Capital.',
@@ -1124,8 +1329,9 @@ function tutSkip(){
 const KEYWORD_TIPS={
   vulnerable:'Vulnerable: takes 50% MORE damage while active. Counts down each turn.',
   weak:'Weak: deals 25% LESS damage while active. Counts down each turn.',
-  debt:'Debt: lose this much HP at the end of every turn. Clear it with Tax Shelter.',
+  debt:'Debt: lose this much HP at the end of every turn. Clear it with Tax Shelter — or weaponize it with Junk Bonds.',
   strength:'Strength: all attacks deal +1 damage per point. Lasts the whole fight.',
+  retain:'Retain: your Block will NOT be removed at the start of your next turn.',
 };
 
 // ============================================================
@@ -1202,9 +1408,12 @@ function startCombat(enemies, isBoss=false){
     turn:1,
     pendingDiscard:0,
     selectedCard:null,
+    cardsPlayedThisTurn:0,
     isBoss,
     drawN:hasRelic('ledger')?6:5,
   };
+  _seenHand=new Set();
+  for(const k in _hbPrev) delete _hbPrev[k];
   document.getElementById('clog').innerHTML='';
   // Relic start-of-combat effects
   if(hasRelic('vault')){ G.player.block=6; log('Private Vault: +6 block.','blk'); }
@@ -1239,8 +1448,11 @@ function playerDealDamage(G,targetIdx,base){
   if(eel){
     shakeEl(eel);
     const r=eel.getBoundingClientRect();
-    spawnPopup(blk>0?`${hit} (${blk}🛡)`:`-${hit}`,'hit',r.left+r.width/2,r.top+20);
-    if(hit>0) flashHbar('.enemy-entity .hbar-fill');
+    spawnPopup(blk>0?`${hit} (${blk}🛡)`:`-${hit}`,hit>=15?'hit crit':'hit',r.left+r.width/2,r.top+30);
+    if(hit>0){
+      flashHbar(eel.querySelector('.hbar-fill'));
+      spawnBurst(r.left+r.width/2,r.top+r.height/2,'#ff6644',hit>=15?16:10);
+    }
   }
   if(e.hp===0){ setTimeout(()=>{ const d=document.querySelectorAll('.enemy-entity')[targetIdx]; if(d){ d.style.animation='enemy-death 0.4s ease forwards'; } },50); }
   renderCombat();
@@ -1263,7 +1475,11 @@ function enemyAttack(G,e,base){
     shakeEl(pel);
     const r=pel.getBoundingClientRect();
     if(blk>0) spawnPopup(`🛡${blk}`,'blk',r.left+r.width/2,r.top+10);
-    if(hit>0){ spawnPopup(`-${hit}`,'hit',r.left+r.width/2,r.top+30); flashHbar('.hbar-fill.p'); }
+    if(hit>0){
+      spawnPopup(`-${hit}`,hit>=15?'hit crit':'hit',r.left+r.width/2,r.top+30);
+      flashHbar(pel.querySelector('.hbar-fill.p'));
+      spawnBurst(r.left+r.width/2,r.top+r.height/2,'#ff4444',hit>=15?16:8);
+    }
   }
   if(hit>=15) screenShake();
   renderCombat();
@@ -1284,7 +1500,11 @@ function playerGainBlock(G,amount){
   log(`Gained ${amount} block.`,'blk');
   snd('block');
   const pel=document.querySelector('.player-entity');
-  if(pel){ const r=pel.getBoundingClientRect(); spawnPopup(`🛡+${amount}`,'blk',r.left+r.width/2,r.top+10); }
+  if(pel){
+    const r=pel.getBoundingClientRect();
+    spawnPopup(`🛡+${amount}`,'blk',r.left+r.width/2,r.top+10);
+    spawnBurst(r.left+r.width/2,r.top+r.height/2,'#44aaff',6);
+  }
   renderCombat();
 }
 
@@ -1381,10 +1601,51 @@ function clickEnemy(ei){
   }
 }
 
-function executeCard(ci,card,targetIdx){
+function playCardAt(cardUid,targetIdx,skipAnim){
+  if(!G||!G.combat) return;
+  const ci=G.combat.hand.findIndex(c=>c.uid===cardUid);
+  if(ci===-1) return;
+  const card=G.combat.hand[ci];
+  if(card.cost>G.combat.energy) return;
+  if(card.needsTarget){
+    const e=G.combat.enemies[targetIdx];
+    if(!e||e.hp<=0) return;
+  }
+  executeCard(ci,card,targetIdx,skipAnim);
+}
+
+// Visual: clone the hand card and fly it into the target before it resolves
+function animateCardPlay(card,targetIdx){
+  const el=document.querySelector(`#hand .card[data-uid="${card.uid}"]`);
+  if(!el) return;
+  const r=el.getBoundingClientRect();
+  const clone=el.cloneNode(true);
+  clone.classList.remove('drag-src','card-in','sel');
+  clone.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;
+    margin:0;z-index:880;pointer-events:none;transition:none;transform:none;`;
+  document.body.appendChild(clone);
+  const tEl=targetIdx!=null
+    ?document.querySelectorAll('.enemy-entity')[targetIdx]
+    :document.querySelector('.player-entity');
+  let tx=0,ty=-180;
+  if(tEl){
+    const tr=tEl.getBoundingClientRect();
+    tx=tr.left+tr.width/2-(r.left+r.width/2);
+    ty=tr.top+tr.height/2-(r.top+r.height/2);
+  }
+  clone.animate([
+    {transform:'translate(0,0) scale(1) rotate(0deg)',opacity:1},
+    {transform:`translate(${tx*.7}px,${ty*.7}px) scale(.65) rotate(${tx>0?10:-10}deg)`,opacity:.9,offset:.7},
+    {transform:`translate(${tx}px,${ty}px) scale(.1)`,opacity:0}
+  ],{duration:360,easing:'cubic-bezier(.4,0,.6,1)'}).onfinish=()=>clone.remove();
+}
+
+function executeCard(ci,card,targetIdx,skipAnim){
+  if(!skipAnim) animateCardPlay(card,targetIdx);
   G.combat.energy-=card.cost;
   G.combat.hand.splice(ci,1);
   G.stats.cardsPlayed++;
+  G.combat.cardsPlayedThisTurn++;
   snd('card_play');
 
   card.effect(G,targetIdx);
@@ -1449,7 +1710,13 @@ function endTurn(){
   if(!G.combat) return;
 
   // New turn setup
-  G.player.block=0;
+  if(G.player.statuses.retain){
+    delete G.player.statuses.retain;
+    if(G.player.block>0) log(`Retained ${G.player.block} block.`,'blk');
+  } else {
+    G.player.block=0;
+  }
+  G.combat.cardsPlayedThisTurn=0;
   G.combat.energy=G.combat.maxEnergy;
   G.combat.turn++;
   document.getElementById('turn-num').textContent=G.combat.turn;
@@ -1508,18 +1775,32 @@ function updateIntents(){
 
 function renderEnergy(){
   const row=document.getElementById('energy-row');
-  row.innerHTML='';
-  for(let i=0;i<G.combat.maxEnergy;i++){
-    const pip=document.createElement('div');
-    pip.className=`epip ${i<G.combat.energy?'on':''}`;
-    pip.textContent=i<G.combat.energy?'$':'';
-    row.appendChild(pip);
+  const e=G.combat.energy, m=G.combat.maxEnergy;
+  row.innerHTML=`
+    <div class="energy-orb ${e===0?'empty':''}"
+      title="Capital is your budget for playing cards each turn. Each card costs the amount shown in its corner. Refills every turn.">
+      <span class="ecur">${e}</span><span class="emax">/${m}</span>
+    </div>
+    <span class="elbl">CAPITAL</span>`;
+}
+
+// Smooth health-bar updates: animate from the previous width, with a pale
+// "ghost" bar that lingers to show the chunk that was just lost.
+const _hbPrev={};
+function setBar(fillEl,ghostEl,key,pct){
+  const prev=_hbPrev[key];
+  if(prev!=null&&Math.abs(prev-pct)>0.01){
+    fillEl.style.width=prev+'%';
+    if(ghostEl) ghostEl.style.width=prev+'%';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      fillEl.style.width=pct+'%';
+      if(ghostEl) ghostEl.style.width=pct+'%';
+    }));
+  } else {
+    fillEl.style.width=pct+'%';
+    if(ghostEl) ghostEl.style.width=pct+'%';
   }
-  const lbl=document.createElement('span');
-  lbl.style.cssText='font-size:.78rem;color:var(--gold);margin-left:4px;';
-  lbl.textContent=`${G.combat.energy}/${G.combat.maxEnergy} CAPITAL`;
-  lbl.title='Capital is your budget for playing cards each turn. Each card costs the amount shown in its corner. Refills every turn.';
-  row.appendChild(lbl);
+  _hbPrev[key]=pct;
 }
 
 function renderCombat(){
@@ -1544,13 +1825,14 @@ function renderPlayerEntity(){
   const pct=clamp(G.player.hp/G.player.maxHp,0,1)*100;
   const sts=G.player.statuses;
   pel.innerHTML=`
-    <div class="esprite">👤</div>
+    <div class="esprite">🧑‍💼</div>
     <div class="ename">YOU — THE TRADER</div>
-    <div class="hbar-bg" style="width:150px"><div class="hbar-fill p" style="width:${pct}%"></div></div>
+    <div class="hbar-bg" style="width:150px"><div class="hbar-ghost"></div><div class="hbar-fill p"></div></div>
     <div class="hptxt p">${G.player.hp}/${G.player.maxHp} HP</div>
     <div class="blk-badge ${G.player.block>0?'on':''}" title="Block: absorbs damage before HP is lost. Resets at the start of your turn.">🛡 ${G.player.block}</div>
     <div class="statuses">${renderStatuses(sts)}</div>
   `;
+  setBar(pel.querySelector('.hbar-fill'),pel.querySelector('.hbar-ghost'),'p',pct);
 }
 
 function renderEnemies(){
@@ -1573,18 +1855,20 @@ function renderEnemies(){
     const el=document.createElement('div');
     el.className='entity enemy-entity';
     const isSel=G.combat.selectedCard!==null;
-    if(isSel) el.style.cursor='crosshair';
+    if(isSel) el.classList.add('targetable');
+    const intentIco={atk:'⚔️',def:'🛡',buf:'💪',deb:'☠️'}[action.it]||'';
     el.innerHTML=`
-      <div class="intent ${action.it}" title="This is what the enemy will do on its next turn — plan around it!">NEXT: ${action.label}</div>
-      <div class="esprite" style="${isSel?'filter:brightness(1.5);cursor:crosshair;':''}">${e.ico}</div>
+      <div class="intent ${action.it}" title="This is what the enemy will do on its next turn — plan around it!">${intentIco} NEXT: ${action.label}</div>
+      <div class="esprite">${e.ico}</div>
       <div class="ename">${e.name}</div>
-      <div class="hbar-bg" style="width:160px"><div class="hbar-fill" style="width:${pct}%"></div></div>
+      <div class="hbar-bg" style="width:160px"><div class="hbar-ghost"></div><div class="hbar-fill"></div></div>
       <div class="hptxt">${e.hp}/${e.maxHp} HP</div>
       <div class="blk-badge ${e.block>0?'on':''}" title="Block: absorbs damage before HP is lost. Resets each turn.">🛡 ${e.block}</div>
       <div class="statuses">${renderStatuses(e.statuses)}</div>
     `;
     el.onclick=()=>clickEnemy(i);
     ca.appendChild(el);
+    setBar(el.querySelector('.hbar-fill'),el.querySelector('.hbar-ghost'),'e'+i,pct);
   });
 }
 
@@ -1594,35 +1878,212 @@ function renderStatuses(sts){
   ).join('');
 }
 
+let _seenHand=new Set();
+
 function renderHand(){
   const cont=document.getElementById('hand');
   cont.innerHTML='';
   if(!G||!G.combat) return;
 
   const discarding=G.combat.pendingDiscard>0;
+  const n=G.combat.hand.length;
+  const mid=(n-1)/2;
+  const overlap=n>8?-30:n>6?-20:n>4?-12:-4;
+  const newSeen=new Set();
 
-  G.combat.hand.forEach(card=>{
+  G.combat.hand.forEach((card,i)=>{
     const cantAfford=card.cost>G.combat.energy;
     const isSel=G.combat.selectedCard===card.uid;
     const el=document.createElement('div');
     el.className=`card ${card.type} ${card.rar||''} ${card.upgraded?'upg':''} ${(cantAfford&&!discarding)?'dis':''} ${isSel?'sel':''} ${card.exhausts?'exhaust':''}`;
+    el.dataset.uid=card.uid;
     el.innerHTML=`
       <div class="ccost">${card.cost}</div>
       <div class="cname">${card.name}</div>
       <div class="cico">${card.ico}</div>
-      <div class="cdesc">${card.desc}</div>
+      <div class="cdesc">${card.dyn?card.dyn(G):card.desc}</div>
       <div class="ctype">${card.type}</div>
     `;
+    // fan the hand in an arc
+    const o=i-mid;
+    el.style.setProperty('--fr',(o*3.2)+'deg');
+    el.style.setProperty('--fy',(o*o*2.4)+'px');
+    el.style.setProperty('--fm',overlap+'px');
     if(discarding){
       el.onclick=()=>discardCard(card.uid);
       el.classList.remove('dis');
       el.style.borderColor='var(--gold)';
-    } else if(!cantAfford){
-      el.onclick=()=>playCard(card.uid);
+    } else {
+      el.addEventListener('pointerdown',(ev)=>handPointerDown(ev,card.uid));
     }
-    el.classList.add('card-in');
+    if(!_seenHand.has(card.uid)) el.classList.add('card-in');
+    newSeen.add(card.uid);
     cont.appendChild(el);
   });
+  _seenHand=newSeen;
+
+  // nudge END TURN when nothing left to play
+  const et=document.getElementById('etbtn');
+  if(et) et.classList.toggle('pulse',
+    !discarding&&n>0&&!G.combat.hand.some(c=>c.cost<=G.combat.energy));
+}
+
+// ——— DRAG & DROP ———
+// Drag a card up to play it; targeted cards are dropped onto an enemy,
+// with a curved targeting arrow. A short press-and-release still clicks.
+let DRAG=null;
+
+function handPointerDown(ev,cardUid){
+  if(!G||!G.combat||G.combat.pendingDiscard>0) return;
+  if(ev.button!==undefined&&ev.button!==0) return;
+  const card=G.combat.hand.find(c=>c.uid===cardUid);
+  if(!card||card.cost>G.combat.energy) return;
+  const el=ev.currentTarget;
+  DRAG={uid:cardUid,card,el,sx:ev.clientX,sy:ev.clientY,
+    x:ev.clientX,y:ev.clientY,active:false,ghost:null,targetIdx:null,inZone:false};
+  try{ el.setPointerCapture(ev.pointerId); }catch(e){}
+  el.addEventListener('pointermove',dragMove);
+  el.addEventListener('pointerup',dragEnd);
+  el.addEventListener('pointercancel',dragCancelEv);
+}
+
+function dragMove(ev){
+  if(!DRAG) return;
+  DRAG.x=ev.clientX; DRAG.y=ev.clientY;
+  if(!DRAG.active){
+    if(Math.hypot(DRAG.x-DRAG.sx,DRAG.y-DRAG.sy)<12) return;
+    startDrag();
+  }
+  updateDrag();
+}
+
+function startDrag(){
+  DRAG.active=true;
+  const el=DRAG.el;
+  const r=el.getBoundingClientRect();
+  const ghost=el.cloneNode(true);
+  ghost.classList.remove('card-in','sel','dis');
+  ghost.classList.add('drag-ghost');
+  ghost.style.width=r.width+'px';
+  document.body.appendChild(ghost);
+  DRAG.ghost=ghost;
+  DRAG.origin={x:r.left+r.width/2,y:r.top+r.height/2};
+  el.classList.add('drag-src');
+  if(G.combat.selectedCard){ G.combat.selectedCard=null; }
+  if(DRAG.card.needsTarget){
+    document.querySelectorAll('.enemy-entity').forEach((e,i)=>{
+      if(G.combat.enemies[i]&&G.combat.enemies[i].hp>0) e.classList.add('targetable');
+    });
+    document.getElementById('drag-arrow').style.display='block';
+  } else {
+    document.getElementById('combat-area').classList.add('drop-ready');
+  }
+}
+
+function updateDrag(){
+  const g=DRAG.ghost; if(!g) return;
+  g.style.left=DRAG.x+'px'; g.style.top=DRAG.y+'px';
+  if(DRAG.card.needsTarget){
+    DRAG.targetIdx=null;
+    document.querySelectorAll('.enemy-entity').forEach((e,i)=>{
+      const en=G.combat.enemies[i];
+      const r=e.getBoundingClientRect();
+      const over=!!en&&en.hp>0&&DRAG.x>r.left-14&&DRAG.x<r.right+14
+        &&DRAG.y>r.top-14&&DRAG.y<r.bottom+14;
+      e.classList.toggle('target-hover',over);
+      if(over) DRAG.targetIdx=i;
+    });
+    drawArrow(DRAG.origin.x,DRAG.origin.y,DRAG.x,DRAG.y,DRAG.targetIdx!=null);
+  } else {
+    const hr=document.getElementById('hand').getBoundingClientRect();
+    DRAG.inZone=DRAG.y<hr.top-30;
+    g.classList.toggle('ghost-ready',DRAG.inZone);
+  }
+}
+
+function drawArrow(x1,y1,x2,y2,locked){
+  const path=document.getElementById('drag-arrow-path');
+  const head=document.getElementById('drag-arrow-head');
+  const mx=(x1+x2)/2, my=Math.min(y1,y2)-70;
+  path.setAttribute('d',`M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`);
+  const ang=Math.atan2(y2-my,x2-mx), s=19;
+  const pt=(a)=>`${x2-Math.cos(a)*s},${y2-Math.sin(a)*s}`;
+  head.setAttribute('points',`${x2},${y2} ${pt(ang-0.45)} ${pt(ang+0.45)}`);
+  const col=locked?'#ff6644':'#88aa88';
+  path.setAttribute('stroke',col);
+  path.style.color=col;
+  head.setAttribute('fill',col);
+}
+
+function clearDragHighlights(){
+  document.querySelectorAll('.enemy-entity').forEach(e=>{
+    e.classList.remove('targetable','target-hover');
+  });
+  const ca=document.getElementById('combat-area');
+  if(ca) ca.classList.remove('drop-ready');
+  document.getElementById('drag-arrow').style.display='none';
+}
+
+function dragCleanupEl(el){
+  el.removeEventListener('pointermove',dragMove);
+  el.removeEventListener('pointerup',dragEnd);
+  el.removeEventListener('pointercancel',dragCancelEv);
+}
+
+function dragEnd(ev){
+  const d=DRAG; if(!d) return;
+  dragCleanupEl(d.el);
+  if(!d.active){ DRAG=null; playCard(d.uid); return; }
+  clearDragHighlights();
+  const wantTarget=d.card.needsTarget;
+  const played=wantTarget?(d.targetIdx!=null):d.inZone;
+  if(played){
+    d.el.classList.remove('drag-src');
+    if(d.ghost) animateGhostToTarget(d.ghost, wantTarget?d.targetIdx:null);
+    const t=d.targetIdx;
+    DRAG=null;
+    playCardAt(d.uid, wantTarget?t:null, true);
+  } else {
+    snapBack();
+  }
+}
+
+function dragCancelEv(){
+  const d=DRAG; if(!d) return;
+  dragCleanupEl(d.el);
+  if(d.active){ clearDragHighlights(); snapBack(); }
+  else DRAG=null;
+}
+
+function snapBack(){
+  const d=DRAG; DRAG=null;
+  if(!d) return;
+  const g=d.ghost;
+  if(g){
+    g.style.transition='left .22s ease,top .22s ease,opacity .22s ease';
+    g.style.left=d.origin.x+'px';
+    g.style.top=d.origin.y+'px';
+    g.style.opacity='0';
+    setTimeout(()=>g.remove(),240);
+  }
+  setTimeout(()=>d.el.classList.remove('drag-src'),160);
+}
+
+function animateGhostToTarget(g,targetIdx){
+  const gr=g.getBoundingClientRect();
+  const tEl=targetIdx!=null
+    ?document.querySelectorAll('.enemy-entity')[targetIdx]
+    :document.querySelector('.player-entity');
+  let tx=0,ty=-160;
+  if(tEl){
+    const tr=tEl.getBoundingClientRect();
+    tx=tr.left+tr.width/2-(gr.left+gr.width/2);
+    ty=tr.top+tr.height/2-(gr.top+gr.height/2);
+  }
+  g.animate([
+    {transform:'translate(-50%,-60%) scale(1.1)',opacity:1},
+    {transform:`translate(calc(-50% + ${tx}px),calc(-60% + ${ty}px)) scale(.15)`,opacity:0}
+  ],{duration:280,easing:'cubic-bezier(.5,0,.7,1)'}).onfinish=()=>g.remove();
 }
 
 function updatePileCounts(){

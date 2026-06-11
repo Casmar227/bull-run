@@ -6,7 +6,10 @@ A finance-themed roguelike deckbuilder that runs entirely in your browser. Build
 
 ## Features
 
-- 29 cards across attack / defense / skill types, with common, uncommon, and rare tiers
+- 43 cards across attack / defense / skill types, with common, uncommon, and rare tiers
+- Four synergy archetypes to build around: Debt/Leverage (Ponzi Scheme → Junk Bonds), Fortress (big Block → Collateral Damage), Momentum (cheap cards → Momentum Trade / Algo Trading), and Strength scaling (Compound Interest → Reinvest)
+- Drag-and-drop card play with a curved targeting arrow — or click, both work
+- Juicy combat feedback: fanned hand, card-fly animations, impact particles, damage ghosting on health bars, CRT scanline aesthetic
 - 8 relics (permanent passive bonuses) dropped by elite enemies and bosses
 - Card upgrades, deck thinning, and shops between fights
 - Random events with risk/reward choices
