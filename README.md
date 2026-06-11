@@ -4,6 +4,14 @@ A finance-themed roguelike deckbuilder that runs entirely in your browser. Build
 
 **[▶ Play it here](https://casmar227.github.io/bull-run/)**
 
+<p align="center">
+  <img src="media/combo.gif" width="420" alt="A Vulture debt-combo turn">
+  <img src="media/boss.gif" width="420" alt="BLACK MONDAY boss intro">
+</p>
+<p align="center">
+  <img src="media/map.gif" width="420" alt="The branching market map — your bull walks the route you commit to">
+</p>
+
 ## Features
 
 - 📅 **Daily Challenge** — everyone worldwide gets the same seeded run with a rotating market condition (ZIRP, Meme Stock Monday, Crypto Winter…); one scored attempt per day, then share your P&L
@@ -41,3 +49,7 @@ Open `index.html` in any modern browser. No build step, no dependencies — it's
 ---
 
 Built with [Claude Code](https://claude.com/claude-code).
+
+---
+
+*Anonymous play counts via GoatCounter — no cookies, no personal data. The game itself makes zero other external requests.*
