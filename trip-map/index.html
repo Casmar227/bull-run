@@ -409,6 +409,8 @@ function renderList(){
   wireListEvents();
 }
 function initials(name){ const p=name.trim().split(/\s+/); return (p.length>1?p[0][0]+p[1][0]:name.slice(0,2)).toUpperCase(); }
+// compact start-date for map pins: "Jul 16–20" → "Jul 16", "Aug 27 – Sep 1" → "Aug 27"
+function shortDate(d){ if(!d) return ""; return d.split("·")[0].split(/[–—]|\s-\s/)[0].trim(); }
 
 function wireListEvents(){
   document.querySelectorAll(".stop-place").forEach(inp=>inp.addEventListener("change",e=>{
@@ -454,11 +456,12 @@ function renderMap(){
     const who=(s.who||[]);
     if(filterT && !who.includes(filterT)) return;
     const inis=trip.travelers.filter(t=>who.includes(t.id)).map(t=>`<span class="pini" style="color:${t.color}">${esc(initials(t.name)[0])}</span>`).join("");
-    const icon=L.divIcon({className:"",html:`<div class="pin-wrap"><div class="pin-pill"><span class="pnum">${i+1}</span>${inis}</div></div>`,iconSize:[1,1],iconAnchor:[0,0]});
+    const label=shortDate(s.date)||("#"+(i+1));
+    const icon=L.divIcon({className:"",html:`<div class="pin-wrap"><div class="pin-pill"><span class="pnum">${esc(label)}</span>${inis}</div></div>`,iconSize:[1,1],iconAnchor:[0,0]});
     const mk=L.marker([s.lat,s.lng],{icon}).addTo(markerLayer);
     const whoHtml=trip.travelers.filter(t=>who.includes(t.id)).map(t=>`<b style="background:${t.color}">${esc(t.name)}</b>`).join("");
     mk.bindPopup(`${s.date?`<div class="pop-date">${esc(s.date)}</div>`:""}
-      <div class="pop-place">${i+1}. ${esc(s.place)}</div>
+      <div class="pop-place">${esc(s.place)}</div>
       ${whoHtml?`<div class="pop-who">${whoHtml}</div>`:""}
       ${s.notes?`<div class="pop-notes">${esc(s.notes)}</div>`:""}`);
   });
