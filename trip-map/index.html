@@ -233,75 +233,50 @@ try{ geoCache=JSON.parse(localStorage.getItem("tm_geocache")||"{}"); }catch(e){}
 let _uidn=0; const uid=()=>"s"+(++_uidn)+"_"+Date.now().toString(36);
 const trav=(id)=>trip.travelers.find(t=>t.id===id);
 
-// ---------- DEFAULT TRIP (authoritative, hand-built, 3 travelers) ----------
-function defaultTrip(){
-  const T=[{id:"c",name:"Christian",color:TCOLORS[0]},{id:"i",name:"Ibby",color:TCOLORS[1]},{id:"m",name:"Mom",color:TCOLORS[2]}];
-  // [place, date, who[], notes]
-  const S=[
-    ["Newark (EWR)","Jul 16",["c","i"],`Transatlantic flight to London Heathrow on points. United UA122 — Polaris Business. Depart EWR 9:30 AM, arrive LHR 9:20 PM. Christian PNR MNFZLT (07D), Ibrahim PNR MNDGS2 (07F).`],
-    ["London, UK","Jul 16–20",["c","i"],`Stay: Spacious Fitzrovia Retreat with A/C (Airbnb). Confirmation HMPFJCZD3C. 17 Rathbone St, London W1T 1NB.`],
-    ["Luxembourg City","Jul 20–22",["c","i"],`Morning Eurostar: London St Pancras 07:31 → Paris Gare du Nord 10:49 (Eurostar Premier, ref 2T4VXQ, Coach 15, seats 53 & 54). Ibby picks up the Sixt BMW 4 Series Gran Coupe (his name, Amex Platinum primary coverage) at Gare du Nord 11:30 AM, then drives to Luxembourg.\nStay: Sofitel Luxembourg Le Grand Ducal (Bilt portal, 1 Classic King). 40 Bd D'Avranches, 1160. Alzette river valley.`],
-    ["Paris","Jul 22–26",["c","i","m"],`Drive back to Paris; drop the Sixt at Paris 02 Vendôme Opéra (10 Rue de la Paix).\nStay: Prince de Galles, a Luxury Collection Hotel — 2 Art Deco rooms via STARS (Christian Jul 22–26, Mom Jul 24–26), same-floor block. 33 Avenue George V, 75008. Mom's room conf 88802654.\nJul 24 — THE HANDOFF: Ibby → CDG, flight home to Newark; Mom arrives CDG.\nJul 25: "Women of Paris" 2.5h walking tour, Left Bank & Latin Quarter.`],
-    ["Geneva, Switzerland","Jul 26–29",["c","m"],`TGV Lyria 9777 from Paris Gare de Lyon 16:18 → Geneva 19:29 (First Class Club Duo, Carriage 12, seats 267 & 270; PNR 55SMAZ).\nStay: Hotel President Wilson, a Luxury Collection Hotel — 2 Superior City View rooms, late ~8 PM arrival flag. Conf 88804933 / 88806562. 47 Quai Wilson, 1211.`],
-    ["Interlaken","Jul 27/28 · day trip",["c","m"],`GoldenPass Express alpine day trip: Montreux → Interlaken in Prestige Class (heated, rotatable seats, glass domes). Return to Geneva by dinner.`],
-    ["Brussels, Belgium","Jul 29 – Aug 1",["c","m"],`TGV Lyria Geneva → Paris Gare de Lyon; private transfer to Gare du Nord; Eurostar into Brussels Midi.\nStay: Brussels Marriott Hotel Grand Place. 3-night base camp.`],
-    ["Bruges","Jul 30 · day trip",["c","m"],`Private chauffeured day trip from Brussels to the flat, preservation-rich town of Bruges.`],
-    ["Amsterdam, Netherlands","Aug 1–4",["c","m"],`Morning Eurostar: Brussels Midi → Amsterdam Centraal (~2h).\nStay: W Amsterdam. 3 nights in a flat, pedestrian-friendly capital; private canal boat tours.`],
-    ["Zürich, Switzerland","Aug 5–8",["c","m"],`Aug 4–5: ÖBB Nightjet sleeper from Amsterdam Centraal — private Deluxe cabin, en-suite shower/WC, gliding south through Germany to the foot of the Swiss Alps; arrive Zürich Hbf after breakfast.\nStay: Neues Schloss Privat Hotel Zurich, Autograph Collection. 3 nights lakeside; compact, flat, tram-accessible center.`],
-    ["Vienna, Austria","Aug 8–12",["c","m"],`First Class ÖBB Railjet Zürich HB → Wien Hbf (~7h50), a daytime cruise straight through the legendary Arlberg Pass.\nStay: Hotel Imperial, a Luxury Collection Hotel. 4 nights. Wide, level imperial boulevards; long flat runs on the Hauptallee in the Prater.`],
-    ["Copenhagen, Denmark","Aug 13–16",["c","m"],`Aug 12–13: ÖBB Nightjet "Baltic Sleeper" out of Vienna in the evening → Germany next morning. Short connection in Hamburg onto First Class Intercity rail, arriving Copenhagen Central in the early afternoon.\nStay: Skt. Petri or a premium boutique design property. 3 nights on the flat, compact waterfront.`],
-    ["Stockholm, Sweden","Aug 16–20",["c","m"],`High-speed SJ X2000: Copenhagen → Stockholm Central (~5h, First Class).\nStay: Bank Hotel or a top-tier waterside property. 4-night base camp; archipelago ferries to nearby islands without moving luggage.`],
-    ["Helsinki, Finland","Aug 21–27",["c","i","m"],`Aug 20–21: Commodore Suite on the overnight Silja Line ferry, Stockholm → Helsinki.\nIbby flies in Aug 21 for the reunion. Stay: Hotel Kämp (Ibby's conference Aug 25–27).`],
-    ["Miami (MIA)","Aug 22",["m"],`Mom flies HEL → MIA via Finnair / American. Her journey home.`],
-    ["Barcelona, Spain","Aug 27 – Sep 1",["c","i"],`Norwegian Air: Helsinki → Barcelona (direct).\nStay: Villa Victoria Barcelona (Horta-Guinardó) — 8 bedrooms, private pool. Ibby's 35th birthday. Flat tempo runs on the Barceloneta promenade.`],
-    ["Newark (EWR)","Sep 1",["c","i"],`United direct: BCN 12:00 PM → EWR 2:45 PM. Ibby continues home to NYC.`],
-    ["Orlando (MCO)","Sep 1",["c"],`Christian connects EWR → MCO. Home.`]
-  ];
-  return {title:"6-Week European Summer",travelers:T,
-    stops:S.map(a=>({id:uid(),place:a[0],date:a[1],who:a[2].slice(),notes:a[3],lat:null,lng:null,status:"pend"}))};
+// ---------- ENCRYPTED ITINERARY (AES-GCM / PBKDF2; no plaintext in source) ----------
+const SALT_B64="nSFB/1Z9PMPNx6/OPfvAlg==";
+const ENC_DEFAULT="s10TtQZc0b2mkVz1.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";
+let CRYPTO_KEY=null;            // derived from the password after unlock; kept only in memory
+const _td=new TextDecoder(), _te=new TextEncoder();
+const a2u=(s)=>{ const x=atob(s),u=new Uint8Array(x.length); for(let i=0;i<x.length;i++) u[i]=x.charCodeAt(i); return u; };
+const u2a=(buf)=>{ const u=new Uint8Array(buf); let s=""; for(const b of u) s+=String.fromCharCode(b); return btoa(s); };
+async function deriveKey(pw){
+  const km=await crypto.subtle.importKey("raw",_te.encode(pw),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt:a2u(SALT_B64),iterations:150000,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+}
+async function decJSON(blob,key){
+  const [iv,ct]=blob.split(".");
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:a2u(iv)},key,a2u(ct));
+  return JSON.parse(_td.decode(pt));
+}
+async function encJSON(obj,key){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,_te.encode(JSON.stringify(obj)));
+  return u2a(iv)+"."+u2a(ct);
+}
+// turn decrypted content (place/date/who/notes) into live stops
+function rehydrate(obj){
+  return {title:obj.title||"My Trip",
+    travelers:(obj.travelers&&obj.travelers.length)?obj.travelers:[{id:"me",name:"Me",color:TCOLORS[0]}],
+    stops:(obj.stops||[]).map(s=>({id:uid(),place:s.place||"",date:s.date||"",who:(s.who||[]).slice(),notes:s.notes||"",lat:null,lng:null,status:/\btbd\b/i.test(s.place||"")?"tbd":"pend"}))};
 }
 
-const SAMPLE_TEXT=`6-Week European Summer
+const SAMPLE_TEXT=`Weekend in Europe (example)
 
-July 16: Newark (EWR) — United UA122 Polaris Business to London Heathrow
-July 16 – 20: London, UK
-Stay: Fitzrovia Retreat (Airbnb). 17 Rathbone St, London W1T 1NB.
-July 20 – 22: Luxembourg City
-Stay: Sofitel Le Grand Ducal, 40 Bd D'Avranches.
-July 22 – 26: Paris
-Stay: Prince de Galles, 33 Avenue George V.
-July 26 – 29: Geneva, Switzerland
-Stay: Hotel President Wilson, 47 Quai Wilson.
-July 27: Interlaken — GoldenPass Express day trip
-July 29 – August 1: Brussels, Belgium
-Stay: Brussels Marriott Grand Place. Day trip to Bruges.
-August 1 – 4: Amsterdam, Netherlands
-Stay: W Amsterdam.
-August 5 – 8: Zürich, Switzerland
-Transit: ÖBB Nightjet sleeper from Amsterdam.
-Stay: Neues Schloss, Autograph Collection.
-August 8 – 12: Vienna, Austria
-Stay: Hotel Imperial.
-August 13 – 16: Copenhagen, Denmark
-Transit: ÖBB Baltic Sleeper from Vienna, change at Hamburg.
-Stay: Skt. Petri.
-August 16 – 20: Stockholm, Sweden
-Stay: Bank Hotel.
-August 21 – 27: Helsinki, Finland
-Transit: Overnight Silja Line ferry from Stockholm.
-Stay: Hotel Kämp. Ibby's conference Aug 25-27.
-August 27 – September 1: Barcelona, Spain
-Stay: Villa Victoria (Horta-Guinardó). Ibby's 35th birthday.
-September 1: Newark (EWR) — United direct from Barcelona, 12:00 PM
-September 1: Orlando (MCO) — connecting flight from Newark`;
+Day 1: London — arrive, walk the South Bank
+Day 2: Paris — Eurostar over, Eiffel Tower at night
+Day 3: Rome — flight down, Colosseum
+Day 4: Barcelona — Sagrada Família, tapas`;
 
 function loadSample(){ document.getElementById("paste-text").value=SAMPLE_TEXT; showTab("paste"); }
-function resetDefault(){
-  if(trip.stops.length && !confirm("Replace the current trip with the default itinerary?")) return;
-  trip=defaultTrip(); filterT=null;
-  document.getElementById("trip-title").value=trip.title;
-  document.getElementById("paste-text").value=SAMPLE_TEXT;
-  showTab("itin"); renderAll(); resolveAll();
+async function resetDefault(){
+  if(!CRYPTO_KEY){ toast("Unlock first"); return; }
+  if(trip.stops.length && !confirm("Replace the current trip with the original itinerary?")) return;
+  try{ const obj=await decJSON(ENC_DEFAULT,CRYPTO_KEY); trip=rehydrate(obj); filterT=null;
+    try{ localStorage.removeItem("tm_enc"); }catch(e){}
+    document.getElementById("trip-title").value=trip.title;
+    showTab("itin"); renderAll(); resolveAll();
+  }catch(e){ toast("Couldn't reset"); }
 }
 
 // ---------- PARSER ----------
@@ -549,23 +524,21 @@ function parseAndLoad(){
 }
 
 // ---------- PERSIST + SHARE ----------
-function persist(){ trip.title=document.getElementById("trip-title").value; try{ localStorage.setItem("tm_trip_v5",JSON.stringify(trip)); }catch(e){} }
-function shareTrip(){
-  persist();
-  const payload={t:trip.title,tv:trip.travelers,s:trip.stops.map(s=>[s.place,s.date,s.who,s.notes,s.lat,s.lng,s.status])};
-  const hash="#t="+encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
-  const url=location.origin+location.pathname+hash;
-  navigator.clipboard?.writeText(url).then(()=>toast("Share link copied to clipboard")).catch(()=>prompt("Copy this link:",url));
+let _persistT=null;
+function persist(){ if(document.getElementById("trip-title")) trip.title=document.getElementById("trip-title").value;
+  if(!CRYPTO_KEY) return; clearTimeout(_persistT); _persistT=setTimeout(savEnc,400); }
+async function savEnc(){ try{
+  const content={title:trip.title,travelers:trip.travelers,stops:trip.stops.map(s=>({place:s.place,date:s.date,who:s.who,notes:s.notes}))};
+  const blob=await encJSON(content,CRYPTO_KEY); localStorage.setItem("tm_enc",blob);
+}catch(e){} }
+async function shareTrip(){
+  if(!CRYPTO_KEY){ toast("Unlock first"); return; }
+  const content={title:trip.title,travelers:trip.travelers,stops:trip.stops.map(s=>({place:s.place,date:s.date,who:s.who,notes:s.notes}))};
+  const blob=await encJSON(content,CRYPTO_KEY);
+  const url=location.origin+location.pathname+"#e="+encodeURIComponent(blob);
+  navigator.clipboard?.writeText(url).then(()=>toast("Encrypted link copied — recipient needs the password")).catch(()=>prompt("Copy this link:",url));
 }
-function loadFromHash(){
-  if(!location.hash.startsWith("#t=")) return false;
-  try{
-    const p=JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(location.hash.slice(3))))));
-    trip={title:p.t||"My Trip",travelers:p.tv||[{id:"me",name:"Me",color:TCOLORS[0]}],
-      stops:p.s.map(a=>({id:uid(),place:a[0],date:a[1],who:a[2]||[],notes:a[3],lat:a[4],lng:a[5],status:a[6]||(a[4]!=null?"ok":"bad")}))};
-    return true;
-  }catch(e){ return false; }
-}
+// (trip is loaded via the encrypted gate; see tryGate/pendingBlob)
 
 // ---------- HELPERS ----------
 function byId(id){ return trip.stops.find(s=>s.id===id); }
@@ -579,18 +552,34 @@ function showTab(t){
 let _toastT=null;
 function toast(msg){ const el=document.getElementById("toast"); el.textContent=msg; el.classList.add("show"); clearTimeout(_toastT); _toastT=setTimeout(()=>el.classList.remove("show"),2200); }
 
-// ---------- PASSWORD GATE (soft client-side deterrent) ----------
-const GATE_HASH=3388682384; // hash of the view password
-function gateHash(s){ let x=2166136261; for(let i=0;i<s.length;i++){ x^=s.charCodeAt(i); x=Math.imul(x,16777619);} return x>>>0; }
-function tryGate(){
-  const v=(document.getElementById("gate-pw").value||"").trim().toLowerCase();
-  if(gateHash(v)===GATE_HASH){ try{ localStorage.setItem("tm_gate","1"); }catch(e){} document.getElementById("gate").classList.add("hide"); }
-  else { document.getElementById("gate-msg").textContent="Incorrect password — try again."; const c=document.querySelector(".gate-card"); c.classList.add("shake"); setTimeout(()=>c.classList.remove("shake"),450); }
+// ---------- PASSWORD GATE (real AES-GCM decryption) ----------
+// The itinerary is encrypted; the password derives the key that decrypts it.
+// A wrong password fails the GCM auth check — the data is never exposed.
+function pendingBlob(){
+  if(location.hash.startsWith("#e=")) return decodeURIComponent(location.hash.slice(3));
+  try{ const l=localStorage.getItem("tm_enc"); if(l) return l; }catch(e){}
+  return ENC_DEFAULT;
+}
+function gateMsg(t){ document.getElementById("gate-msg").textContent=t||""; }
+async function tryGate(){
+  const pw=(document.getElementById("gate-pw").value||"").trim().toLowerCase();
+  if(!pw) return;
+  gateMsg("Unlocking…");
+  try{
+    const key=await deriveKey(pw);
+    const obj=await decJSON(pendingBlob(),key);   // throws on wrong password
+    CRYPTO_KEY=key;
+    trip=rehydrate(obj); filterT=null;
+    document.getElementById("trip-title").value=trip.title;
+    document.getElementById("gate").classList.add("hide");
+    gateMsg("");
+    renderAll(); resolveAll();
+  }catch(e){
+    gateMsg("Incorrect password — try again.");
+    const c=document.querySelector(".gate-card"); c.classList.add("shake"); setTimeout(()=>c.classList.remove("shake"),450);
+  }
 }
 function initGate(){
-  let ok=false; try{ ok=localStorage.getItem("tm_gate")==="1"; }catch(e){}
-  const g=document.getElementById("gate");
-  if(ok){ g.classList.add("hide"); return; }
   const inp=document.getElementById("gate-pw");
   inp.addEventListener("keydown",e=>{ if(e.key==="Enter") tryGate(); });
   setTimeout(()=>inp.focus(),60);
@@ -604,16 +593,13 @@ function init(){
     L.tileLayer("https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{attribution:"&copy; OpenStreetMap &copy; CARTO",subdomains:"abcd",maxZoom:19}).addTo(map);
     markerLayer=L.layerGroup().addTo(map); lineLayer=L.layerGroup().addTo(map);
   } else {
-    document.getElementById("map").innerHTML='<div style="padding:30px;text-align:center;color:#8a8275;font-size:.85rem;">Map needs an internet connection to load.<br>Your itinerary still works — edits are saved.</div>';
+    document.getElementById("map").innerHTML='<div style="padding:30px;text-align:center;color:#8a8275;font-size:.85rem;">Map needs an internet connection to load.</div>';
   }
   document.getElementById("trip-title").addEventListener("change",persist);
   document.getElementById("paste-text").value=SAMPLE_TEXT;
-  let loaded=false;
-  if(loadFromHash()) loaded=true;
-  else { try{ const sv=JSON.parse(localStorage.getItem("tm_trip_v5")||"null"); if(sv&&sv.stops&&sv.stops.length){ trip=sv; loaded=true; } }catch(e){} }
-  if(!loaded) trip=defaultTrip();
-  document.getElementById("trip-title").value=trip.title;
-  renderAll(); resolveAll();
+  // purge any plaintext trips saved by earlier (pre-encryption) versions
+  try{ ["tm_trip","tm_trip_v2","tm_trip_v3","tm_trip_v4","tm_trip_v5","tm_gate"].forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  // the trip itself stays encrypted until the gate unlocks it (see tryGate)
 }
 init();
 </script>
