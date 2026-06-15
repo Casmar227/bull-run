@@ -29,7 +29,10 @@
 
   /* travelers bar */
   .travelers{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);}
-  .tv-chip{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:16px;padding:3px 6px 3px 8px;background:#fff;}
+  .tv-chip{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:16px;padding:3px 6px 3px 8px;background:#fff;cursor:pointer;user-select:none;}
+  .tv-chip:hover{border-color:var(--accent2);}
+  .tv-edit{border:none;background:transparent;color:var(--dim);cursor:pointer;font-size:.68rem;padding:0 1px;}
+  .tv-edit:hover{color:var(--accent2);}
   .tv-chip.filt{box-shadow:0 0 0 2px rgba(0,0,0,.06);}
   .tv-chip.off{opacity:.4;}
   .tv-dot{width:12px;height:12px;border-radius:50%;cursor:pointer;flex:none;border:1px solid rgba(0,0,0,.15);}
@@ -93,7 +96,7 @@
   .pin-pill{display:flex;align-items:center;gap:4px;background:#fffdf8;border:1px solid rgba(0,0,0,.2);border-radius:13px;
     padding:2px 7px;box-shadow:0 2px 6px rgba(0,0,0,.35);font-size:.74rem;font-weight:700;white-space:nowrap;}
   .pin-pill .pnum{color:#23201b;} .pin-pill .pini{font-weight:800;}
-  .dir-arrow{font-size:13px;line-height:1;text-shadow:0 0 2px #fffdf8,0 0 3px #fffdf8,0 0 3px #fffdf8;}
+  .dir-arrow{font-size:15px;line-height:1;text-shadow:0 0 2px #fffdf8,0 0 3px #fffdf8,0 0 3px #fffdf8,0 0 4px #fffdf8;}
   .pin-pill::after{content:"";position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);
     border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #fffdf8;filter:drop-shadow(0 1px 0 rgba(0,0,0,.2));}
   .leaflet-popup-content{font-size:.85rem;line-height:1.5;margin:10px 12px;max-width:250px;}
@@ -154,7 +157,7 @@
   <aside id="side">
     <header>
       <h1><span class="pin">🗺️</span> Trip Mapper</h1>
-      <div class="sub">Paste an itinerary → get a map. Track who's where; edit anything live.</div>
+      <div class="sub">Paste an itinerary → get a map. Track who's where; edit anything live. <span style="opacity:.6">· build 6</span></div>
       <input class="trip-title" id="trip-title" value="My Trip" aria-label="Trip title">
       <div class="trip-span" id="trip-span"></div>
     </header>
@@ -363,19 +366,29 @@ function renderSpan(){
 function renderTravelers(){
   const bar=document.getElementById("travelers");
   bar.innerHTML="";
+  const anyFilter=!!filterT;
   trip.travelers.forEach(t=>{
     const chip=document.createElement("div");
-    chip.className="tv-chip"+(filterT===t.id?" filt":"")+(filterT&&filterT!==t.id?" off":"");
-    chip.innerHTML=`<span class="tv-dot" style="background:${t.color}" title="Show only ${esc(t.name)}'s route"></span>
-      <input class="tv-name" value="${esc(t.name)}" data-id="${t.id}">
-      <button class="tv-x" title="Remove traveler" data-id="${t.id}">✕</button>`;
-    chip.querySelector(".tv-dot").onclick=()=>{ filterT=filterT===t.id?null:t.id; renderAll(); if(filterT) fitTraveler(filterT); else fitAll(); };
-    chip.querySelector(".tv-name").addEventListener("change",e=>{ t.name=e.target.value.trim()||t.name; renderAll(); });
+    chip.className="tv-chip"+(filterT===t.id?" filt":"")+(anyFilter&&filterT!==t.id?" off":"");
+    chip.title=(filterT===t.id?"Showing only ":"Click to show only ")+t.name+"'s route";
+    chip.innerHTML=`<span class="tv-dot" style="background:${t.color}"></span>
+      <span class="tv-name">${esc(t.name)}</span>
+      <button class="tv-edit" title="Rename">✎</button>
+      <button class="tv-x" title="Remove traveler">✕</button>`;
+    chip.addEventListener("click",e=>{
+      if(e.target.closest(".tv-edit")||e.target.closest(".tv-x")) return;
+      filterT=filterT===t.id?null:t.id; renderAll(); if(filterT) fitTraveler(filterT); else fitAll();
+    });
+    chip.querySelector(".tv-edit").onclick=()=>{ const v=prompt("Rename traveler",t.name); if(v&&v.trim()){ t.name=v.trim(); renderAll(); } };
     chip.querySelector(".tv-x").onclick=()=>removeTraveler(t.id);
     bar.appendChild(chip);
   });
+  const hint=document.createElement("span");
+  hint.style.cssText="font-size:.66rem;color:var(--dim);margin-left:2px;";
+  hint.textContent=filterT?"(tap a name again to show all)":"tap a name to isolate their route";
+  bar.appendChild(hint);
   const add=document.createElement("button");
-  add.className="tv-add"; add.textContent="＋ traveler"; add.onclick=addTraveler;
+  add.className="tv-add"; add.textContent="＋"; add.title="Add traveler"; add.onclick=addTraveler;
   bar.appendChild(add);
 }
 
@@ -454,7 +467,7 @@ function wireListEvents(){
 function addArrow(a,b,color){
   if(!map) return;
   const pa=map.latLngToLayerPoint([a.lat,a.lng]), pb=map.latLngToLayerPoint([b.lat,b.lng]);
-  if(Math.hypot(pb.x-pa.x,pb.y-pa.y)<26) return;          // skip arrows on very short legs
+  if(Math.hypot(pb.x-pa.x,pb.y-pa.y)<9) return;          // skip arrows on very short legs
   const ang=Math.atan2(pb.y-pa.y,pb.x-pa.x)*180/Math.PI;  // mercator scaling is uniform → zoom-invariant
   const mid=[(a.lat+b.lat)/2,(a.lng+b.lng)/2];
   const icon=L.divIcon({className:"",html:`<div class="dir-arrow" style="transform:rotate(${ang}deg);color:${color}">\u27A4</div>`,iconSize:[16,16],iconAnchor:[8,8]});
@@ -606,6 +619,7 @@ function init(){
     map=L.map("map",{zoomControl:true,worldCopyJump:true}).setView([50,8],4);
     L.tileLayer("https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{attribution:"&copy; OpenStreetMap &copy; CARTO",subdomains:"abcd",maxZoom:19}).addTo(map);
     markerLayer=L.layerGroup().addTo(map); lineLayer=L.layerGroup().addTo(map);
+    map.on("zoomend",()=>{ if(trip.stops&&trip.stops.length) renderMap(); });
   } else {
     document.getElementById("map").innerHTML='<div style="padding:30px;text-align:center;color:#8a8275;font-size:.85rem;">Map needs an internet connection to load.</div>';
   }
