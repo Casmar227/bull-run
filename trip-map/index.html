@@ -154,7 +154,7 @@
   .p-trav{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 2px;font-size:10pt;}
   .p-tv{display:flex;align-items:center;gap:5px;}
   .p-sw{width:13px;height:13px;border-radius:3px;display:inline-block;}
-  .p-map{display:block;width:100%;max-width:520px;height:auto;border:1px solid #ddd;border-radius:6px;margin:10px auto 16px;background:#fbfaf7;}
+  .p-map{display:block;width:100%;max-width:520px;height:auto;aspect-ratio:680/460;border:1px solid #ddd;border-radius:6px;margin:10px auto 16px;background:#fbfaf7;}
   .p-stop{break-inside:avoid;page-break-inside:avoid;padding:8px 0;border-top:1px solid #e6e3da;}
   .p-row1{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;}
   .p-date{font-weight:700;color:#2f6f6a;min-width:96px;font-size:10.5pt;}
@@ -180,7 +180,7 @@
   <aside id="side">
     <header>
       <h1><span class="pin">🗺️</span> Trip Mapper</h1>
-      <div class="sub">Paste an itinerary → get a map. Track who's where; edit anything live. <span style="opacity:.6">· build 9</span></div>
+      <div class="sub">Paste an itinerary → get a map. Track who's where; edit anything live. <span style="opacity:.6">· build 10</span></div>
       <input class="trip-title" id="trip-title" value="My Trip" aria-label="Trip title">
       <div class="trip-span" id="trip-span"></div>
     </header>
@@ -653,7 +653,7 @@ function schematicSVG(){
   const sc=Math.min((W-2*pad)/spanX,(H-2*pad)/spanY);
   const offX=(W-spanX*sc)/2, offY=(H-spanY*sc)/2;
   const X=lng=>offX+(mX(lng)-minX)*sc, Y=la=>H-(offY+(mY(la)-minY)*sc);
-  let s='<svg class="p-map" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+  let s='<svg class="p-map" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">';
   trip.travelers.forEach(t=>{
     const seq=trip.stops.filter(p=>inEurope(p)&&(p.who||[]).includes(t.id));
     for(let k=0;k<seq.length-1;k++){
