@@ -112,6 +112,20 @@
   .lg-n{margin-left:auto;color:var(--dim);font-size:.68rem;}
   .lg-all{margin-top:6px;font-size:.7rem;color:var(--accent);cursor:pointer;text-align:center;}
 
+
+  /* password gate (soft client-side deterrent, not real security) */
+  #gate{position:fixed;inset:0;z-index:5000;background:radial-gradient(ellipse at 50% 30%,#fffdf8,#efe9dd);display:flex;align-items:center;justify-content:center;padding:20px;}
+  #gate.hide{display:none;}
+  .gate-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:30px 28px;width:330px;max-width:92vw;text-align:center;}
+  .gate-card .gate-pin{font-size:2.2rem;}
+  .gate-card h2{margin:8px 0 2px;font-size:1.2rem;}
+  .gate-card p{margin:0 0 16px;font-size:.8rem;color:var(--dim);}
+  .gate-card input{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-size:.95rem;text-align:center;margin-bottom:12px;}
+  .gate-card input:focus{outline:none;border-color:var(--accent);}
+  .gate-card .btn{width:100%;}
+  #gate-msg{min-height:18px;margin-top:10px;font-size:.76rem;color:var(--accent);}
+  .gate-card.shake{animation:gshake .45s;}
+  @keyframes gshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
   #toast{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:#23201b;color:#fff;padding:9px 16px;border-radius:20px;font-size:.8rem;z-index:900;opacity:0;transition:.3s;pointer-events:none;box-shadow:var(--shadow);}
   #toast.show{opacity:1;}
 
@@ -125,6 +139,16 @@
 </style>
 </head>
 <body>
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-pin">🗺️🔒</div>
+    <h2>Trip Mapper</h2>
+    <p>Enter the password to view this trip.</p>
+    <input id="gate-pw" type="password" placeholder="Password" autocomplete="off" spellcheck="false">
+    <button class="btn primary" onclick="tryGate()">View trip</button>
+    <div id="gate-msg"></div>
+  </div>
+</div>
 <div id="app">
   <aside id="side">
     <header>
@@ -554,6 +578,24 @@ function showTab(t){
 }
 let _toastT=null;
 function toast(msg){ const el=document.getElementById("toast"); el.textContent=msg; el.classList.add("show"); clearTimeout(_toastT); _toastT=setTimeout(()=>el.classList.remove("show"),2200); }
+
+// ---------- PASSWORD GATE (soft client-side deterrent) ----------
+const GATE_HASH=3388682384; // hash of the view password
+function gateHash(s){ let x=2166136261; for(let i=0;i<s.length;i++){ x^=s.charCodeAt(i); x=Math.imul(x,16777619);} return x>>>0; }
+function tryGate(){
+  const v=(document.getElementById("gate-pw").value||"").trim().toLowerCase();
+  if(gateHash(v)===GATE_HASH){ try{ localStorage.setItem("tm_gate","1"); }catch(e){} document.getElementById("gate").classList.add("hide"); }
+  else { document.getElementById("gate-msg").textContent="Incorrect password — try again."; const c=document.querySelector(".gate-card"); c.classList.add("shake"); setTimeout(()=>c.classList.remove("shake"),450); }
+}
+function initGate(){
+  let ok=false; try{ ok=localStorage.getItem("tm_gate")==="1"; }catch(e){}
+  const g=document.getElementById("gate");
+  if(ok){ g.classList.add("hide"); return; }
+  const inp=document.getElementById("gate-pw");
+  inp.addEventListener("keydown",e=>{ if(e.key==="Enter") tryGate(); });
+  setTimeout(()=>inp.focus(),60);
+}
+initGate();
 
 // ---------- INIT ----------
 function init(){
