@@ -139,7 +139,30 @@
     #map{height:44%;}
     #legend{bottom:auto;top:8px;right:8px;width:168px;}
   }
-  @media print{ #side,#legend,#toast{display:none;} #app{display:block;} #map{height:100vh;width:100vw;} }
+  /* ── PRINT: a clean itinerary handout (schematic map + full details) ── */
+  #print-doc{display:none;}
+  @media print{
+    #app,#toast,#gate{display:none!important;}
+    #print-doc{display:block;}
+    html,body{height:auto;overflow:visible;background:#fff;}
+    @page{margin:14mm;}
+  }
+  #print-doc,#print-doc *{ -webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact; }
+  #print-doc{color:#1a1a1a;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+  .p-title{font-size:20pt;font-weight:800;letter-spacing:.2px;}
+  .p-sub{color:#666;font-size:10pt;margin-top:2px;}
+  .p-trav{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 2px;font-size:10pt;}
+  .p-tv{display:flex;align-items:center;gap:5px;}
+  .p-sw{width:13px;height:13px;border-radius:3px;display:inline-block;}
+  .p-map{width:100%;height:auto;border:1px solid #ddd;border-radius:6px;margin:12px 0 16px;background:#fbfaf7;}
+  .p-stop{break-inside:avoid;page-break-inside:avoid;padding:8px 0;border-top:1px solid #e6e3da;}
+  .p-row1{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;}
+  .p-date{font-weight:700;color:#2f6f6a;min-width:96px;font-size:10.5pt;}
+  .p-place{font-weight:700;font-size:12pt;}
+  .p-who{display:flex;gap:4px;margin-left:auto;}
+  .p-wt{color:#fff;font-size:7.5pt;padding:1px 7px;border-radius:9px;font-weight:700;}
+  .p-notes{margin:4px 0 0 0;font-size:9.5pt;color:#333;white-space:pre-wrap;line-height:1.45;}
+  .p-foot{margin-top:16px;font-size:8pt;color:#aaa;text-align:center;}
 </style>
 </head>
 <body>
@@ -157,7 +180,7 @@
   <aside id="side">
     <header>
       <h1><span class="pin">🗺️</span> Trip Mapper</h1>
-      <div class="sub">Paste an itinerary → get a map. Track who's where; edit anything live. <span style="opacity:.6">· build 6</span></div>
+      <div class="sub">Paste an itinerary → get a map. Track who's where; edit anything live. <span style="opacity:.6">· build 7</span></div>
       <input class="trip-title" id="trip-title" value="My Trip" aria-label="Trip title">
       <div class="trip-span" id="trip-span"></div>
     </header>
@@ -188,7 +211,7 @@
       <button class="btn sm" onclick="addStop()">＋ Add stop</button>
       <button class="btn sm" onclick="fitAll()">⤢ Fit map</button>
       <button class="btn sm" onclick="shareTrip()">🔗 Share</button>
-      <button class="btn sm" onclick="window.print()">🖨 Print</button>
+      <button class="btn sm" onclick="printNow()">🖨 Print</button>
       <button class="btn sm" onclick="resetDefault()">↺ Reset</button>
     </div>
   </aside>
@@ -196,6 +219,7 @@
   <div id="map"></div>
   <div id="legend"><h4>Travelers</h4><div id="legend-body"></div></div>
 </div>
+<div id="print-doc"></div>
 <div id="toast"></div>
 
 <script src="lib/leaflet.js"></script>
@@ -612,6 +636,51 @@ function initGate(){
   setTimeout(()=>inp.focus(),60);
 }
 initGate();
+
+// ---------- PRINT ----------
+function spanText(){ const d=trip.stops.filter(s=>s.date); return d.length?d[0].date.split(/[–—]|\s-\s/)[0].trim()+" – "+d[d.length-1].date:""; }
+function schematicSVG(){
+  const pts=trip.stops.filter(s=>s.lat!=null);
+  if(pts.length<2) return "";
+  const mY=la=>Math.log(Math.tan(Math.PI/4+la*Math.PI/360));
+  const xs=pts.map(s=>s.lng), ys=pts.map(s=>mY(s.lat));
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  const W=720,H=380,pad=26, spanX=(maxX-minX)||1, spanY=(maxY-minY)||1;
+  const sc=Math.min((W-2*pad)/spanX,(H-2*pad)/spanY);
+  const offX=(W-spanX*sc)/2, offY=(H-spanY*sc)/2;
+  const X=lng=>offX+(lng-minX)*sc, Y=la=>H-(offY+(mY(la)-minY)*sc);
+  let s='<svg class="p-map" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+  trip.travelers.forEach(t=>{
+    const seq=trip.stops.filter(p=>p.lat!=null&&(p.who||[]).includes(t.id));
+    for(let k=0;k<seq.length-1;k++){
+      const a=seq[k],b=seq[k+1], ax=X(a.lng),ay=Y(a.lat),bx=X(b.lng),by=Y(b.lat);
+      s+='<line x1="'+ax+'" y1="'+ay+'" x2="'+bx+'" y2="'+by+'" stroke="'+t.color+'" stroke-width="2" opacity="0.72"/>';
+      const mx=ax+(bx-ax)*0.6,my=ay+(by-ay)*0.6,an=Math.atan2(by-ay,bx-ax),d=5.5;
+      s+='<path d="M '+mx+' '+my+' L '+(mx-d*Math.cos(an-0.45))+' '+(my-d*Math.sin(an-0.45))+' L '+(mx-d*Math.cos(an+0.45))+' '+(my-d*Math.sin(an+0.45))+' Z" fill="'+t.color+'"/>';
+    }
+  });
+  pts.forEach(p=>{ s+='<circle cx="'+X(p.lng)+'" cy="'+Y(p.lat)+'" r="3.4" fill="#23201b"/>'; });
+  return s+'</svg>';
+}
+function buildPrint(){
+  const el=document.getElementById("print-doc"); if(!el) return;
+  let h='<div class="p-title">🗺️ '+esc(trip.title)+'</div>'+
+    '<div class="p-sub">'+trip.stops.length+' stops · '+esc(spanText())+'</div>'+
+    '<div class="p-trav">'+trip.travelers.map(t=>'<span class="p-tv"><span class="p-sw" style="background:'+t.color+'"></span>'+esc(t.name)+'</span>').join("")+'</div>';
+  h+=schematicSVG();
+  trip.stops.forEach(s=>{
+    const who=trip.travelers.filter(t=>(s.who||[]).includes(t.id));
+    h+='<div class="p-stop"><div class="p-row1">'+
+       '<span class="p-date">'+esc(s.date||"")+'</span>'+
+       '<span class="p-place">'+esc(s.place)+'</span>'+
+       '<span class="p-who">'+who.map(t=>'<span class="p-wt" style="background:'+t.color+'">'+esc(t.name)+'</span>').join("")+'</span></div>'+
+       (s.notes?'<div class="p-notes">'+esc(s.notes)+'</div>':'')+'</div>';
+  });
+  h+='<div class="p-foot">Generated by Trip Mapper</div>';
+  el.innerHTML=h;
+}
+function printNow(){ buildPrint(); setTimeout(()=>window.print(),30); }
+window.addEventListener("beforeprint",buildPrint);
 
 // ---------- INIT ----------
 function init(){
