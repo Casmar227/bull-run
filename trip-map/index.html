@@ -12,16 +12,17 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);}
+  html{overflow-x:hidden;}
   #app{display:flex;height:100vh;overflow:hidden;}
 
   /* ── SIDEBAR ── */
-  #side{width:420px;min-width:340px;max-width:46vw;display:flex;flex-direction:column;
+  #side{width:440px;min-width:360px;max-width:48vw;display:flex;flex-direction:column;
     background:var(--panel);border-right:1px solid var(--line);box-shadow:var(--shadow);z-index:500;}
   #side header{padding:14px 18px 10px;border-bottom:1px solid var(--line);}
   #side h1{margin:0;font-size:1.15rem;letter-spacing:.3px;display:flex;align-items:center;gap:8px;}
   #side h1 .pin{font-size:1.2rem;}
-  .sub{font-size:.72rem;color:var(--dim);margin-top:2px;}
-  .trip-title{width:100%;border:none;background:transparent;font-size:1rem;font-weight:600;
+  .sub{font-size:.72rem;color:var(--dim);margin-top:2px;line-height:1.5;}
+  .trip-title{width:100%;border:none;background:transparent;font-size:1.05rem;font-weight:700;
     color:var(--ink);margin-top:8px;padding:4px 0;border-bottom:1px dashed var(--line);}
   .trip-title:focus{outline:none;border-bottom-color:var(--accent);}
 
@@ -34,34 +35,43 @@
   .pane.hidden{display:none;}
 
   /* paste pane */
-  #paste-text{width:100%;height:calc(100% - 92px);min-height:240px;resize:none;border:1px solid var(--line);
-    border-radius:8px;padding:10px;font-size:.82rem;line-height:1.5;font-family:ui-monospace,Menlo,Consolas,monospace;
+  #paste-text{width:100%;height:calc(100% - 96px);min-height:240px;resize:none;border:1px solid var(--line);
+    border-radius:8px;padding:10px;font-size:.8rem;line-height:1.5;font-family:ui-monospace,Menlo,Consolas,monospace;
     color:var(--ink);background:#fffefb;}
   #paste-text:focus{outline:none;border-color:var(--accent);}
   .paste-actions{display:flex;gap:8px;margin-top:10px;}
 
-  /* stop list */
+  /* chapter group heading inside the list */
+  .grp-head{display:flex;align-items:center;gap:8px;margin:14px 2px 7px;font-size:.74rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.5px;color:var(--dim);}
+  .grp-head:first-child{margin-top:2px;}
+  .grp-bar{width:16px;height:16px;border-radius:4px;flex:none;}
+
+  /* stop card */
   .stop{border:1px solid var(--line);border-radius:9px;margin-bottom:9px;background:#fffefb;
-    box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden;}
+    box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden;border-left:4px solid var(--line);}
   .stop.dragging{opacity:.4;}
   .stop.dragover{border-color:var(--accent);box-shadow:0 0 0 2px rgba(192,96,58,.25);}
-  .stop-head{display:flex;align-items:center;gap:9px;padding:9px 10px;cursor:grab;}
-  .stop-num{flex:none;width:26px;height:26px;border-radius:50%;color:#fff;font-size:.78rem;font-weight:700;
+  .stop-head{display:flex;align-items:flex-start;gap:9px;padding:9px 10px;cursor:grab;}
+  .stop-num{flex:none;width:26px;height:26px;border-radius:50%;color:#fff;font-size:.78rem;font-weight:700;margin-top:2px;
     display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,.2);}
   .stop-main{flex:1;min-width:0;}
-  .stop-place{width:100%;border:none;background:transparent;font-size:.92rem;font-weight:600;color:var(--ink);padding:1px 0;}
+  .stop-place{width:100%;border:none;background:transparent;font-size:.95rem;font-weight:700;color:var(--ink);padding:1px 0;}
   .stop-place:focus{outline:none;}
   .stop-place.unresolved{color:var(--accent);}
-  .stop-meta{display:flex;align-items:center;gap:7px;font-size:.68rem;color:var(--dim);margin-top:1px;}
-  .stop-meta select{font-size:.68rem;border:1px solid var(--line);border-radius:5px;padding:1px 3px;background:#fff;color:var(--dim);}
-  .geo-dot{width:7px;height:7px;border-radius:50%;flex:none;}
-  .geo-ok{background:#4a9b5e;} .geo-bad{background:var(--accent);} .geo-pend{background:#d8b84a;}
+  .stop-meta{display:flex;align-items:center;gap:7px;font-size:.7rem;color:var(--dim);margin-top:2px;flex-wrap:wrap;}
+  .stop-date{border:1px solid var(--line);border-radius:5px;padding:1px 5px;background:#fff;color:var(--accent2);
+    font-size:.7rem;font-weight:600;width:118px;}
+  .stop-date:focus{outline:none;border-color:var(--accent2);}
+  .stop-meta select{font-size:.68rem;border:1px solid var(--line);border-radius:5px;padding:1px 3px;background:#fff;color:var(--dim);max-width:150px;}
+  .geo-dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  .geo-ok{background:#4a9b5e;} .geo-bad{background:var(--accent);} .geo-pend{background:#d8b84a;} .geo-tbd{background:#b8b2a6;}
   .stop-tools{display:flex;flex-direction:column;gap:2px;}
   .icon-btn{border:none;background:transparent;cursor:pointer;color:var(--dim);font-size:.85rem;padding:2px 5px;border-radius:4px;line-height:1;}
   .icon-btn:hover{background:#eee5d6;color:var(--ink);}
   .stop-notes{padding:0 10px 9px 45px;}
   .stop-notes textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;
-    font-size:.76rem;line-height:1.4;resize:vertical;min-height:30px;color:#544e44;background:#fff;font-family:inherit;}
+    font-size:.76rem;line-height:1.45;resize:vertical;min-height:32px;color:#544e44;background:#fff;font-family:inherit;}
   .stop-notes textarea:focus{outline:none;border-color:var(--accent2);}
 
   .btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 13px;border-radius:8px;
@@ -69,42 +79,38 @@
   .btn:hover{border-color:var(--accent);color:var(--accent);}
   .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
   .btn.primary:hover{background:#a94e2d;color:#fff;}
-  .btn.full{width:100%;}
   .btn.sm{padding:5px 9px;font-size:.74rem;}
   .toolbar{display:flex;gap:7px;padding:10px 14px;border-top:1px solid var(--line);flex-wrap:wrap;background:var(--panel);}
 
   /* ── MAP ── */
   #map{flex:1;height:100%;background:#dfe6e3;}
   .num-marker{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;
-    border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px rgba(0,0,0,.35);
-    border:2px solid #fff;}
+    border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px rgba(0,0,0,.35);border:2px solid #fff;}
   .num-marker span{transform:rotate(45deg);font-size:.8rem;}
-  .leaflet-popup-content{font-size:.85rem;line-height:1.5;margin:10px 12px;}
-  .pop-day{font-size:.68rem;text-transform:uppercase;letter-spacing:.6px;font-weight:700;}
-  .pop-place{font-size:1rem;font-weight:700;margin:2px 0;}
-  .pop-notes{color:#555;font-size:.8rem;}
+  .leaflet-popup-content{font-size:.85rem;line-height:1.5;margin:10px 12px;max-width:240px;}
+  .pop-day{font-size:.66rem;text-transform:uppercase;letter-spacing:.6px;font-weight:700;}
+  .pop-place{font-size:1.02rem;font-weight:700;margin:2px 0;}
+  .pop-date{font-size:.74rem;color:var(--accent2);font-weight:600;margin-bottom:3px;}
+  .pop-notes{color:#555;font-size:.78rem;white-space:pre-wrap;}
 
-  /* legend */
   #legend{position:absolute;right:12px;bottom:22px;z-index:600;background:var(--panel);border:1px solid var(--line);
-    border-radius:10px;padding:9px 11px;box-shadow:var(--shadow);font-size:.74rem;max-height:40vh;overflow-y:auto;max-width:170px;}
+    border-radius:10px;padding:9px 11px;box-shadow:var(--shadow);font-size:.74rem;max-height:46vh;overflow-y:auto;max-width:210px;}
   #legend h4{margin:0 0 5px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;color:var(--dim);}
-  .leg-row{display:flex;align-items:center;gap:7px;padding:2px 0;cursor:default;}
-  .leg-sw{width:12px;height:12px;border-radius:3px;flex:none;}
+  .leg-row{display:flex;align-items:flex-start;gap:7px;padding:3px 0;}
+  .leg-sw{width:12px;height:12px;border-radius:3px;flex:none;margin-top:2px;}
 
   #toast{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:#23201b;color:#fff;
     padding:9px 16px;border-radius:20px;font-size:.8rem;z-index:900;opacity:0;transition:.3s;pointer-events:none;box-shadow:var(--shadow);}
   #toast.show{opacity:1;}
 
-  /* mobile */
-  #handle{display:none;}
   @media(max-width:760px){
     #app{flex-direction:column;}
-    #side{width:100%;max-width:100%;height:54%;border-right:none;border-bottom:1px solid var(--line);}
-    #map{height:46%;}
-    #legend{bottom:auto;top:8px;right:8px;max-height:30vh;}
+    #side{width:100%;max-width:100%;height:55%;border-right:none;border-bottom:1px solid var(--line);}
+    #map{height:45%;}
+    #legend{bottom:auto;top:8px;right:8px;max-height:32vh;}
   }
   @media print{
-    #side{display:none;} #legend{display:none;} #toast{display:none;}
+    #side,#legend,#toast{display:none;}
     #app{display:block;} #map{height:100vh;width:100vw;}
   }
 </style>
@@ -123,17 +129,19 @@
       <div class="tab" id="tab-paste" onclick="showTab('paste')">📝 Paste text</div>
     </div>
 
-    <div class="pane" id="pane-itin"><!-- stop list renders here --></div>
+    <div class="pane" id="pane-itin"></div>
 
     <div class="pane hidden" id="pane-paste">
       <div class="sub" style="margin-bottom:8px;">
-        One stop per line. Start a line with <b>Day 1</b>, <b>Day 2</b>… to group by day
-        (or write dates like <b>Jun 3</b>). Everything after the place name becomes notes.
+        Each stop starts with a <b>date</b> (<i>July 16</i>, <i>July 20–22</i>) or <b>Day N</b>,
+        then the place — e.g. <i>July 20–22: Luxembourg City</i>. Lines like
+        <b>Stay:</b>, <b>Transit:</b>, <b>Address:</b> attach as notes. <b>Chapter N:</b> lines
+        group &amp; color the stops.
       </div>
       <textarea id="paste-text" spellcheck="false"></textarea>
       <div class="paste-actions">
         <button class="btn primary" onclick="parseAndLoad()">▶ Build map from text</button>
-        <button class="btn" onclick="loadSample()">Load sample</button>
+        <button class="btn" onclick="loadSample()">Reload sample text</button>
       </div>
     </div>
 
@@ -142,12 +150,12 @@
       <button class="btn sm" onclick="fitAll()">⤢ Fit map</button>
       <button class="btn sm" onclick="shareTrip()">🔗 Share</button>
       <button class="btn sm" onclick="window.print()">🖨 Print</button>
-      <button class="btn sm" onclick="resetSample()">↺ Reset</button>
+      <button class="btn sm" onclick="resetDefault()">↺ Reset</button>
     </div>
   </aside>
 
   <div id="map"></div>
-  <div id="legend"><h4>Days</h4><div id="legend-body"></div></div>
+  <div id="legend"><h4>Chapters</h4><div id="legend-body"></div></div>
 </div>
 <div id="toast"></div>
 
@@ -155,197 +163,214 @@
 <script>
 // ============================================================
 // Trip Mapper — single-file, no backend.
-// Geocoding: built-in gazetteer first (instant, offline), then
-// Nominatim (OSM) for anything unknown, throttled + cached.
+// Model: trip = { title, groups:{n:label}, stops:[ {id, place, date,
+//   group, notes, lat, lng, status} ] }. Stops are colored & grouped
+// by `group` (a chapter/day index). Geocoding: built-in gazetteer
+// first (instant/offline), then OSM Nominatim for unknowns.
 // ============================================================
 
-// ---------- built-in gazetteer (lon/lat of common places) ----------
-// Covers the sample trip + many world cities so the demo and most
-// edits resolve instantly without a network round-trip.
 const GAZ = {
-  "tokyo":[35.6762,139.6503],"hakone":[35.2324,139.1069],"kyoto":[35.0116,135.7681],
-  "osaka":[34.6937,135.5023],"hiroshima":[34.3853,132.4553],"miyajima":[34.2959,132.3197],
-  "nara":[34.6851,135.8048],"kanazawa":[36.5613,136.6562],"nikko":[36.7199,139.6982],
-  "mount fuji":[35.3606,138.7274],"fuji":[35.3606,138.7274],"sapporo":[43.0618,141.3545],
-  "paris":[48.8566,2.3522],"london":[51.5074,-0.1278],"rome":[41.9028,12.4964],
-  "venice":[45.4408,12.3155],"florence":[43.7696,11.2558],"milan":[45.4642,9.19],
-  "barcelona":[41.3851,2.1734],"madrid":[40.4168,-3.7038],"lisbon":[38.7223,-9.1393],
-  "porto":[41.1579,-8.6291],"amsterdam":[52.3676,4.9041],"berlin":[52.52,13.405],
-  "munich":[48.1351,11.582],"prague":[50.0755,14.4378],"vienna":[48.2082,16.3738],
-  "budapest":[47.4979,19.0402],"zurich":[47.3769,8.5417],"geneva":[46.2044,6.1432],
-  "interlaken":[46.6863,7.8632],"lucerne":[47.0502,8.3093],"athens":[37.9838,23.7275],
-  "santorini":[36.3932,25.4615],"mykonos":[37.4467,25.3289],"istanbul":[41.0082,28.9784],
-  "dubai":[25.2048,55.2708],"cairo":[30.0444,31.2357],"marrakech":[31.6295,-7.9811],
-  "cape town":[-33.9249,18.4241],"nairobi":[-1.2921,36.8219],
-  "new york":[40.7128,-74.006],"new york city":[40.7128,-74.006],"nyc":[40.7128,-74.006],
-  "boston":[42.3601,-71.0589],"washington":[38.9072,-77.0369],"washington dc":[38.9072,-77.0369],
-  "chicago":[41.8781,-87.6298],"miami":[25.7617,-80.1918],"new orleans":[29.9511,-90.0715],
-  "los angeles":[34.0522,-118.2437],"san francisco":[37.7749,-122.4194],"las vegas":[36.1699,-115.1398],
-  "seattle":[47.6062,-122.3321],"denver":[39.7392,-104.9903],"austin":[30.2672,-97.7431],
-  "grand canyon":[36.1069,-112.1129],"yosemite":[37.8651,-119.5383],"yellowstone":[44.428,-110.5885],
-  "toronto":[43.6532,-79.3832],"vancouver":[49.2827,-123.1207],"montreal":[45.5017,-73.5673],
-  "mexico city":[19.4326,-99.1332],"cancun":[21.1619,-86.8515],"havana":[23.1136,-82.3666],
-  "rio de janeiro":[-22.9068,-43.1729],"rio":[-22.9068,-43.1729],"buenos aires":[-34.6037,-58.3816],
-  "lima":[-12.0464,-77.0428],"cusco":[-13.5319,-71.9675],"machu picchu":[-13.1631,-72.545],
-  "bogota":[4.711,-74.0721],"santiago":[-33.4489,-70.6693],
-  "bangkok":[13.7563,100.5018],"chiang mai":[18.7883,98.9853],"phuket":[7.8804,98.3923],
-  "singapore":[1.3521,103.8198],"kuala lumpur":[3.139,101.6869],"bali":[-8.3405,115.092],
-  "ubud":[-8.5069,115.2625],"hanoi":[21.0285,105.8542],"ho chi minh city":[10.8231,106.6297],
-  "hong kong":[22.3193,114.1694],"beijing":[39.9042,116.4074],"shanghai":[31.2304,121.4737],
-  "seoul":[37.5665,126.978],"taipei":[25.033,121.5654],"delhi":[28.7041,77.1025],
-  "new delhi":[28.6139,77.209],"mumbai":[19.076,72.8777],"jaipur":[26.9124,75.7873],
-  "agra":[27.1767,78.0081],"goa":[15.2993,74.124],
-  "sydney":[-33.8688,151.2093],"melbourne":[-37.8136,144.9631],"auckland":[-36.8485,174.7633],
-  "queenstown":[-45.0312,168.6626],"reykjavik":[64.1466,-21.9426],"oslo":[59.9139,10.7522],
-  "stockholm":[59.3293,18.0686],"copenhagen":[55.6761,12.5683],"helsinki":[60.1699,24.9384],
-  "dublin":[53.3498,-6.2603],"edinburgh":[55.9533,-3.1883],"brussels":[50.8503,4.3517],
-  "nice":[43.7102,7.262],"marseille":[43.2965,5.3698],"naples":[40.8518,14.2681],
-  "dubrovnik":[42.6507,18.0944],"split":[43.5081,16.4402],"krakow":[50.0647,19.945]
+  "tokyo":[35.6762,139.6503],"kyoto":[35.0116,135.7681],"osaka":[34.6937,135.5023],
+  "london":[51.5074,-0.1278],"paris":[48.8566,2.3522],"luxembourg city":[49.6116,6.1319],
+  "luxembourg":[49.6116,6.1319],"geneva":[46.2044,6.1432],"interlaken":[46.6863,7.8632],
+  "montreux":[46.4312,6.9106],"lucerne":[47.0502,8.3093],"zurich":[47.3769,8.5417],
+  "helsinki":[60.1699,24.9384],"barcelona":[41.3851,2.1734],"madrid":[40.4168,-3.7038],
+  "newark":[40.7357,-74.1724],"new york":[40.7128,-74.006],"orlando":[28.5383,-81.3792],
+  "miami":[25.7617,-80.1918],"boston":[42.3601,-71.0589],"washington":[38.9072,-77.0369],
+  "chicago":[41.8781,-87.6298],"los angeles":[34.0522,-118.2437],"san francisco":[37.7749,-122.4194],
+  "seattle":[47.6062,-122.3321],"las vegas":[36.1699,-115.1398],"toronto":[43.6532,-79.3832],
+  "rome":[41.9028,12.4964],"venice":[45.4408,12.3155],"florence":[43.7696,11.2558],
+  "milan":[45.4642,9.19],"naples":[40.8518,14.2681],"amsterdam":[52.3676,4.9041],
+  "berlin":[52.52,13.405],"munich":[48.1351,11.582],"frankfurt":[50.1109,8.6821],
+  "prague":[50.0755,14.4378],"vienna":[48.2082,16.3738],"budapest":[47.4979,19.0402],
+  "lisbon":[38.7223,-9.1393],"porto":[41.1579,-8.6291],"brussels":[50.8503,4.3517],
+  "copenhagen":[55.6761,12.5683],"stockholm":[59.3293,18.0686],"oslo":[59.9139,10.7522],
+  "reykjavik":[64.1466,-21.9426],"dublin":[53.3498,-6.2603],"edinburgh":[55.9533,-3.1883],
+  "athens":[37.9838,23.7275],"istanbul":[41.0082,28.9784],"dubai":[25.2048,55.2708],
+  "nice":[43.7102,7.262],"marseille":[43.2965,5.3698],"lyon":[45.764,4.8357],
+  "bangkok":[13.7563,100.5018],"singapore":[1.3521,103.8198],"hong kong":[22.3193,114.1694],
+  "tokyo japan":[35.6762,139.6503],"sydney":[-33.8688,151.2093],"melbourne":[-37.8136,144.9631],
+  "hakone":[35.2324,139.1069],"nara":[34.6851,135.8048],"hiroshima":[34.3853,132.4553],
+  "miyajima":[34.2959,132.3197],"nikko":[36.7199,139.6982],"cairo":[30.0444,31.2357],
+  "marrakech":[31.6295,-7.9811],"cape town":[-33.9249,18.4241],"rio de janeiro":[-22.9068,-43.1729]
 };
 
-const DAY_COLORS=["#c0603a","#2f6f6a","#6a4f9e","#3a7bc0","#b08a2e","#9e3a6a","#4a9b5e","#c0883a","#5a6a8a","#8a5a3a"];
-const dayColor=(d)=>DAY_COLORS[((d||1)-1)%DAY_COLORS.length];
+const PALETTE=["#c0603a","#2f6f6a","#6a4f9e","#b08a2e","#3a7bc0","#9e3a6a","#4a9b5e","#8a5a3a","#5a6a8a","#a0444a"];
+const groupColor=(g)=>PALETTE[((g||1)-1)%PALETTE.length];
 
-let trip={title:"My Trip",stops:[]};
+let trip={title:"My Trip",groups:{},stops:[]};
 let map, markerLayer, lineLayer, dragId=null;
 let geoCache={};
 try{ geoCache=JSON.parse(localStorage.getItem("tm_geocache")||"{}"); }catch(e){}
 
-// ---------- SAMPLE ----------
-const SAMPLE_TEXT=`Japan: Two Weeks in Spring
+// ---------- DEFAULT TRIP (authoritative, hand-built) ----------
+function defaultTrip(){
+  const G={
+    title:"Europe Summer — The Grand Corridor",
+    groups:{1:"Ch.1 · Launch & Drive",2:"Ch.2 · The Handoff",3:"Ch.3 · Grand European Rail",4:"Ch.4 · Baltic Reunion",5:"Ch.5 · Birthday & Return"},
+    stops:[
+      {place:"Newark (EWR)",date:"Jul 16",group:1,notes:"Fly out on points to London Heathrow. United UA122 — Polaris Business. Depart EWR 9:30 AM, arrive LHR 9:20 PM. Christian PNR MNFZLT (07D), Ibrahim PNR MNDGS2 (07F)."},
+      {place:"London, UK",date:"Jul 16–20",group:1,notes:"Stay: Spacious Fitzrovia Retreat w/ A/C (Airbnb). Confirmation HMPFJCZD3C. 17 Rathbone St, London W1T 1NB."},
+      {place:"Paris",date:"Jul 20 · transit",group:1,notes:"Morning Eurostar: London St Pancras 07:31 → Paris Gare du Nord 10:49. Eurostar Premier, ref 2T4VXQ, Coach 15, seats 53 & 54. Ibby picks up the Sixt BMW 4 Series Gran Coupe (Amex Platinum primary coverage) at Gare du Nord, 11:30 AM."},
+      {place:"Luxembourg City",date:"Jul 20–22",group:1,notes:"Drive from Paris. Stay: Sofitel Luxembourg Le Grand Ducal (Bilt Travel portal, 1 Classic King). 40 Bd D'Avranches, 1160. Exploring the Alzette river valley."},
+      {place:"Paris",date:"Jul 22–26",group:2,notes:"Drive back; drop the Sixt at Paris 02 Vendôme Opéra (10 Rue de la Paix). Stay: Prince de Galles, a Luxury Collection Hotel — 2 Art Deco rooms via STARS, targeting space-available Titanium suite upgrades, same-floor block. 33 Avenue George V, 75008.\nJul 24: Ibby → CDG home; Mom arrives CDG (conf 88802654), same-floor entry-level room.\nJul 25: \"Women of Paris\" 2.5h walking tour — Left Bank & Latin Quarter. Seine runs, familiar brasseries."},
+      {place:"Geneva, Switzerland",date:"Jul 26–29",group:3,notes:"TGV Lyria 9777: Paris Gare de Lyon 16:18 → Geneva 19:29. First Class Club Duo, Carriage 12, seats 267 & 270. PNR 55SMAZ.\nStay: Hotel President Wilson, a Luxury Collection Hotel — 2 Superior City View rooms, flagged late ~8 PM arrival. Conf 88804933 / 88806562. 47 Quai Wilson, 1211."},
+      {place:"Interlaken",date:"Jul 27/28 · day trip",group:3,notes:"GoldenPass Express alpine day trip: Montreux → Interlaken in Prestige Class (heated, rotatable seats, glass domes). Return to Geneva via Interlaken intercity rail by dinner."},
+      {place:"Central & Northern Corridor (TBD)",date:"Jul 29 – Aug 21",group:3,status:"tbd",notes:"Routing under construction — logistics & transit details pending."},
+      {place:"Helsinki, Finland",date:"Aug 21–27",group:4,notes:"Ibby flies in Aug 21 for the reunion. Stay: Hotel Kämp (Ibby's conference runs Aug 25–27).\nAug 22: Mom flies HEL → MIA via Finnair / American."},
+      {place:"Barcelona, Spain",date:"Aug 27 – Sep 1",group:5,notes:"Norwegian Air: Helsinki → Barcelona direct. Stay: Villa Victoria Barcelona (Horta-Guinardó) — 8 bedrooms, private pool. Celebrating Ibby's 35th birthday. Flat tempo runs on the Barceloneta promenade."},
+      {place:"Newark (EWR)",date:"Sep 1",group:5,notes:"United direct: BCN 12:00 PM → EWR 2:45 PM. Ibby continues home to NYC."},
+      {place:"Orlando (MCO)",date:"Sep 1",group:5,notes:"Connecting United flight EWR → MCO. Home."}
+    ]
+  };
+  G.stops=G.stops.map(s=>({id:uid(),lat:null,lng:null,status:s.status||"pend",...s}));
+  return G;
+}
 
-Day 1: Tokyo — land at Haneda, check in to Shinjuku, evening in Golden Gai
-Day 2: Tokyo — Tsukiji breakfast, teamLab Planets, Shibuya crossing at night
-Day 3: Tokyo — day trip to Nikko shrines and waterfalls
-Day 4: Hakone — ryokan with onsen, views of Mount Fuji, the pirate ship on Lake Ashi
-Day 5: Kyoto — bullet train in, Fushimi Inari at dusk
-Day 6: Kyoto — Arashiyama bamboo grove, Kinkaku-ji, Gion in the evening
-Day 7: Nara — day trip to feed the deer and see the Great Buddha
-Day 8: Osaka — Dotonbori street food crawl, Osaka Castle
-Day 9: Hiroshima — Peace Memorial Park and Museum
-Day 10: Miyajima — the floating torii gate, hike Mount Misen`;
+const SAMPLE_TEXT=`Europe Summer — The Grand Corridor
+
+Chapter 1: The Launch & The Drive
+July 16: Newark (EWR) — United UA122 Polaris Business, depart 9:30 AM to London Heathrow (arrive 9:20 PM)
+July 16 – 20: London, UK
+Stay: Fitzrovia Retreat (Airbnb), 17 Rathbone St, London W1T 1NB
+July 20: Paris — Eurostar from London St Pancras 07:31, arrive Gare du Nord 10:49; pick up Sixt BMW
+July 20 – 22: Luxembourg City
+Stay: Sofitel Luxembourg Le Grand Ducal, 40 Bd D'Avranches. Exploring the Alzette river valley.
+
+Chapter 2: The Handoff
+July 22 – 26: Paris
+Stay: Prince de Galles, 33 Avenue George V. Drop the Sixt at Place Vendôme.
+July 25: "Women of Paris" walking tour — Left Bank & Latin Quarter
+
+Chapter 3: The Grand European Rail Corridor
+July 26 – 29: Geneva, Switzerland
+Transit: TGV Lyria 9777 from Paris Gare de Lyon 16:18, arrive Geneva 19:29
+Stay: Hotel President Wilson, 47 Quai Wilson
+July 27: Interlaken — GoldenPass Express from Montreux, Prestige Class
+July 29 – August 21: Central & Northern Corridor (TBD) — routing under construction
+
+Chapter 4: The Baltic Reunion
+August 21 – 27: Helsinki, Finland
+Stay: Hotel Kämp. Ibby's conference Aug 25-27.
+
+Chapter 5: The Birthday & Return
+August 27 – September 1: Barcelona, Spain
+Stay: Villa Victoria (Horta-Guinardó). Ibby's 35th birthday.
+September 1: Newark (EWR) — United direct from Barcelona, 12:00 PM
+September 1: Orlando (MCO) — connecting flight from Newark`;
 
 function loadSample(){ document.getElementById("paste-text").value=SAMPLE_TEXT; showTab("paste"); }
-function resetSample(){
-  if(trip.stops.length && !confirm("Replace the current trip with the sample itinerary?")) return;
+function resetDefault(){
+  if(trip.stops.length && !confirm("Replace the current trip with the default itinerary?")) return;
+  trip=defaultTrip();
+  document.getElementById("trip-title").value=trip.title;
   document.getElementById("paste-text").value=SAMPLE_TEXT;
-  parseAndLoad();
+  showTab("itin"); renderAll(); resolveAll();
 }
 
 // ---------- PARSER ----------
-// Line-based: "Day N" / date prefix sets the current day; the rest of
-// the line is "Place — notes" (also accepts : , - or "(" as separators).
+const MONTHS="(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*";
+const DATE_HEAD=new RegExp("^("+MONTHS+"\\.?\\s*\\d{1,2}|\\d{1,2}[\\/.]\\d{1,2})","i");
+const DAY_HEAD=/^day\s*\d+/i;
+
 function parseItinerary(text){
   const lines=text.split(/\r?\n/);
-  const stops=[];
-  let day=1, sawDay=false, title=null;
-  const monthRe=/^((mon|tues|wednes|thurs|fri|satur|sun)day|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i;
+  const stops=[]; const groups={};
+  let group=1, autoGroupForDays=false, title=null, cur=null;
+
+  const pushNote=(t)=>{ if(cur){ cur.notes=(cur.notes?cur.notes+"\n":"")+t.trim(); } };
 
   for(let raw of lines){
     let line=raw.trim();
     if(!line) continue;
-    // first non-empty line is the trip title unless it's already a stop
-    // (i.e. unless it starts with "Day N" or a date)
-    if(title===null && stops.length===0){
-      const isDay=/^day\s*\d/i.test(line);
-      const isDate=monthRe.test(line)||/^\d{1,2}[\/.]\d{1,2}/.test(line);
-      if(!isDay && !isDate){ title=line.replace(/\s*[:–—\-]\s*$/,""); continue; }
-    }
-    let dayThisLine=null;
-    // "Day 3" / "Day 3:" prefix
-    let m=line.match(/^day\s*(\d+)\s*[:.\-–—)]?\s*/i);
-    if(m){ dayThisLine=parseInt(m[1],10); line=line.slice(m[0].length).trim(); sawDay=true; }
-    else {
-      // date-ish prefix → advance to a new day automatically
-      let d=line.match(/^(\w{3,9}\.?\s*\d{1,2}(st|nd|rd|th)?|\d{1,2}[\/.]\d{1,2})\s*[:.\-–—)]?\s*/i);
-      if(d && (monthRe.test(line)|| /^\d{1,2}[\/.]/.test(line))){
-        line=line.slice(d[0].length).trim();
-        dayThisLine=(sawDay||stops.length)?day+1:1; sawDay=true;
-      }
-    }
-    if(dayThisLine!=null) day=dayThisLine;
-    if(!line) continue;
-    // strip bullets/numbering
-    line=line.replace(/^[•\-\*•\d.)\s]+/,"").trim();
-    if(!line) continue;
-    // split place from notes on the first strong separator
-    let place=line, notes="";
-    let sep=line.match(/\s[—–\-:|(]\s?|,\s/);
-    if(sep){
-      const idx=line.indexOf(sep[0]);
-      place=line.slice(0,idx).trim();
-      notes=line.slice(idx+sep[0].length).replace(/\)$/,"").trim();
-    }
-    // if the "place" is suspiciously long, it's probably prose — try gazetteer hit inside it
-    if(place.split(/\s+/).length>4){
-      const hit=findGazInText(line);
-      if(hit){ place=hit; notes=line; }
-    }
-    if(place) stops.push({id:uid(),day,place,notes,lat:null,lng:null,status:"pend"});
-  }
-  return {title:title||"My Trip", stops};
-}
 
-function findGazInText(text){
-  const low=text.toLowerCase();
-  let best=null;
-  for(const name in GAZ){
-    if(low.includes(name) && (!best||name.length>best.length)) best=name;
+    // Chapter heading → new color group
+    let ch=line.match(/^chapter\s*(\d+)\s*[:.\-–—)]?\s*(.*)$/i);
+    if(ch){
+      group=parseInt(ch[1],10);
+      let label=ch[2].replace(/\(.*?\)/,"").trim();
+      groups[group]="Ch."+group+(label?" · "+label:"");
+      continue;
+    }
+
+    // Title = first non-empty line that isn't a stop header
+    if(title===null && stops.length===0 && !DATE_HEAD.test(line) && !DAY_HEAD.test(line)){
+      title=line.replace(/\s*[:–—\-]\s*$/,""); continue;
+    }
+
+    // Stop header?  "July 20 – 22: London" / "Day 3: Tokyo — notes"
+    let isDate=DATE_HEAD.test(line), isDay=DAY_HEAD.test(line);
+    if(isDate||isDay){
+      let date="", rest=line;
+      if(isDay){
+        const m=line.match(/^(day\s*\d+)\s*[:.\-–—)]?\s*/i);
+        date=m[1].replace(/\s+/," "); rest=line.slice(m[0].length);
+        const n=parseInt(date.match(/\d+/)[0],10);
+        if(!Object.keys(groups).length){ group=n; groups[n]="Day "+n; autoGroupForDays=true; }
+      } else {
+        // capture a date or date-range up to the first ':' or '—'/'-' separator
+        const m=line.match(/^([a-z]{3,9}\.?\s*\d{1,2}(\s*[–—\-]\s*([a-z]{3,9}\.?\s*)?\d{1,2})?|\d{1,2}[\/.]\d{1,2})\s*[:.\-–—)]?\s*/i);
+        if(m){ date=m[1].replace(/\s+/g," ").trim(); rest=line.slice(m[0].length); }
+        if(!Object.keys(groups).length){ group=1; groups[1]="Trip"; }
+      }
+      // place vs notes: split the remainder on the first strong separator
+      let place=rest, notes="";
+      let sep=rest.match(/\s[—–\-:|(]\s?|,\s/);
+      if(sep){ const i=rest.indexOf(sep[0]); place=rest.slice(0,i).trim(); notes=rest.slice(i+sep[0].length).replace(/\)$/,"").trim(); }
+      place=place.replace(/^[•\-\*\s]+/,"").trim();
+      const tbd=/\btbd\b/i.test(place)||/\btbd\b/i.test(rest);
+      cur={id:uid(),place:place||rest.trim(),date,group,notes,lat:null,lng:null,status:tbd?"tbd":"pend"};
+      stops.push(cur);
+      continue;
+    }
+
+    // otherwise: a detail/notes line attaches to the current stop
+    if(cur) pushNote(line);
+    else if(title===null){ title=line; }
   }
-  return best? best.replace(/\b\w/g,c=>c.toUpperCase()) : null;
+  if(!Object.keys(groups).length) groups[1]="Trip";
+  return {title:title||"My Trip", groups, stops};
 }
 
 let _uidn=0; const uid=()=>"s"+(++_uidn)+"_"+Date.now().toString(36);
 
 // ---------- GEOCODING ----------
 function gazLookup(place){
-  let k=place.toLowerCase().trim().replace(/[.,]/g,"");
+  let k=place.toLowerCase().replace(/\(.*?\)/g,"").replace(/[.,]/g,"").trim();
   if(GAZ[k]) return GAZ[k];
-  // try trailing token e.g. "Shinjuku, Tokyo" → tokyo
   const parts=k.split(/,|\//).map(s=>s.trim()).filter(Boolean);
-  for(let i=parts.length-1;i>=0;i--) if(GAZ[parts[i]]) return GAZ[parts[i]];
-  // substring gazetteer hit
+  for(let i=0;i<parts.length;i++) if(GAZ[parts[i]]) return GAZ[parts[i]]; // "London, UK" → london
   for(const name in GAZ) if(k.includes(name)) return GAZ[name];
   return null;
 }
-
 let _geoQueue=Promise.resolve(), _lastFetch=0;
 async function geocode(place){
   const g=gazLookup(place);
   if(g) return {lat:g[0],lng:g[1],src:"gaz"};
   const ck="q:"+place.toLowerCase().trim();
   if(geoCache[ck]) return geoCache[ck];
-  // throttle Nominatim to ~1 req/sec, serialized
   const run=_geoQueue.then(async()=>{
-    const wait=Math.max(0,1100-(Date.now()-_lastFetch));
-    if(wait) await new Promise(r=>setTimeout(r,wait));
+    const wait=Math.max(0,1100-(Date.now()-_lastFetch)); if(wait) await new Promise(r=>setTimeout(r,wait));
     _lastFetch=Date.now();
     try{
       const u="https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(place);
-      const res=await fetch(u,{headers:{"Accept":"application/json"}});
-      const j=await res.json();
-      if(j&&j[0]){
-        const out={lat:+j[0].lat,lng:+j[0].lon,src:"osm"};
-        geoCache[ck]=out;
-        try{ localStorage.setItem("tm_geocache",JSON.stringify(geoCache)); }catch(e){}
-        return out;
-      }
+      const j=await (await fetch(u,{headers:{"Accept":"application/json"}})).json();
+      if(j&&j[0]){ const out={lat:+j[0].lat,lng:+j[0].lon,src:"osm"};
+        geoCache[ck]=out; try{ localStorage.setItem("tm_geocache",JSON.stringify(geoCache)); }catch(e){} return out; }
     }catch(e){}
     return null;
   });
-  _geoQueue=run.catch(()=>{});
-  return run;
+  _geoQueue=run.catch(()=>{}); return run;
 }
-
 async function resolveStop(stop){
+  if(stop.status==="tbd"){ renderAll(); return; }
   stop.status="pend"; renderList();
   const r=await geocode(stop.place);
-  if(r){ stop.lat=r.lat; stop.lng=r.lng; stop.status="ok"; }
-  else { stop.lat=null; stop.lng=null; stop.status="bad"; }
+  if(r){ stop.lat=r.lat; stop.lng=r.lng; stop.status="ok"; } else { stop.lat=null; stop.lng=null; stop.status="bad"; }
   renderAll();
 }
 async function resolveAll(){
-  for(const s of trip.stops){ if(s.lat==null||s.status==="pend"){ await resolveStop(s); } }
+  for(const s of trip.stops){ if(s.status==="tbd") continue; if(s.lat==null||s.status==="pend") await resolveStop(s); }
   fitAll();
 }
 
@@ -355,26 +380,30 @@ function renderAll(){ renderList(); renderMap(); renderLegend(); persist(); }
 function renderList(){
   const pane=document.getElementById("pane-itin");
   if(!trip.stops.length){
-    pane.innerHTML=`<div class="sub" style="text-align:center;padding:30px 10px;">
-      No stops yet.<br>Paste an itinerary in the <b>Paste text</b> tab, or load the sample.</div>`;
+    pane.innerHTML=`<div class="sub" style="text-align:center;padding:30px 10px;">No stops yet.<br>Paste an itinerary in <b>Paste text</b>, or hit Reset for the sample.</div>`;
     return;
   }
-  pane.innerHTML="";
+  pane.innerHTML=""; let lastGroup=null;
   trip.stops.forEach((s,i)=>{
+    if(s.group!==lastGroup){
+      lastGroup=s.group;
+      const gh=document.createElement("div"); gh.className="grp-head";
+      gh.innerHTML=`<span class="grp-bar" style="background:${groupColor(s.group)}"></span>${esc(trip.groups[s.group]||("Group "+s.group))}`;
+      pane.appendChild(gh);
+    }
+    const dotCls=s.status==="ok"?"geo-ok":s.status==="tbd"?"geo-tbd":s.status==="bad"?"geo-bad":"geo-pend";
+    const dotTitle=s.status==="ok"?"Located":s.status==="tbd"?"To be decided — not mapped":s.status==="bad"?"Couldn't find this place — try a city name":"Locating…";
     const el=document.createElement("div");
-    el.className="stop"; el.draggable=true; el.dataset.id=s.id;
-    const dotCls=s.status==="ok"?"geo-ok":s.status==="bad"?"geo-bad":"geo-pend";
-    const dotTitle=s.status==="ok"?"Located":s.status==="bad"?"Couldn't find this place — try a city name":"Locating…";
+    el.className="stop"; el.draggable=true; el.dataset.id=s.id; el.style.borderLeftColor=groupColor(s.group);
     el.innerHTML=`
       <div class="stop-head">
-        <div class="stop-num" style="background:${dayColor(s.day)}">${i+1}</div>
+        <div class="stop-num" style="background:${groupColor(s.group)}">${i+1}</div>
         <div class="stop-main">
-          <input class="stop-place ${s.status==="bad"?"unresolved":""}" value="${esc(s.place)}"
-            data-id="${s.id}" placeholder="Place name">
+          <input class="stop-place ${s.status==="bad"?"unresolved":""}" value="${esc(s.place)}" data-id="${s.id}" placeholder="Place name">
           <div class="stop-meta">
             <span class="geo-dot ${dotCls}" title="${dotTitle}"></span>
-            Day <select data-id="${s.id}" class="day-sel">${dayOptions(s.day)}</select>
-            <span class="muted">${s.status==="bad"?"not found":""}</span>
+            <input class="stop-date" data-id="${s.id}" value="${esc(s.date||"")}" placeholder="dates" title="When">
+            <select class="grp-sel" data-id="${s.id}">${groupOptions(s.group)}</select>
           </div>
         </div>
         <div class="stop-tools">
@@ -383,68 +412,58 @@ function renderList(){
           <button class="icon-btn" title="Remove" onclick="removeStop('${s.id}')">✕</button>
         </div>
       </div>
-      <div class="stop-notes">
-        <textarea data-id="${s.id}" class="note-area" placeholder="Notes (optional)">${esc(s.notes)}</textarea>
-      </div>`;
+      <div class="stop-notes"><textarea data-id="${s.id}" class="note-area" placeholder="Notes">${esc(s.notes)}</textarea></div>`;
     pane.appendChild(el);
   });
   wireListEvents();
 }
 
-function dayOptions(cur){
-  const maxDay=Math.max(cur, ...trip.stops.map(s=>s.day), 1)+1;
-  let o="";
-  for(let d=1;d<=maxDay;d++) o+=`<option value="${d}" ${d===cur?"selected":""}>${d}</option>`;
-  return o;
+function groupOptions(cur){
+  const gids=Object.keys(trip.groups).map(Number).sort((a,b)=>a-b);
+  if(!gids.includes(cur)) gids.push(cur);
+  const next=Math.max(...gids,0)+1; gids.push(next);
+  return gids.map(g=>`<option value="${g}" ${g===cur?"selected":""}>${esc(trip.groups[g]||("New group "+g))}</option>`).join("");
 }
 
 function wireListEvents(){
-  document.querySelectorAll(".stop-place").forEach(inp=>{
-    inp.addEventListener("change",e=>{
-      const s=byId(e.target.dataset.id); if(!s) return;
-      s.place=e.target.value.trim(); resolveStop(s);
-    });
-  });
-  document.querySelectorAll(".note-area").forEach(t=>{
-    t.addEventListener("change",e=>{ const s=byId(e.target.dataset.id); if(s){ s.notes=e.target.value; persist(); renderMap(); } });
-  });
-  document.querySelectorAll(".day-sel").forEach(sel=>{
-    sel.addEventListener("change",e=>{ const s=byId(e.target.dataset.id); if(s){ s.day=+e.target.value; renderAll(); } });
-  });
-  // drag reorder
+  document.querySelectorAll(".stop-place").forEach(inp=>inp.addEventListener("change",e=>{
+    const s=byId(e.target.dataset.id); if(!s) return; s.place=e.target.value.trim();
+    s.status=/\btbd\b/i.test(s.place)?"tbd":"pend"; resolveStop(s);
+  }));
+  document.querySelectorAll(".stop-date").forEach(inp=>inp.addEventListener("change",e=>{
+    const s=byId(e.target.dataset.id); if(s){ s.date=e.target.value.trim(); persist(); renderMap(); }
+  }));
+  document.querySelectorAll(".note-area").forEach(t=>t.addEventListener("change",e=>{
+    const s=byId(e.target.dataset.id); if(s){ s.notes=e.target.value; persist(); renderMap(); }
+  }));
+  document.querySelectorAll(".grp-sel").forEach(sel=>sel.addEventListener("change",e=>{
+    const s=byId(e.target.dataset.id); if(s){ s.group=+e.target.value; if(!trip.groups[s.group]) trip.groups[s.group]="Group "+s.group; renderAll(); }
+  }));
   document.querySelectorAll(".stop").forEach(el=>{
     el.addEventListener("dragstart",()=>{ dragId=el.dataset.id; el.classList.add("dragging"); });
     el.addEventListener("dragend",()=>{ el.classList.remove("dragging"); document.querySelectorAll(".stop").forEach(s=>s.classList.remove("dragover")); });
     el.addEventListener("dragover",e=>{ e.preventDefault(); el.classList.add("dragover"); });
     el.addEventListener("dragleave",()=>el.classList.remove("dragover"));
-    el.addEventListener("drop",e=>{
-      e.preventDefault();
-      const from=trip.stops.findIndex(s=>s.id===dragId);
-      const to=trip.stops.findIndex(s=>s.id===el.dataset.id);
+    el.addEventListener("drop",e=>{ e.preventDefault();
+      const from=trip.stops.findIndex(s=>s.id===dragId), to=trip.stops.findIndex(s=>s.id===el.dataset.id);
       if(from<0||to<0||from===to) return;
-      const [m]=trip.stops.splice(from,1);
-      trip.stops.splice(to,0,m);
-      renderAll();
+      const [m]=trip.stops.splice(from,1); trip.stops.splice(to,0,m); renderAll();
     });
   });
 }
 
 function renderMap(){
-  if(!map) return; // map library unavailable (offline first load) — list still works
+  if(!map) return;
   markerLayer.clearLayers(); lineLayer.clearLayers();
   const pts=trip.stops.filter(s=>s.lat!=null);
-  // route line connecting located stops in order
-  if(pts.length>1){
-    L.polyline(pts.map(s=>[s.lat,s.lng]),{color:"#23201b",weight:2,opacity:.45,dashArray:"6 6"}).addTo(lineLayer);
-  }
+  if(pts.length>1) L.polyline(pts.map(s=>[s.lat,s.lng]),{color:"#23201b",weight:2,opacity:.45,dashArray:"6 6"}).addTo(lineLayer);
   trip.stops.forEach((s,i)=>{
     if(s.lat==null) return;
-    const c=dayColor(s.day), sz=30;
-    const icon=L.divIcon({className:"",html:
-      `<div class="num-marker" style="width:${sz}px;height:${sz}px;background:${c}"><span>${i+1}</span></div>`,
-      iconSize:[sz,sz],iconAnchor:[sz/2,sz]});
+    const c=groupColor(s.group), sz=30;
+    const icon=L.divIcon({className:"",html:`<div class="num-marker" style="width:${sz}px;height:${sz}px;background:${c}"><span>${i+1}</span></div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz]});
     const mk=L.marker([s.lat,s.lng],{icon}).addTo(markerLayer);
-    mk.bindPopup(`<div class="pop-day" style="color:${c}">Day ${s.day} · Stop ${i+1}</div>
+    mk.bindPopup(`<div class="pop-day" style="color:${c}">${esc(trip.groups[s.group]||"")} · Stop ${i+1}</div>
+      ${s.date?`<div class="pop-date">${esc(s.date)}</div>`:""}
       <div class="pop-place">${esc(s.place)}</div>
       ${s.notes?`<div class="pop-notes">${esc(s.notes)}</div>`:""}`);
     mk.on("click",()=>focusStop(s.id));
@@ -452,11 +471,12 @@ function renderMap(){
 }
 
 function renderLegend(){
-  const days=[...new Set(trip.stops.map(s=>s.day))].sort((a,b)=>a-b);
-  document.getElementById("legend-body").innerHTML=days.map(d=>{
-    const places=trip.stops.filter(s=>s.day===d).map(s=>s.place).join(", ");
-    return `<div class="leg-row"><span class="leg-sw" style="background:${dayColor(d)}"></span>
-      <span><b>Day ${d}</b> ${esc(places).slice(0,40)}</span></div>`;
+  const gids=Object.keys(trip.groups).map(Number).sort((a,b)=>a-b);
+  document.getElementById("legend-body").innerHTML=gids.map(g=>{
+    const places=trip.stops.filter(s=>s.group===g).map(s=>s.place.replace(/\(.*?\)/,"").trim()).join(", ");
+    if(!places) return "";
+    return `<div class="leg-row"><span class="leg-sw" style="background:${groupColor(g)}"></span>
+      <span><b>${esc(trip.groups[g])}</b><br><span style="color:var(--dim)">${esc(places)}</span></span></div>`;
   }).join("")||"<div class='sub'>—</div>";
 }
 
@@ -465,18 +485,16 @@ function focusStop(id){
   map.flyTo([s.lat,s.lng],Math.max(map.getZoom(),9),{duration:.6});
   markerLayer.eachLayer(l=>{ if(Math.abs(l.getLatLng().lat-s.lat)<1e-6) l.openPopup(); });
 }
-
 function fitAll(){
   if(!map) return;
   const pts=trip.stops.filter(s=>s.lat!=null).map(s=>[s.lat,s.lng]);
-  if(pts.length===1) map.setView(pts[0],10);
-  else if(pts.length>1) map.fitBounds(pts,{padding:[60,60]});
+  if(pts.length===1) map.setView(pts[0],10); else if(pts.length>1) map.fitBounds(pts,{padding:[55,55]});
 }
 
 // ---------- EDIT ACTIONS ----------
 function addStop(){
-  const lastDay=trip.stops.length?trip.stops[trip.stops.length-1].day:1;
-  const s={id:uid(),day:lastDay,place:"",notes:"",lat:null,lng:null,status:"bad"};
+  const last=trip.stops[trip.stops.length-1];
+  const s={id:uid(),place:"",date:"",group:last?last.group:1,notes:"",lat:null,lng:null,status:"bad"};
   trip.stops.push(s); renderAll(); showTab("itin");
   setTimeout(()=>{ const inp=document.querySelector(`.stop-place[data-id="${s.id}"]`); if(inp) inp.focus(); },50);
 }
@@ -484,29 +502,25 @@ function removeStop(id){ trip.stops=trip.stops.filter(s=>s.id!==id); renderAll()
 function moveStop(id,dir){
   const i=trip.stops.findIndex(s=>s.id===id), j=i+dir;
   if(i<0||j<0||j>=trip.stops.length) return;
-  [trip.stops[i],trip.stops[j]]=[trip.stops[j],trip.stops[i]];
-  renderAll();
+  [trip.stops[i],trip.stops[j]]=[trip.stops[j],trip.stops[i]]; renderAll();
 }
-
 function parseAndLoad(){
   const txt=document.getElementById("paste-text").value;
   if(!txt.trim()){ toast("Paste an itinerary first"); return; }
   const parsed=parseItinerary(txt);
   if(!parsed.stops.length){ toast("Couldn't find any stops in that text"); return; }
-  trip=parsed;
-  document.getElementById("trip-title").value=trip.title;
-  showTab("itin"); renderAll(); resolveAll();
-  toast(`Parsed ${trip.stops.length} stops`);
+  trip=parsed; document.getElementById("trip-title").value=trip.title;
+  showTab("itin"); renderAll(); resolveAll(); toast("Parsed "+trip.stops.length+" stops");
 }
 
 // ---------- PERSIST + SHARE ----------
 function persist(){
   trip.title=document.getElementById("trip-title").value;
-  try{ localStorage.setItem("tm_trip",JSON.stringify(trip)); }catch(e){}
+  try{ localStorage.setItem("tm_trip_v2",JSON.stringify(trip)); }catch(e){}
 }
 function shareTrip(){
   persist();
-  const payload={t:trip.title,s:trip.stops.map(s=>[s.place,s.day,s.notes,s.lat,s.lng])};
+  const payload={t:trip.title,g:trip.groups,s:trip.stops.map(s=>[s.place,s.date,s.group,s.notes,s.lat,s.lng,s.status])};
   const hash="#t="+encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
   const url=location.origin+location.pathname+hash;
   navigator.clipboard?.writeText(url).then(()=>toast("Share link copied to clipboard")).catch(()=>prompt("Copy this link:",url));
@@ -515,7 +529,7 @@ function loadFromHash(){
   if(!location.hash.startsWith("#t=")) return false;
   try{
     const p=JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(location.hash.slice(3))))));
-    trip={title:p.t||"My Trip",stops:p.s.map(a=>({id:uid(),place:a[0],day:a[1],notes:a[2],lat:a[3],lng:a[4],status:a[3]!=null?"ok":"bad"}))};
+    trip={title:p.t||"My Trip",groups:p.g||{1:"Trip"},stops:p.s.map(a=>({id:uid(),place:a[0],date:a[1],group:a[2],notes:a[3],lat:a[4],lng:a[5],status:a[6]||(a[4]!=null?"ok":"bad")}))};
     return true;
   }catch(e){ return false; }
 }
@@ -530,37 +544,27 @@ function showTab(t){
   document.getElementById("tab-paste").classList.toggle("on",t==="paste");
 }
 let _toastT=null;
-function toast(msg){ const el=document.getElementById("toast"); el.textContent=msg; el.classList.add("show");
-  clearTimeout(_toastT); _toastT=setTimeout(()=>el.classList.remove("show"),2200); }
+function toast(msg){ const el=document.getElementById("toast"); el.textContent=msg; el.classList.add("show"); clearTimeout(_toastT); _toastT=setTimeout(()=>el.classList.remove("show"),2200); }
 
 // ---------- INIT ----------
 function init(){
   if(typeof L!=="undefined"){
-    map=L.map("map",{zoomControl:true,worldCopyJump:true}).setView([30,15],2);
-    L.tileLayer("https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{
-      attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:"abcd", maxZoom:19
-    }).addTo(map);
-    markerLayer=L.layerGroup().addTo(map);
-    lineLayer=L.layerGroup().addTo(map);
+    map=L.map("map",{zoomControl:true,worldCopyJump:true}).setView([46,6],4);
+    L.tileLayer("https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{attribution:"&copy; OpenStreetMap &copy; CARTO",subdomains:"abcd",maxZoom:19}).addTo(map);
+    markerLayer=L.layerGroup().addTo(map); lineLayer=L.layerGroup().addTo(map);
   } else {
     document.getElementById("map").innerHTML='<div style="padding:30px;text-align:center;color:#8a8275;font-size:.85rem;">Map needs an internet connection to load.<br>Your itinerary still works — edits are saved.</div>';
   }
   document.getElementById("trip-title").addEventListener("change",persist);
+  document.getElementById("paste-text").value=SAMPLE_TEXT;
 
   let loaded=false;
-  if(loadFromHash()){ loaded=true; }
-  else { try{ const saved=JSON.parse(localStorage.getItem("tm_trip")||"null"); if(saved&&saved.stops&&saved.stops.length){ trip=saved; loaded=true; } }catch(e){} }
+  if(loadFromHash()) loaded=true;
+  else { try{ const sv=JSON.parse(localStorage.getItem("tm_trip_v2")||"null"); if(sv&&sv.stops&&sv.stops.length){ trip=sv; loaded=true; } }catch(e){} }
 
-  if(loaded){
-    document.getElementById("trip-title").value=trip.title;
-    renderAll(); resolveAll();
-  } else {
-    // first visit → pre-populate the sample so there's always something on the map
-    document.getElementById("paste-text").value=SAMPLE_TEXT;
-    trip=parseItinerary(SAMPLE_TEXT);
-    document.getElementById("trip-title").value=trip.title;
-    renderAll(); resolveAll();
-  }
+  if(!loaded) trip=defaultTrip();
+  document.getElementById("trip-title").value=trip.title;
+  renderAll(); resolveAll();
 }
 init();
 </script>
